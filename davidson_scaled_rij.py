@@ -140,12 +140,12 @@ def inference(w, x, n_models):
 
 def train(x, y, n_models):
     n_pairs = n_models * (n_models - 1) // 2
-    w = np.zeros(n_models * 2 + n_pairs + 1)
-    w[:n_models] = np.full(n_models, np.log(1 / n_models))
-    w[n_models:n_models * 2] = np.full(n_models, 0.5 ** 0.5)
+    w0 = np.zeros(n_models * 2 + n_pairs + 1)
+    w0[:n_models] = np.full(n_models, np.log(1 / n_models))
+    w0[n_models:n_models * 2] = np.full(n_models, 0.5 ** 0.5)
 
     result = minimize(davidson_jac,
-                      w,
+                      w0,
                       args=(x, y, n_models),
                       jac=True,
                       method='L-BFGS-B',

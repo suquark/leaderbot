@@ -88,10 +88,10 @@ def inference(w, x, n_models):
 
 
 def train(x, y, n_models):
-    w = np.full(n_models * 2, np.log(1 / n_models))
-    w[n_models:n_models * 2] = 0.5 ** 0.5
+    w0 = np.full(n_models * 2, np.log(1 / n_models))
+    w0[n_models:n_models * 2] = 0.5 ** 0.5
     result = minimize(bt_jac,
-                      w,
+                      w0,
                       args=(x, y, n_models),
                       jac=True,
                       method='L-BFGS-B',

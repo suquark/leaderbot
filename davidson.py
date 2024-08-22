@@ -116,11 +116,11 @@ def inference(w, x, n_models):
 
 
 def train(x, y, n_models):
-    w = np.zeros(n_models + 1)
-    w[:n_models] = np.full(n_models, np.log(1 / n_models))
+    w0 = np.zeros(n_models + 1)
+    w0[:n_models] = np.full(n_models, np.log(1 / n_models))
 
     result = minimize(davidson_jac,
-                      w,
+                      w0,
                       args=(x, y, n_models),
                       jac=True,
                       method='L-BFGS-B',

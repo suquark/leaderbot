@@ -101,12 +101,12 @@ def inference(w, x, n_models):
 
 def train(x, y, n_models):
     n_pairs = n_models * (n_models - 1) // 2
-    P = np.zeros(n_models * 2 + n_pairs)
-    P[:n_models] = np.full(n_models, np.log(1 / n_models))
-    P[n_models:n_models * 2] = np.full(n_models, 0.5 ** 0.5)
+    w0 = np.zeros(n_models * 2 + n_pairs)
+    w0[:n_models] = np.full(n_models, np.log(1 / n_models))
+    w0[n_models:n_models * 2] = np.full(n_models, 0.5 ** 0.5)
 
     result = minimize(bt_jac,
-                      P,
+                      w0,
                       args=(x, y, n_models),
                       jac=True,
                       method='L-BFGS-B',
