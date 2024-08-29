@@ -63,15 +63,6 @@ def bt_jac(w, x, y, n_models):
 
     loss /= count
     jac /= count
-
-    # constraint
-    constraint_diff = np.sum(np.exp(w[:n_models])) - 1
-    constraint_loss = constraint_diff ** 2
-    constraint_jac = 2 * constraint_diff * np.exp(w[:n_models])
-    loss += constraint_loss
-    jac[:n_models] += constraint_jac
-
-    # print(f"Loss: {loss}. Constraint: {constraint_diff}")
     return loss, jac
 
 
@@ -88,13 +79,23 @@ def inference(w, x, n_models):
 
 
 def train(x, y, n_models):
-    w0 = np.full(n_models * 2, np.log(1 / n_models))
-    w0[n_models:n_models * 2] = 0.5 ** 0.5
-    result = minimize(bt_jac,
-                      w0,
-                      args=(x, y, n_models),
-                      jac=True,
-                      method='L-BFGS-B',
-                      options={'maxiter': 1500},
-                      tol=1e-7)
+    w0 = np.random.rand(n_models * 2)
+    w0[n_models:n_models * 2] = np.random.uniform(0.5, 1.5, n_models)
+    result = minimize(
+        bt_jac,
+        w0,
+        args=(x, y, n_models),
+        jac=True,
+        method='L-BFGS-B',
+        options={
+            'maxiter': 120000,  # Increase the maximum iterations
+            'ftol': 1e-14,  # Tighten the function tolerance
+            'gtol': 1e-14,  # Tighten the gradient tolerance
+            'disp': False
+        },  # Display detailed convergence messages
+        tol=1e-12)
+
+    C = np.mean(np.abs(result.x[n_models:n_models * 2]))
+    result.x[:n_models * 2] /= C
+    result.x[:n_models] -= np.mean(result.x[:n_models])
     return result.x
