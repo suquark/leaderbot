@@ -100,12 +100,12 @@ def davidson_jac(w, x, y, n_models):
     loss /= count
     jac /= count
 
-    # constraint
-    constraint_diff = np.sum(np.exp(w[:n_models])) - 1
-    constraint_loss = constraint_diff ** 2
-    constraint_jac = 2 * constraint_diff * np.exp(w[:n_models])
-    loss += constraint_loss
-    jac[:n_models] += constraint_jac
+    # # constraint
+    # constraint_diff = np.sum(np.exp(w[:n_models])) - 1
+    # constraint_loss = constraint_diff ** 2
+    # constraint_jac = 2 * constraint_diff * np.exp(w[:n_models])
+    # loss += constraint_loss
+    # jac[:n_models] += constraint_jac
 
     # print(f"Loss: {loss}. Constraint: {constraint_diff}. Nu: {np.exp(mu)}")
     return loss, jac
@@ -130,12 +130,6 @@ def train(x, y, n_models):
     w0[:n_models] = np.full(n_models, np.log(1 / n_models))
     w0[n_models:n_models * 2] = np.full(n_models, 0.5 ** 0.5)
 
-    result = minimize(davidson_jac,
-                      w0,
-                      args=(x, y, n_models),
-                      jac=True,
-                      method='L-BFGS-B',
-                      options={'maxiter': 1500},
-                      tol=1e-8)
+    result = minimize(davidson_jac, w0, args=(x, y, n_models), jac=True, method='BFGS', tol=1e-12)
 
     return result.x

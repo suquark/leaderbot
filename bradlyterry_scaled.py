@@ -86,14 +86,9 @@ def train(x, y, n_models):
         w0,
         args=(x, y, n_models),
         jac=True,
-        method='L-BFGS-B',
-        options={
-            'maxiter': 120000,  # Increase the maximum iterations
-            'ftol': 1e-14,  # Tighten the function tolerance
-            'gtol': 1e-14,  # Tighten the gradient tolerance
-            'disp': False
-        },  # Display detailed convergence messages
-        tol=1e-12)
+        method='BFGS',
+        options={'disp': False},  # Display detailed convergence messages
+        tol=1e-9)
 
     C = np.mean(np.abs(result.x[n_models:n_models * 2]))
     result.x[:n_models * 2] /= C
