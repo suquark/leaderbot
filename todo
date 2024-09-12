@@ -1,0 +1,3 @@
+add cov arg and combine algorithms.
+figure for vis in doc
+evaluate(algs, print, train)
