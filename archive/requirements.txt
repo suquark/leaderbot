@@ -2,5 +2,7 @@ numpy
 scipy
 pandas
 plotly
+texplot
+matplotlib
 numba
 scikit-learn

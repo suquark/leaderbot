@@ -13,9 +13,12 @@
       .. autosummary::
          :toctree:
       
-         DavidsonScaledR.inference
+         DavidsonScaledR.infer
          DavidsonScaledR.loss
+         DavidsonScaledR.predict
+         DavidsonScaledR.rank
          DavidsonScaledR.train
+         DavidsonScaledR.visualize
       
   
 

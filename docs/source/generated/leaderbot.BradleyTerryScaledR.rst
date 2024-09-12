@@ -13,9 +13,12 @@
       .. autosummary::
          :toctree:
       
-         BradleyTerryScaledR.inference
+         BradleyTerryScaledR.infer
          BradleyTerryScaledR.loss
+         BradleyTerryScaledR.predict
+         BradleyTerryScaledR.rank
          BradleyTerryScaledR.train
+         BradleyTerryScaledR.visualize
       
   
 

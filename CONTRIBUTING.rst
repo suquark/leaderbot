@@ -121,12 +121,12 @@ Tests
 Package Structure
 -----------------
 
-1. **Adding New Algorithm**
+1. **Adding a New Model**
 
-   To add a new algorithm, such as as an algorithm named ``foo_bar``:
+   To add a new model, such as as a model named ``foo_bar``:
 
-   1. Create a new file in ``/leaderbot/algorithms/foo_bar.py``.
+   1. Create a new file in ``/leaderbot/models/foo_bar.py``.
    2. Define a class therein called ``FooBar`` that is inherited from
       ``BaseModel`` base class.
-   3. In ``/leaderbot/algorithms/__init__.py`` import your new class and add
+   3. In ``/leaderbot/models/__init__.py`` import your new class and add
       its name to ``__all__`` variable.

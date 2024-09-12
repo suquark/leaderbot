@@ -7,13 +7,14 @@
 
 
 from .data import load_data
-from .algorithms import BradleyTerry, BradleyTerryScaled, \
+from .models import BradleyTerry, BradleyTerryScaled, \
     BradleyTerryScaledR, BradleyTerryScaledRIJ, RaoKupper, RaoKupperScaled, \
     RaoKupperScaledR, RaoKupperScaledRIJ, Davidson, DavidsonScaled, \
     DavidsonScaledR, DavidsonScaledRIJ
+from .evaluate import evaluate
 
 __all__ = ['load_data', 'BradleyTerry', 'BradleyTerryScaled',
            'BradleyTerryScaledR', 'BradleyTerryScaledRIJ', 'RaoKupper',
            'RaoKupperScaled', 'RaoKupperScaledR', 'RaoKupperScaledRIJ',
            'Davidson', 'DavidsonScaled', 'DavidsonScaledR',
-           'DavidsonScaledRIJ']
+           'DavidsonScaledRIJ', 'evaluate']

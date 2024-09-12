@@ -13,8 +13,11 @@
       .. autosummary::
          :toctree:
       
-         BradleyTerry.inference
+         BradleyTerry.infer
+         BradleyTerry.predict
+         BradleyTerry.rank
          BradleyTerry.train
+         BradleyTerry.visualize
       
   
 

@@ -13,9 +13,12 @@
       .. autosummary::
          :toctree:
       
-         RaoKupper.inference
+         RaoKupper.infer
          RaoKupper.loss
+         RaoKupper.predict
+         RaoKupper.rank
          RaoKupper.train
+         RaoKupper.visualize
       
   
 

@@ -1,0 +1,21 @@
+global-exclude *.py[cod] __pycache__
+global-exclude *.so *.dll *.dylib
+global-exclude *.o
+global-exclude *.swp
+
+recursive-include leaderbot *.rst
+recursive-include leaderbot/data *.json
+
+include CHANGELOG.rst
+include README.rst
+include LICENSE.txt
+include requirements.txt
+include pyproject.toml
+
+exclude .gitattributes
+exclude .tokeignore
+
+prune docs
+prune notebooks
+prune tests
+prune .git

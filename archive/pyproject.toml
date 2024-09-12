@@ -1,22 +1,21 @@
-
 [build-system]
-requires = ["setuptools>=62.6"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-optional-dependencies.lint = { file = ["requirements-lint.txt"] }
-optional-dependencies.test = { file = ["requirements-test.txt"] }
+# [tool.setuptools.dynamic]
+# dependencies = {file = ["requirements.txt"]}
+# optional-dependencies.lint = { file = ["requirements-lint.txt"] }
+# optional-dependencies.test = { file = ["requirements-test.txt"] }
 
-[tool.setuptools.packages.find]
-where = ["."]  # list of folders that contain the packages (["."] by default)
-include = []  # package names should match these glob patterns (["*"] by default)
-exclude = []  # exclude packages matching these glob patterns (empty by default)
-namespaces = false
+# [tool.setuptools.packages.find]
+# where = ["."]  # list of folders that contain the packages (default ["."])
+# include = []  # package names should match these glob patterns (default ["*"])
+# exclude = []  # exclude packages matching these glob patterns (default empty)
+# namespaces = false
 
 [tool.ruff]
-# Allow lines to be as long as 120.
-line-length = 120
+# Allow lines to be as long as 80.
+line-length = 80
 
 [tool.ruff.lint]
 select = [
@@ -37,7 +36,7 @@ select = [
 
 [tool.yapf]
 based_on_style = "pep8"
-column_limit = 120
+column_limit = 80
 SPACES_AROUND_POWER_OPERATOR = true
 
 [tool.yapfignore]

@@ -40,7 +40,7 @@ def _clean_data(
         x: Union[List[List[int]], np.ndarray[np.integer]],
         y: Union[List[List[int]], np.ndarray[np.integer]]):
     """
-    Removes data pairs with no game (where the entire row of self.y is
+    Removes data pairs with no matches (where the entire row of self.y is
     zero).
     """
 
@@ -60,7 +60,7 @@ def _check_data_duplicacy(
         x: Union[List[List[int]], np.ndarray[np.integer]],
         verbose: bool = False) -> int:
     """
-    Checks duplicate games. Calling this is optional.
+    Checks duplicate matches. Calling this is optional.
     """
 
     duplicacy_count = 0
@@ -110,12 +110,14 @@ def load_data(
     data : DataType
         A dictionary containing the following key/values:
 
-        * ``'X'``: A list of the pairs ``(i, j)`` where the ``i``-th and
-          ``j``-th models played games.
-        * ``'Y'``: A list of the counts ``(n_win, n_loss, n_ties)``
-          respectively representing the number of wins, losses, and ties
-          between ``i``-th and ``j``-th models games.
-        * ``'models'``: a list of thre name of models in the game.
+        * ``'X'``:
+            A list of tuple of two indices ``(i, j)`` representing a match
+            between a pair of agents with the indices ``i`` and ``j``.
+        * ``'Y'``:
+            A list of tuples of three integers ``(n_win, n_loss, n_ties)``
+            representing the frequencies of win, loss, and ties between agents
+            ``i`` and ``j`` given by the corresponding tuple in ``X``.
+        * ``'models'``: a list of thre name of agents in the match.
 
     Raises
     ------
