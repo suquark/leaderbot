@@ -23,7 +23,7 @@ Alternatively, clone the source code and install with
 Build Documentation
 ===================
 
-..code-block::
+.. code-block::
 
     cd docs
     make clean html
