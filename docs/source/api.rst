@@ -32,6 +32,14 @@ API Reference
 
 .. autosummary::
     :toctree: generated
+    :caption: Model Evaluation
+    :recursive:
+    :template: autosummary/member.rst
+
+    leaderbot.evaluate
+
+.. autosummary::
+    :toctree: generated
     :caption: Types
     :recursive:
     :template: autosummary/class.rst

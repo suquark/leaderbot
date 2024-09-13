@@ -10,7 +10,8 @@
 # Imports
 # =======
 
-# import numpy as np
+import numpy as np
+from ..data import DataType
 
 
 # ========
@@ -18,6 +19,7 @@
 # ========
 
 def evaluate(
+        data: DataType,
         models: list,
         train: bool = False,
         print: bool = True):
@@ -46,5 +48,26 @@ def evaluate(
         for model in models:
             model.train()
 
-    # Not implemented
-    pass
+    # Outputs
+    name = []
+    n_param = []
+    jsd = []  # Jensen-Shannon divergence
+    kld = []  # Kullback-Leibler divergence
+    aic = []  # Akaike information criterion
+    bic = []  # bayesian infrmation criterion
+
+    for model in models:
+        # Not implemented
+        pass
+
+
+# ===
+# jsd
+# ===
+
+def _jsd():
+    """
+    Jensen-Shannon divergence.
+    """
+
+

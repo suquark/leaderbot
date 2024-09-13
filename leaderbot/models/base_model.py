@@ -564,7 +564,7 @@ class BaseModel(object):
         --------
 
         train : train model parameters.
-        inference : make inference of the probabilities of win, loss, and tie.
+        infer : make inference of the probabilities of win, loss, and tie.
 
         Examples
         --------
@@ -785,8 +785,9 @@ class BaseModel(object):
                 plt.tight_layout()
 
                 texplot.show_or_save_plot(plt, default_filename='rank',
-                                          transparent_background=True, dpi=200,
-                                          show_and_save=save, verbose=True)
+                                          transparent_background=False,
+                                          dpi=200, show_and_save=save,
+                                          verbose=True)
 
     # =========
     # visualize
@@ -1026,5 +1027,6 @@ class BaseModel(object):
             plt.tight_layout()
 
             texplot.show_or_save_plot(plt, default_filename='visualization',
-                                      transparent_background=True, dpi=200,
-                                      show_and_save=save, verbose=True)
+                                      transparent_background=False,
+                                      dpi=200, show_and_save=save,
+                                      verbose=True)

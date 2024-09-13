@@ -3,7 +3,7 @@
 |project| Documentation
 ***********************
 
-|project| is a python package that provides **leader**\ board for
+|project| is a python package that provides a **leader**\ board for
 chat\ **bot**\ s based on `Chatbot Arena <https://lmarena.ai/>`_ project.
 
 .. .. grid:: 4
@@ -48,23 +48,13 @@ Alternatively, clone the source code and install with
     cd source_dir
     pip install .
 
-API Reference
-=============
-
-Check the list of functions, classes, and modules of |project| with their
-usage, options, and examples.
-
-.. toctree::
-    :maxdepth: 2
-   
-    API Reference <api>
-
 Quick Usage
 ===========
 
-In the example below, we use :class:`leaderbot.DavidsonSaled` class to build a
-model. Users can choose from many other models provided in the
-:ref:`API <api>`.
+The package provides several statistical models (see
+:ref:`API reference <api>` for details). In the example below, we use
+:class:`leaderbot.Davidson` class to build a model. However, working with
+other models is similar.
 
 Create and Train a Model
 ------------------------
@@ -72,11 +62,11 @@ Create and Train a Model
 .. code-block:: python
 
     >>> from leaderbot.data import load_data
-    >>> from leaderbot.models import DavidsonScaled
+    >>> from leaderbot.models import Davidson
 
     >>> # Create a model
     >>> data = load_data()
-    >>> model = DavidsonScaled(data)
+    >>> model = Davidson(data)
 
     >>> # Train the model
     >>> model.train()
@@ -84,15 +74,15 @@ Create and Train a Model
 Leaderboard Table
 -----------------
 
-To print leaderboard table of the LLM agents, use
-:func:`leaderbot.BaseModel.rank` function:
+To print leaderboard table of the chatbot agents, use
+:func:`leaderbot.Davidson.rank` function:
 
 .. code-block:: python
 
     >>> # Leaderboard rank and plot
     >>> model.rank(max_rank=30, plot=True)
 
-The above code provides the text output and plot below.
+The above code prints the table below:
 
 .. literalinclude:: _static/data/rank.txt
     :language: none
@@ -101,18 +91,20 @@ The above code provides the text output and plot below.
     :align: center
     :class: custom-dark
 
-Visualize Results
------------------
+Visualize Correlation
+---------------------
 
-The results can be visualized with :func:`leaderboard.BaseModel.visualize`
-using various methods. Here is an example using Kernel PCA method:
+The correlation of the chatbot performances can be visualized with
+:func:`leaderbot.Davidson.visualize` using various methods. Here is an
+example with the Kernel PCA method:
 
 .. code-block:: python
 
     >>> # Plot kernel PCA
     >>> model.visualize(max_rank=50)
 
-The above code produces plot below.
+The above code produces plot below demonstrating the Kernel PCA projection on
+three principal axes:
 
 .. image:: _static/images/plots/kpca.png
     :align: center
@@ -122,12 +114,12 @@ Make Inference and Prediction
 -----------------------------
 
 Once a model is trained, you can make inference on the probabilities of win,
-loss, or tie for a pair of agents using :func:`leaderbot.BaseModel.infer`
+loss, or tie for a pair of agents using :func:`leaderbot.Davidson.infer`
 method:
 
 .. code-block:: python
 
-    >>> # Create a list of matches using indices of agents
+    >>> # Create a list of three matches using pairs of indices of agents
     >>> matches = zip((0, 1, 2), (1, 2, 0))
 
     >>> # Make inference
@@ -139,9 +131,8 @@ method:
 Model Evaluation
 ----------------
 
-If you created multiple models, you can compare their performance using
-:func:`leaderbot.evaluate` function:
-
+Compare the performance of multiple models using :func:`leaderbot.evaluate`
+function:
 
 .. code-block:: python
 
@@ -158,10 +149,20 @@ If you created multiple models, you can compare their performance using
     >>> # Evaluate models
     >>> leaderbot.evaluate(models)
 
-The above provides several analysis of the goodness of fit of the modes,
-including loss, Bayesian and Akaike information criteria, KL and
-Jensen-Shannon divergences and
+The above model evaluation performs the analysis of the goodness of fit using
+Bayesian and Akaike information criteria, and KL and Jensen-Shannon
+divergences.
 
+API Reference
+=============
+
+Check the list of functions, classes, and modules of |project| with their
+usage, options, and examples.
+
+.. toctree::
+    :maxdepth: 2
+   
+    API Reference <api>
 
 Test
 ====
@@ -173,12 +174,20 @@ You may test the package with `tox <https://tox.wiki/>`__:
     cd source_dir
     tox
 
+Alternatively, test with `pytest <https://pytest.org>`__:
+
+.. prompt:: bash
+
+    cd source_dir
+    pytest
+
 How to Contribute
 =================
 
-We welcome contributions via GitHub's pull request. If you do not feel
-comfortable modifying the code, we also welcome feature requests and bug
-reports.
+We welcome contributions via GitHub's pull request. Developers should review
+our :ref:`Contributing Guidelines <contribute>` before submitting their code.
+If you do not feel comfortable modifying the code, we also welcome feature
+requests and bug reports.
 
 .. _index_publications:
 
@@ -191,9 +200,9 @@ reports.
 License
 =======
 
-This project uses a BSD 3-clause license in hopes that it will be accessible
-to most projects. If you require a different license, please raise an issue and
-we will consider a dual license.
+This project uses a BSD 3-clause license in hopes that it will be accessible to
+most projects. If you require a different license, please raise an issue and we
+will consider a dual license.
 
 .. |pypi| image:: https://img.shields.io/pypi/v/leaderbot
 .. |traceflows-light| image:: _static/images/icons/logo-leaderbot-light.svg
