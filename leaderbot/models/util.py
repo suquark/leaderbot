@@ -13,7 +13,7 @@
 import numba
 import numpy as np
 
-__all__ = ['sigmoid', 'double_sigmoid', 'cross_entropy']
+__all__ = ['sigmoid', 'double_sigmoid', 'cross_entropy', 'kl_divergence']
 
 
 # =======
@@ -50,3 +50,21 @@ def cross_entropy(p, q):
     h = p * np.log(q)
     h[p == 0] = 0
     return h
+
+
+# =============
+# kl divergence
+# =============
+
+# @numba.jit(nopython=True)
+def kl_divergence(p, q):
+    """
+    KL divergence between two distributions or two frequencies, especially for
+    the case when p is exactly zero integer and q is near zero floating point.
+
+    Since p is integer, p == 0 comparison is fine.
+    """
+
+    d = p * np.log(p / q)
+    d[p == 0] = 0
+    return d

@@ -262,7 +262,7 @@ class BradleyTerry(BaseModel):
         See Also
         --------
 
-        predict : predict probabilities based on given param.
+        predict : predict probabilities based on given parameters.
 
         Notes
         -----
@@ -285,8 +285,8 @@ class BradleyTerry(BaseModel):
             >>> # Train the model
             >>> model.train()
 
-            >>> # Make prediction
-            >>> p_win, p_loss, p_tie = model.predict()
+            >>> # Make inference
+            >>> prob = model.infer()
         """
 
         self.param = self._iterative_solver(self.n_agents, self.x, self.y,
@@ -319,9 +319,9 @@ class BradleyTerry(BaseModel):
         -------
 
         prob : np.array[np.float]
-            An array of the shape ``(n_samples, 3)`` where the columns
+            An array of the shape ``(n_pairs, 3)`` where the columns
             represent the win, loss, and tie probabilities for the model `i`
-            against model `j` in order that appears in the member `x`.
+            against model `j` in order that appears in the input `x`.
 
         Raises
         ------
@@ -351,7 +351,7 @@ class BradleyTerry(BaseModel):
             >>> model.train()
 
             >>> # Make prediction
-            >>> p_win, p_loss, p_tie = model.predict()
+            >>> pred = model.predict()
         """
 
         if self.param is None:

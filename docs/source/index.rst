@@ -123,7 +123,7 @@ method:
     >>> matches = zip((0, 1, 2), (1, 2, 0))
 
     >>> # Make inference
-    >>> p_win, p_loss, p_tie = model.infer(matches)
+    >>> prob = model.infer(matches)
 
     >>> # Make prediction
     >>> pred = model.predict(mathces)
@@ -137,9 +137,9 @@ function:
 .. code-block:: python
 
     >>> # Create a list of models
-    >>> model1 = leaderbot.BradleyTerry(data)
-    >>> model2 = leaderbot.RaoKupper(data)
-    >>> model3 = leaderbot.Davidson(data)
+    >>> model1 = leaderbot.BradleyTerryScaled(data)
+    >>> model2 = leaderbot.RaoKupperScaled(data)
+    >>> model3 = leaderbot.DavidsonScaled(data)
     >>> models = [model1, model2, model3]
 
     >>> # Train models

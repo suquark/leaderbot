@@ -362,7 +362,7 @@ class BaseModel(object):
         See Also
         --------
 
-        predict : predict probabilities based on given param.
+        predict : predict probabilities based on given parammeters.
 
         Notes
         -----
@@ -385,8 +385,8 @@ class BaseModel(object):
             >>> # Train the model
             >>> model.train()
 
-            >>> # Make prediction
-            >>> p_win, p_loss, p_tie = model.infer()
+            >>> # Make inference
+            >>> prob = model.infer()
         """
 
         # Check or initialize param
@@ -476,9 +476,9 @@ class BaseModel(object):
         -------
 
         prob : np.array
-            An array of the shape ``(n_samples, 3)`` where the columns
+            An array of the shape ``(n_pairs, 3)`` where the columns
             represent the win, loss, and tie probabilities for the model `i`
-            against model `j` in order that appears in the member `x`.
+            against model `j` in order that appears in the input `x`.
 
         Raises
         ------
@@ -508,7 +508,7 @@ class BaseModel(object):
             >>> model.train()
 
             >>> # Make inference
-            >>> p_win, p_loss, p_tie = model.infer()
+            >>> prob = model.infer()
         """
 
         if self.param is None:

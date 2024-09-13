@@ -133,7 +133,7 @@ class DavidsonScaled(BaseModel):
 
         self.n_param = 2 * self.n_agents + 1
 
-        # Approximate bound for param (only needed for shgo optimization
+        # Approximate bound for parameters (only needed for shgo optimization
         # method). Note that these bounds are not enforced, rather, only used
         # for seeding multi-initial points in global optimization methods.
         self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
@@ -238,7 +238,7 @@ class DavidsonScaled(BaseModel):
 
     def loss(
             self,
-            w: Union[List[float], np.ndarray[np.floating]],
+            w: Union[List[float], np.ndarray[np.floating]] = None,
             return_jac: bool = True,
             constraint: bool = True):
         """
@@ -247,11 +247,12 @@ class DavidsonScaled(BaseModel):
         Parameters
         ----------
 
-        w : array_like
-            Parameters.
+        w : array_like, default=None
+            Parameters. If `None`, the pre-trained parameters are used,
+            provided is already trained.
 
         return_jac : bool, default=True
-            if `True`, the Jacobian of loss with respect to the param is
+            if `True`, the Jacobian of loss with respect to the parameters is
             also returned.
 
         constraint : bool, default=True
@@ -267,14 +268,17 @@ class DavidsonScaled(BaseModel):
         if return_jac is `True`:
 
             jac : np.array
-                An array of the size of the number of param, representing the
-                Jacobian of loss.
+                An array of the size of the number of parameters, representing
+                the Jacobian of loss.
 
         Raises
         ------
 
-        RuntimeError
+        RuntimeWarning
             If loss is ``nan``.
+
+        RuntimeError
+            If the model is not trained and the input ``w`` is set to `None`.
 
         See Also
         --------
@@ -298,9 +302,14 @@ class DavidsonScaled(BaseModel):
             >>> import numpy as np
             >>> w = np.random.randn(model.n_param)
 
-            >>> # Compute loss and its gradient with respect to param
+            >>> # Compute loss and its gradient with respect to parameters
             >>> loss, jac = model.loss(w, return_jac=True, constraint=False)
         """
+
+        if w is None:
+            if self.param is None:
+                raise RuntimeError('train model first.')
+            w = self.param
 
         loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
                                             return_jac=return_jac,

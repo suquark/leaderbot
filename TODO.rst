@@ -62,6 +62,21 @@ All ``*ScaledRIJ`` classes can not be optimized with ``BFGS``, rather, they
 only work with ``L-BFGS-B``. Needs work. It might need constraint with the
 trace of full ``S``, rather than its diagonal constraint.
 
+Models
+------
+
+* ``BradleyTerry`` (without cov) does not have a loss function. It is needed
+  for evaluation.
+
+Package Naming
+--------------
+
+* leaderbot
+* arena (taken)
+* botarena
+* chatbotarena
+* chatbot_arena
+
 Notes
 =====
 
