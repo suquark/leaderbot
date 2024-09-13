@@ -1,5 +1,5 @@
 # Generated image files
-# images/
+images/
 
 config.json
 cookies.json
@@ -76,7 +76,6 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-docs/build/
 
 # PyBuilder
 .pybuilder/
@@ -175,7 +174,3 @@ out
 
 # MacOS
 .DS_Store
-
-# Vim
-*.vim
-*.sw[op]

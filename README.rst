@@ -133,8 +133,7 @@ Make Inference and Prediction
 -----------------------------
 
 Once a model is trained, you can make inference on the probabilities of win,
-loss, or tie for a pair of agents using :``leaderbot.Davidson.infer``
-method:
+loss, or tie for a pair of agents using ``leaderbot.Davidson.infer`` method:
 
 .. code-block:: python
 

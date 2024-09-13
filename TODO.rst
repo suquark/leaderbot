@@ -31,13 +31,18 @@ have three classes:
 Documentation
 -------------
 
-* Add fig for rank and vis. (done).
+* Font size in ``kpca.png`` plot is too small.
+
+* In ``README.rst``, why the link to ``CONTRIBUTING.rst`` is not properly shown
+  in GitHub?
 
 Visualization
 -------------
 
-* Why in jupyter notebook, 3D plot is not centered? Use ``%matplotlib tk``
+* Why in Jupyter notebook, 3D plot is not centered? Use ``%matplotlib tk``
   to temporarily fix the plot canvas.
+
+* Add win-table from archive codes.
 
 Model Evaluation
 ----------------

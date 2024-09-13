@@ -1,4 +1,0 @@
-LeaderBot
-=========
-
-Leaderboard for chatbots!
