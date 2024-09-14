@@ -1,6 +1,6 @@
 .. image:: docs/source/_static/images/icons/logo-leaderbot-light.png
     :align: left
-    :width: 180
+    :width: 230
     :class: custom-dark
 
 *leaderbot* is a python package that provides a **leader**\ board for
