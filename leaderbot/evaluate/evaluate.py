@@ -49,13 +49,13 @@ def evaluate(
     metrics : dict
         A dictionary containing the following keys and values:
 
-        * ``'name'``: list of names of models
-        * ``'n_param'``: list of number of parameters of each model
-        * ``'loss'``: list of loss values of each model.
-        * ``'jsd'``: list of Jensen-Shannon divergences of each model.
-        * ``'kld'``: list of Kullback-Leiber divergences of each model.
-        * ``'aic'``: list of Akaike information criterion of each model.
-        * ``'bic'``: list of Bayesian information criterion of each model.
+        * ``'name'``: list of names of the models.
+        * ``'n_param'``: list of number of parameters of the models.
+        * ``'loss'``: list of loss values of the models.
+        * ``'jsd'``: list of Jensen-Shannon divergences of the models.
+        * ``'kld'``: list of Kullback-Leiber divergences of the models.
+        * ``'aic'``: list of Akaike information criterion of the models.
+        * ``'bic'``: list of Bayesian information criterion of the models.
 
     Raises
     ------
