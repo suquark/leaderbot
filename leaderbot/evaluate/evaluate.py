@@ -91,7 +91,7 @@ def evaluate(
         ...           model_07, model_08, model_09]
 
         >>> # Evaluate models
-        >>> metrics = lb.evaluate(models, train=True, print=True)
+        >>> metrics = lb.evaluate(models, train=True, report=True)
 
         The above code outputs the following table
 

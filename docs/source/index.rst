@@ -158,7 +158,7 @@ function:
     ...           model_07, model_08, model_09]
 
     >>> # Evaluate models
-    >>> metrics = lb.evaluate(models, train=True, print=True)
+    >>> metrics = lb.evaluate(models, train=True, report=True)
 
 The above model evaluation performs the analysis of the goodness of fit using
 the value of loss function, KL divergence (KLD), Jensen-Shannon divergence
