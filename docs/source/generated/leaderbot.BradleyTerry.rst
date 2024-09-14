@@ -14,6 +14,7 @@
          :toctree:
       
          BradleyTerry.infer
+         BradleyTerry.loss
          BradleyTerry.predict
          BradleyTerry.rank
          BradleyTerry.train

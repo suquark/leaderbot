@@ -136,22 +136,37 @@ function:
 
 .. code-block:: python
 
-    >>> # Create a list of models
-    >>> model1 = leaderbot.BradleyTerryScaled(data)
-    >>> model2 = leaderbot.RaoKupperScaled(data)
-    >>> model3 = leaderbot.DavidsonScaled(data)
-    >>> models = [model1, model2, model3]
+    >>> import leaderbot as lb
 
-    >>> # Train models
-    >>> for model in models:
-    ...     model.train()
+    >>> # Obtain data
+    >>> data = lb.data.load_data()
+
+    >>> # Create models to compare
+    >>> model_01 = lb.BradleyTerry(data)
+    >>> model_02 = lb.BradleyTerryScaled(data)
+    >>> model_03 = lb.BradleyTerryScaledR(data)
+    >>> model_04 = lb.RaoKupper(data)
+    >>> model_05 = lb.RaoKupperScaled(data)
+    >>> model_06 = lb.RaoKupperScaledR(data)
+    >>> model_07 = lb.Davidson(data)
+    >>> model_08 = lb.DavidsonScaled(data)
+    >>> model_09 = lb.DavidsonScaledR(data)
+
+    >>> # Create a list of models
+    >>> models = [model_01, model_02, model_03,
+    ...           model_04, model_05, model_06,
+    ...           model_07, model_08, model_09]
 
     >>> # Evaluate models
-    >>> leaderbot.evaluate(models)
+    >>> metrics = lb.evaluate(models, train=True, print=True)
 
 The above model evaluation performs the analysis of the goodness of fit using
-Bayesian and Akaike information criteria, and KL and Jensen-Shannon
-divergences.
+the value of loss function, KL divergence (KLD), Jensen-Shannon divergence
+(JSD), Bayesian information criterion (BIC), and Akaike information criterion
+(AIC), and prints a report these metrics the following table:
+
+.. literalinclude:: _static/data/evaluate.txt
+    :language: none
 
 API Reference
 =============

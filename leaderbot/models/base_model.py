@@ -362,7 +362,7 @@ class BaseModel(object):
         See Also
         --------
 
-        predict : predict probabilities based on given parammeters.
+        predict : predict probabilities based on given parameters.
 
         Notes
         -----
@@ -710,9 +710,10 @@ class BaseModel(object):
 
         for i in range(max_rank):
 
+            name_length = 20
             name = self.agents[rank_[i]]
-            if len(name) > 20:
-                name = name[:17] + '...'
+            if len(name) > name_length:
+                name = name[:(name_length - 3)] + '...'
 
             print(f'| {i+1:>3}. {name:<20} | '
                   f'{score[rank_[i]]:>+0.3f} | '

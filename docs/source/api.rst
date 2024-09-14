@@ -5,7 +5,7 @@ API Reference
 
 .. autosummary::
     :toctree: generated
-    :caption: Algorithms
+    :caption: Models
     :recursive:
     :template: autosummary/class.rst
 

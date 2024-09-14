@@ -1,5 +1,7 @@
-LeaderBot
-*********
+.. image:: docs/source/_static/images/icons/logo-leaderbot-light.png
+    :align: left
+    :width: 50
+    :class: custom-dark
 
 *leaderbot* is a python package that provides a **leader**\ board for
 chat\ **bot**\ s based on `Chatbot Arena <https://lmarena.ai/>`_ project.
@@ -154,22 +156,50 @@ function:
 
 .. code-block:: python
 
-    >>> # Create a list of models
-    >>> model1 = leaderbot.BradleyTerryScaled(data)
-    >>> model2 = leaderbot.RaoKupperScaled(data)
-    >>> model3 = leaderbot.DavidsonScaled(data)
-    >>> models = [model1, model2, model3]
+    >>> import leaderbot as lb
 
-    >>> # Train models
-    >>> for model in models:
-    ...     model.train()
+    >>> # Obtain data
+    >>> data = lb.data.load_data()
+
+    >>> # Create models to compare
+    >>> model_01 = lb.BradleyTerry(data)
+    >>> model_02 = lb.BradleyTerryScaled(data)
+    >>> model_03 = lb.BradleyTerryScaledR(data)
+    >>> model_04 = lb.RaoKupper(data)
+    >>> model_05 = lb.RaoKupperScaled(data)
+    >>> model_06 = lb.RaoKupperScaledR(data)
+    >>> model_07 = lb.Davidson(data)
+    >>> model_08 = lb.DavidsonScaled(data)
+    >>> model_09 = lb.DavidsonScaledR(data)
+
+    >>> # Create a list of models
+    >>> models = [model_01, model_02, model_03,
+    ...           model_04, model_05, model_06,
+    ...           model_07, model_08, model_09]
 
     >>> # Evaluate models
-    >>> leaderbot.evaluate(models)
+    >>> metrics = lb.evaluate(models, train=True, print=True)
 
 The above model evaluation performs the analysis of the goodness of fit using
-Bayesian and Akaike information criteria, and KL and Jensen-Shannon
-divergences.
+the value of loss function, KL divergence (KLD), Jensen-Shannon divergence
+(JSD), Bayesian information criterion (BIC), and Akaike information criterion
+(AIC), and prints a report these metrics the following table:
+
+::
+
+    +-----------------------+---------+--------+--------+--------+----------+-----------+
+    | name                  | # param | loss   | KLD    | JSD    | AIC      | BIC       |
+    +-----------------------+---------+--------+--------+--------+----------+-----------+
+    | BradleyTerry          |     129 | 0.6554 |    inf | 0.0724 | 256.6892 | 1049.7267 |
+    | BradleyTerryScaled    |     258 | 0.6552 |    inf | 0.0722 | 514.6896 | 2100.7646 |
+    | BradleyTerryScaledR   |     259 | 0.6552 |    inf | 0.0722 | 516.6896 | 2108.9122 |
+    | RaoKupper             |     130 | 1.0095 | 0.0332 | 0.0092 | 257.9810 | 1057.1661 |
+    | RaoKupperScaled       |     259 | 1.0092 | 0.0323 | 0.0090 | 515.9815 | 2108.2042 |
+    | RaoKupperScaledR      |     260 | 1.0092 | 0.0323 | 0.0090 | 517.9816 | 2116.3518 |
+    | Davidson              |     130 | 1.0100 | 0.0341 | 0.0094 | 257.9800 | 1057.1651 |
+    | DavidsonScaled        |     259 | 1.0098 | 0.0332 | 0.0092 | 515.9805 | 2108.2031 |
+    | DavidsonScaledR       |     260 | 1.0098 | 0.0332 | 0.0092 | 517.9805 | 2116.3507 |
+    +-----------------------+---------+--------+--------+--------+----------+-----------+
 
 Test
 ====

@@ -27,8 +27,8 @@
          DataType.update
          DataType.values
       
-         DataType.__getitem__
          DataType.__len__
+         DataType.__getitem__
   
 
   

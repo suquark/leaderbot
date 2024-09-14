@@ -16,10 +16,9 @@ Instead of these four classes, just create one interface class, ``Davidson``,
 but in its instructor define the argument ``cov`` where:
 
 * ``cov=None`` refers to Vanilla ``Davidson`` with no covariance
-* ``cov='diag'`` refers to ``DavidsonScaled`` (as this is diagonal covariance)
-* ``cov=1`` refers to ``DavidsonScaledR`` (as this is factor analysis of rank
-  1)
-* ``cov='full'`` refers to ``DavidsonScaledRIJ`` (as this is full covariance)
+* ``cov='diag'`` refers to ``DavidsonScaled`` (this is diagonal covariance)
+* ``cov=1`` refers to ``DavidsonScaledR`` (this is factor analysis of rank 1)
+* ``cov='full'`` refers to ``DavidsonScaledRIJ`` (this is full covariance)
 
 Also, ``cov=k`` will be factor analysis of rank k. With this, we will only
 have three classes:
@@ -61,12 +60,6 @@ Merge archived code to ``load_data`` by adding option to to get recent data.
 All ``*ScaledRIJ`` classes can not be optimized with ``BFGS``, rather, they
 only work with ``L-BFGS-B``. Needs work. It might need constraint with the
 trace of full ``S``, rather than its diagonal constraint.
-
-Models
-------
-
-* ``BradleyTerry`` (without cov) does not have a loss function. It is needed
-  for evaluation.
 
 Package Naming
 --------------

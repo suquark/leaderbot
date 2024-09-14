@@ -90,6 +90,9 @@ class RaoKupperScaledRIJ(BaseModel):
     Methods
     -------
 
+    loss
+        Loss function of the model.
+
     train
         Train model parameters.
 
@@ -148,9 +151,9 @@ class RaoKupperScaledRIJ(BaseModel):
                              [(-1.0, 1.0) for _ in range(n_pairs)] + \
                              [(0.0, 1.0)]
 
-    # ==================
+    # ================
     # initialize param
-    # ==================
+    # ================
 
     def _initialize_param(self):
         """

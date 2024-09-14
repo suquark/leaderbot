@@ -13,6 +13,7 @@
 import numba
 import numpy as np
 from .base_model import BaseModel
+from .util import sigmoid, cross_entropy
 from ..data import DataType
 from typing import List, Union
 
@@ -82,6 +83,9 @@ class BradleyTerry(BaseModel):
     Methods
     -------
 
+    loss
+        Loss function of the model.
+
     train
         Train model parameters.
 
@@ -129,6 +133,174 @@ class BradleyTerry(BaseModel):
 
         super().__init__(data)
         self.n_param = self.n_agents
+
+    # ===========
+    # sample loss
+    # ===========
+
+    @staticmethod
+    @numba.jit(nopython=True)
+    def _sample_loss(
+            w: Union[List[float], np.ndarray[np.floating]],
+            x: np.ndarray[np.integer],
+            y: np.ndarray[np.integer],
+            n_agents: int,
+            return_jac: bool = True,
+            inference_only: bool = False):
+        """
+        Loss per each sample data (instance).
+        """
+
+        # Initialize outputs so numba does not complain
+        loss_ = None
+        grads = None
+        probs = None
+
+        i, j = x.T
+        xi, xj = w[i], w[j]
+        z = xi - xj
+
+        # Probabilities
+        p_win = sigmoid(z)
+        p_loss = 1.0 - p_win
+
+        if inference_only:
+            p_tie = np.zeros_like(p_loss)
+            probs = (p_win, p_loss, p_tie)
+            return loss_, grads, probs
+
+        # loss for each sample ij
+        win_ij, loss_ij, tie_ij = y.T
+        w_ij = win_ij + 0.5 * tie_ij
+        l_ij = loss_ij + 0.5 * tie_ij
+        loss_ = - cross_entropy(w_ij, p_win) - cross_entropy(l_ij, p_loss)
+
+        if return_jac:
+            # grad_z = w_ij * (p_win - 1) + l_ij * p_win
+            grad_z = (w_ij + l_ij) * p_win - w_ij
+
+            grad_xi = grad_z
+            grad_xj = -grad_xi
+
+            grads = (grad_xi, grad_xj)
+
+        return loss_, grads, probs
+
+    # ====
+    # loss
+    # ====
+
+    def loss(
+            self,
+            w: Union[List[float], np.ndarray[np.floating]] = None,
+            return_jac: bool = True,
+            constraint: bool = True):
+        """
+        Total loss for all data instances.
+
+        Parameters
+        ----------
+
+        w : array_like, default=None
+            Parameters. If `None`, the pre-trained parameters are used,
+            provided is already trained.
+
+        return_jac : bool, default=True
+            if `True`, the Jacobian of loss with respect to the parameters is
+            also returned.
+
+        constraint : bool, default=True
+            If `True`, the constrain on the parameters is also added to the
+            loss.
+
+        Returns
+        -------
+
+        loss : float
+            Total loss for all data points.
+
+        if return_jac is `True`:
+
+            jac : np.array
+                An array of the size of the number of parameters, representing
+                the Jacobian of loss.
+
+        Raises
+        ------
+
+        RuntimeWarning
+            If loss is ``nan``.
+
+        RuntimeError
+            If the model is not trained and the input ``w`` is set to `None`.
+
+        See Also
+        --------
+
+        train : train model parameters.
+
+        Examples
+        --------
+
+        .. code-block:: python
+            :emphasize-lines: 13
+
+            >>> from leaderbot.data import load_data
+            >>> from leaderbot.models import BradleyTerryScaled
+
+            >>> # Create a model
+            >>> data = load_data()
+            >>> model = BradleyTerryScaled(data)
+
+            >>> # Generate an array of parameters
+            >>> import numpy as np
+            >>> w = np.random.randn(model.n_param)
+
+            >>> # Compute loss and its gradient with respect to parameters
+            >>> loss, jac = model.loss(w, return_jac=True, constraint=False)
+        """
+
+        if w is None:
+            if self.param is None:
+                raise RuntimeError('train model first.')
+            w = self.param
+
+        loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
+                                            return_jac=return_jac,
+                                            inference_only=False)
+
+        loss_ = loss_.sum() / self._count
+        if np.isnan(loss_):
+            raise RuntimeWarning("loss is nan")
+
+        if return_jac:
+            grad_xi, grad_xj = grads
+            i, j = self.x.T
+            n = self.x.shape[0]
+            ax = np.arange(n)
+            jac = np.zeros((n, w.shape[0]))
+            jac[ax, i] += grad_xi
+            jac[ax, j] += grad_xj
+
+            jac = jac.sum(axis=0) / self._count
+
+        if constraint:
+            # constraining score parameters
+            # constraint_diff = np.sum(np.exp(w[:n_agents])) - 1
+            constraint_diff = np.sum(w[:self.n_agents])
+            constraint_loss = constraint_diff ** 2
+            loss_ += constraint_loss
+
+            if return_jac:
+                # constraining score parameters
+                # constraint_jac = 2 * constraint_diff * np.exp(w[:n_agents])
+                constraint_jac = 2.0 * constraint_diff
+                jac[:self.n_agents] += constraint_jac
+
+        if return_jac:
+            return loss_, jac
+        else:
+            return loss_
 
     # ================
     # iterative solver

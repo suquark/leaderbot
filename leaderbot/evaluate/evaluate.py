@@ -21,7 +21,7 @@ from ..models.util import kl_divergence
 def evaluate(
         models: list,
         train: bool = False,
-        print: bool = True):
+        report: bool = True):
     """
     Evaluate models for goodness of fit with respect to training data.
 
@@ -40,7 +40,7 @@ def evaluate(
         If `True`, the models will be trained. If `False`, it is assumed that
         the models are pre-trained.
 
-    print : bool, default=False
+    report : bool, default=False
         If `True`, a table of the analysis is printed.
 
     Returns
@@ -69,16 +69,34 @@ def evaluate(
 
     .. code-block:: python
 
-        >>> import leaderbot
+        >>> import leaderbot as lb
+
+        >>> # Obtain data
+        >>> data = lb.data.load_data()
+
+        >>> # Create models to compare
+        >>> model_01 = lb.BradleyTerry(data)
+        >>> model_02 = lb.BradleyTerryScaled(data)
+        >>> model_03 = lb.BradleyTerryScaledR(data)
+        >>> model_04 = lb.RaoKupper(data)
+        >>> model_05 = lb.RaoKupperScaled(data)
+        >>> model_06 = lb.RaoKupperScaledR(data)
+        >>> model_07 = lb.Davidson(data)
+        >>> model_08 = lb.DavidsonScaled(data)
+        >>> model_09 = lb.DavidsonScaledR(data)
 
         >>> # Create a list of models
-        >>> model1 = leaderbot.BradleyTerryScaled(data)
-        >>> model2 = leaderbot.RaoKupperScaled(data)
-        >>> model3 = leaderbot.DavidsonScaled(data)
-        >>> models = [model1, model2, model3]
+        >>> models = [model_01, model_02, model_03,
+        ...           model_04, model_05, model_06,
+        ...           model_07, model_08, model_09]
 
         >>> # Evaluate models
-        >>> metrics = leaderbot.evaluate(models, train=True, print=True)
+        >>> metrics = lb.evaluate(models, train=True, print=True)
+
+        The above code outputs the following table
+
+        .. literalinclude:: ../_static/data/evaluate.txt
+            :language: none
     """
 
     # Convert a single model to a singleton list
@@ -107,7 +125,7 @@ def evaluate(
     for model in models:
 
         # Model attributes
-        name.append(model.__module__.split('.')[-1])
+        name.append(model.__class__.__name__)
         n_param.append(model.n_param)
 
         # Divergences
@@ -133,20 +151,40 @@ def evaluate(
         'bic': bic,
     }
 
-    if print:
-        print('+---------------------+---------+--------+--------+--------+----------+-----------+')
-        print('| name                | # param | loss   | kld    | jsd    | aic      | bic       |')
-        print('+---------------------+---------+--------+--------+--------+----------+-----------+')
+    if report:
+        print('+-----------------------+---------+--------+--------+--------' +
+              '+----------+-----------+')
+        print('| name                  | # param | loss   | KLD    | JSD    ' +
+              '| AIC      | BIC       |')
+        print('+-----------------------+---------+--------+--------+--------' +
+              '+----------+-----------+')
+
         for i in range(len(name)):
-            name_ = name[i].ljust(19)
-            print(f'| {name_:<15s} '
+
+            name_length = 21
+            name_str = name[i]
+            if len(name_str) > name_length:
+                name_str = name_str[:(name_length - 3)] + '...'
+            name_str = name_str.ljust(name_length)
+
+            kld_f = kld[i]
+            if kld_f == float('inf'):
+                kld_str = ' ' * (len(f'{0:0.1f}')) + 'inf'
+            elif kld_f == float('-inf'):
+                kld_str = '-' + ' ' * (len(f'{0:0.1f}') - 1) + 'inf'
+            else:
+                kld_str = f'{kld_f:>0.4f}'
+
+            print(f'| {name_str:<21s} '
                   f'| {n_param[i]:>7} '
                   f'| {loss[i]:>0.4f} '
-                  f'| {kld[i]:>0.4f} '
+                  f'| {kld_str} '
                   f'| {jsd[i]:>0.4f} '
                   f'| {aic[i]:>0.4f} '
                   f'| {bic[i]:>9.4f} |')
-        print('+---------------------+---------+--------+--------+--------+----------+-----------+')
+
+        print('+-----------------------+---------+--------+--------+--------' +
+              '+----------+-----------+')
 
     return metrics
 

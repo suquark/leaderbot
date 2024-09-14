@@ -83,6 +83,9 @@ class RaoKupper(BaseModel):
     Methods
     -------
 
+    loss
+        Loss function of the model.
+
     train
         Train model parameters.
 

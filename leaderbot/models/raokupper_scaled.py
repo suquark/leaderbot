@@ -84,6 +84,9 @@ class RaoKupperScaled(BaseModel):
     Methods
     -------
 
+    loss
+        Loss function of the model.
+
     train
         Train model parameters.
 
@@ -140,9 +143,9 @@ class RaoKupperScaled(BaseModel):
                              [(0.01, 1.0) for _ in range(self.n_agents)] + \
                              [(0.0, 1.0)]
 
-    # ==================
+    # ================
     # initialize param
-    # ==================
+    # ================
 
     def _initialize_param(self):
         """
