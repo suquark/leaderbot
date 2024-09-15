@@ -61,11 +61,11 @@ Create and Train a Model
 
 .. code-block:: python
 
-    >>> from leaderbot.data import load_data
+    >>> from leaderbot.data import load
     >>> from leaderbot.models import Davidson
 
     >>> # Create a model
-    >>> data = load_data()
+    >>> data = load()
     >>> model = Davidson(data)
 
     >>> # Train the model
@@ -142,7 +142,7 @@ function:
     >>> import leaderbot as lb
 
     >>> # Obtain data
-    >>> data = lb.data.load_data()
+    >>> data = lb.data.load()
 
     >>> # Create models to compare
     >>> model_01 = lb.models.BradleyTerry(data)

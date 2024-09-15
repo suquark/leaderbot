@@ -14,25 +14,25 @@
 
 import sys
 import time
-from leaderbot.data import load_data
-from leaderbot.algorithms import BradleyTerry, BradleyTerryScaled, \
+from leaderbot.data import load
+from leaderbot.models import BradleyTerry, BradleyTerryScaled, \
     BradleyTerryScaledR, BradleyTerryScaledRIJ, RaoKupper, RaoKupperScaled, \
     RaoKupperScaledR, RaoKupperScaledRIJ, Davidson, DavidsonScaled, \
     DavidsonScaledR, DavidsonScaledRIJ
 
 
-# ===============
-# test algorithms
-# ===============
+# ===========
+# test models
+# ===========
 
-def test_algorithms():
+def test_models():
     """
-    A test for :mod:`leaderbot.algorithms` module.
+    A test for :mod:`leaderbot.models` module.
     """
 
-    data = load_data()
+    data = load()
 
-    algorithms = [
+    Models = [
         BradleyTerry,
         BradleyTerryScaled,
         BradleyTerryScaledR,
@@ -47,20 +47,21 @@ def test_algorithms():
         DavidsonScaledRIJ
     ]
 
-    for algorithm in algorithms:
+    for Model in Models:
 
-        print(f'{algorithm.__name__:<21s} ...', end='', flush=True)
+        print(f'{Model.__name__:<21s} ...', end='', flush=True)
 
         t0 = time.time()
-        alg = algorithm(data)
+        model = Model(data)
 
-        if algorithm.__name__.endswith('ScaledRIJ'):
+        if Model.__class__.__name__.endswith('ScaledRIJ'):
             method = 'L-BFGS-B'
         else:
             method = 'BFGS'
 
-        alg.train(method=method)
-        alg.inference()
+        model.train(method=method)
+        model.infer()
+        model.predict()
         t1 = time.time() - t0
 
         print(f' passed in {t1:>5.1f} sec.', flush=True)
@@ -71,4 +72,4 @@ def test_algorithms():
 # ===========
 
 if __name__ == "__main__":
-    sys.exit(test_algorithms())
+    sys.exit(test_models())

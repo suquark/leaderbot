@@ -26,7 +26,7 @@ def convert(
         output_file: str):
     """
     Convert raw data from Chatbot Arena into a processed JSON format to be
-    compatible as input to :func:`leaderbot.data.load_data`.
+    compatible as input to :func:`leaderbot.data.load`.
 
     Parameters
     ----------
@@ -57,7 +57,7 @@ def convert(
     See Also
     --------
 
-    leaderbot.data.load_data
+    leaderbot.data.load
 
     Examples
     --------
@@ -65,7 +65,7 @@ def convert(
     .. code-block:: python
         :emphasize-lines: 9
 
-        >>> from leaderbot.data import convert, load_data
+        >>> from leaderbot.data import convert, load
 
         >>> # Input data
         >>> input_file = 'https://storage.googleapis.com/arena_external_' + \\
@@ -76,7 +76,7 @@ def convert(
         >>> convert(input_file, output_file)
 
         >>> # Load the converted data
-        >>> data = load_data(output_file)
+        >>> data = load(output_file)
     """
 
     # load the JSON data from the local file

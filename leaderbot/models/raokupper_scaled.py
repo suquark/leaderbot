@@ -34,7 +34,7 @@ class RaoKupperScaled(BaseModel):
 
     data : dict
         A dictionary of data that is provided by
-        :func:`leaderbot.data.load_data`.
+        :func:`leaderbot.data.load`.
 
     Notes
     -----
@@ -108,11 +108,11 @@ class RaoKupperScaled(BaseModel):
 
     .. code-block:: python
 
-        >>> from leaderbot.data import load_data
+        >>> from leaderbot.data import load
         >>> from leaderbot.models import RaoKupperScaled
 
         >>> # Create a model
-        >>> data = load_data()
+        >>> data = load()
         >>> model = RaoKupperScaled(data)
 
         >>> # Train the model
@@ -299,11 +299,11 @@ class RaoKupperScaled(BaseModel):
         .. code-block:: python
             :emphasize-lines: 13
 
-            >>> from leaderbot.data import load_data
+            >>> from leaderbot.data import load
             >>> from leaderbot.models import RaoKupperScaled
 
             >>> # Create a model
-            >>> data = load_data()
+            >>> data = load()
             >>> model = RaoKupperScaled(data)
 
             >>> # Generate an array of parameters

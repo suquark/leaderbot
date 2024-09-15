@@ -375,11 +375,11 @@ class BaseModel(object):
         .. code-block:: python
             :emphasize-lines: 9
 
-            >>> from leaderbot.data import load_data
+            >>> from leaderbot.data import load
             >>> from leaderbot.models import DavidsonScaled
 
             >>> # Create a model
-            >>> data = load_data()
+            >>> data = load()
             >>> model = DavidsonScaled(data)
 
             >>> # Train the model
@@ -497,11 +497,11 @@ class BaseModel(object):
         .. code-block:: python
             :emphasize-lines: 12
 
-            >>> from leaderbot.data import load_data
+            >>> from leaderbot.data import load
             >>> from leaderbot.models import DavidsonScaled
 
             >>> # Create a model
-            >>> data = load_data()
+            >>> data = load()
             >>> model = DavidsonScaled(data)
 
             >>> # Train the model
@@ -572,11 +572,11 @@ class BaseModel(object):
         .. code-block:: python
             :emphasize-lines: 12
 
-            >>> from leaderbot.data import load_data
+            >>> from leaderbot.data import load
             >>> from leaderbot.models import DavidsonScaled
 
             >>> # Create a model
-            >>> data = load_data()
+            >>> data = load()
             >>> model = DavidsonScaled(data)
 
             >>> # Train the model
@@ -655,11 +655,11 @@ class BaseModel(object):
         .. code-block:: python
             :emphasize-lines: 12
 
-            >>> from leaderbot.data import load_data
+            >>> from leaderbot.data import load
             >>> from leaderbot.models import DavidsonScaled
 
             >>> # Create a model
-            >>> data = load_data()
+            >>> data = load()
             >>> model = DavidsonScaled(data)
 
             >>> # Train the model
@@ -851,11 +851,11 @@ class BaseModel(object):
         .. code-block:: python
             :emphasize-lines: 12
 
-            >>> from leaderbot.data import load_data
+            >>> from leaderbot.data import load
             >>> from leaderbot.models import DavidsonScaled
 
             >>> # Create a model
-            >>> data = load_data()
+            >>> data = load()
             >>> model = DavidsonScaled(data)
 
             >>> # Train the model

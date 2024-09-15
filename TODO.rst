@@ -49,11 +49,6 @@ Model Evaluation
 Prototype function: ``evaluate(models: list, print: bool, train: bool)``. Not
 fully implemented yet.
 
-Data
-----
-
-Merge archived code to ``load_data`` by adding option to to get recent data.
-
 ``ScaledRIJ`` Optimization
 --------------------------
 

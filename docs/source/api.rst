@@ -36,7 +36,7 @@ API Reference
     :recursive:
     :template: autosummary/member.rst
 
-    leaderbot.data.load_data
+    leaderbot.data.load
     leaderbot.data.convert
     leaderbot.data.sample_whitelist
 

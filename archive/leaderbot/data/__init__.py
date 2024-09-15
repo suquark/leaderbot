@@ -6,9 +6,6 @@
 # directory of this source tree.
 
 
-from .load import load
-from .convert import convert
-from .sample_whitelist import sample_whitelist
-from ._util import DataType
+from .load_data import load_data, DataType
 
-__all__ = ['load', 'DataType', 'convert', 'sample_whitelist']
+__all__ = ['load_data', 'DataType']

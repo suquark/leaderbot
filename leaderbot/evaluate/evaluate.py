@@ -72,7 +72,7 @@ def evaluate(
         >>> import leaderbot as lb
 
         >>> # Obtain data
-        >>> data = lb.data.load_data()
+        >>> data = lb.data.load()
 
         >>> # Create models to compare
         >>> model_01 = lb.models.BradleyTerry(data)
@@ -154,7 +154,7 @@ def evaluate(
     if report:
         print('+-----------------------+---------+--------+--------+--------' +
               '+--------+---------+')
-        print('| name                  | # param | loss   | KLD    | JSD    ' +
+        print('| name                  | # param | loss   | KLD    | JSD %  ' +
               '| AIC    | BIC     |')
         print('+-----------------------+---------+--------+--------+--------' +
               '+--------+---------+')
@@ -179,12 +179,12 @@ def evaluate(
                   f'| {n_param[i]:>7} '
                   f'| {loss[i]:>0.4f} '
                   f'| {kld_str} '
-                  f'| {jsd[i]:>0.4f} '
+                  f'| {100.0 * jsd[i]:>0.4f} '
                   f'| {aic[i]:>0.2f} '
                   f'| {bic[i]:>0.2f} |')
 
         print('+-----------------------+---------+--------+--------+--------' +
-              '+-------+---------+')
+              '+-------+----------+')
 
     return metrics
 
