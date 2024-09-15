@@ -9,26 +9,18 @@ API Reference
     :recursive:
     :template: autosummary/class.rst
 
-    leaderbot.BradleyTerry
-    leaderbot.BradleyTerryScaled
-    leaderbot.BradleyTerryScaledR
-    leaderbot.BradleyTerryScaledRIJ
-    leaderbot.RaoKupper
-    leaderbot.RaoKupperScaled
-    leaderbot.RaoKupperScaledR
-    leaderbot.RaoKupperScaledRIJ
-    leaderbot.Davidson
-    leaderbot.DavidsonScaled
-    leaderbot.DavidsonScaledR
-    leaderbot.DavidsonScaledRIJ
-
-.. autosummary::
-    :toctree: generated
-    :caption: Data
-    :recursive:
-    :template: autosummary/member.rst
-
-    leaderbot.load_data
+    leaderbot.models.BradleyTerry
+    leaderbot.models.BradleyTerryScaled
+    leaderbot.models.BradleyTerryScaledR
+    leaderbot.models.BradleyTerryScaledRIJ
+    leaderbot.models.RaoKupper
+    leaderbot.models.RaoKupperScaled
+    leaderbot.models.RaoKupperScaledR
+    leaderbot.models.RaoKupperScaledRIJ
+    leaderbot.models.Davidson
+    leaderbot.models.DavidsonScaled
+    leaderbot.models.DavidsonScaledR
+    leaderbot.models.DavidsonScaledRIJ
 
 .. autosummary::
     :toctree: generated
@@ -37,6 +29,16 @@ API Reference
     :template: autosummary/member.rst
 
     leaderbot.evaluate
+
+.. autosummary::
+    :toctree: generated
+    :caption: Data
+    :recursive:
+    :template: autosummary/member.rst
+
+    leaderbot.data.load_data
+    leaderbot.data.convert
+    leaderbot.data.sample_whitelist
 
 .. autosummary::
     :toctree: generated

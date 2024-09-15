@@ -613,7 +613,8 @@ class BaseModel(object):
             self,
             max_rank: bool = None,
             plot: bool = False,
-            save: bool = False):
+            save: bool = False,
+            latex: bool = False):
         """
         Rank agents based on their scores.
 
@@ -631,6 +632,11 @@ class BaseModel(object):
         save : bool, default=False
             If `True`, the plot will be saved. This argument is effective only
             if ``plot`` is `True`.
+
+        latex : bool, default=False
+            If `True`, the plot is rendered with LaTeX engine, assuming the
+            ``latex`` executable is available on the ``PATH``. Enabling this
+            option will slow the plot generation.
 
         Raises
         ------
@@ -733,7 +739,7 @@ class BaseModel(object):
             n_wins_pred, n_losses_pred, n_ties_pred = \
                 self._cumulative_counts(self.x, n_pred, density=False)
 
-            with texplot.theme(rc={'font.family': 'serif'}):
+            with texplot.theme(rc={'font.family': 'serif'}, use_latex=latex):
 
                 rng = np.arange(1, 1+max_rank)
 
@@ -741,31 +747,31 @@ class BaseModel(object):
 
                 # First plot row: frequencies
                 ax[0, 0].plot(rng, n_wins[rank_], color='maroon',
-                              label='observed')
+                              label='Observed')
                 ax[0, 0].plot(rng, n_wins_pred[rank_], color='black',
-                              label='predicted')
+                              label='Predicted')
                 ax[0, 1].plot(rng, n_losses[rank_], color='maroon',
-                              label='observed')
+                              label='Observed')
                 ax[0, 1].plot(rng, n_losses_pred[rank_], color='black',
-                              label='predicted')
+                              label='Predicted')
                 ax[0, 2].plot(rng, n_ties[rank_], color='maroon',
-                              label='observed')
+                              label='Observed')
                 ax[0, 2].plot(rng, n_ties_pred[rank_], color='black',
-                              label='predicted')
+                              label='Predicted')
 
                 # Second plot row: probabilities
                 ax[1, 0].plot(rng, p_wins[rank_], color='maroon',
-                              label='observed')
+                              label='Observed')
                 ax[1, 0].plot(rng, p_wins_pred[rank_], color='black',
-                              label='predicted')
+                              label='Predicted')
                 ax[1, 1].plot(rng, p_losses[rank_], color='maroon',
-                              label='observed')
+                              label='Observed')
                 ax[1, 1].plot(rng, p_losses_pred[rank_], color='black',
-                              label='predicted')
+                              label='Predicted')
                 ax[1, 2].plot(rng, p_ties[rank_], color='maroon',
-                              label='observed')
+                              label='Observed')
                 ax[1, 2].plot(rng, p_ties_pred[rank_], color='black',
-                              label='predicted')
+                              label='Predicted')
 
                 for j in range(3):
                     ax[1, j].set_ylim(top=1)
@@ -776,7 +782,7 @@ class BaseModel(object):
                         ax[i, j].legend(fontsize='small')
                         ax[i, j].set_xlim([rng[0], rng[-1]])
                         ax[i, j].set_ylim(bottom=0)
-                        ax[i, j].set_xlabel('Model Rank')
+                        ax[i, j].set_xlabel('Agent Rank')
 
                 for i in range(2):
                     ax[i, 0].set_title('Wins')
@@ -799,7 +805,8 @@ class BaseModel(object):
             max_rank: int = None,
             method: str = 'kpca',
             dim: str = '3d',
-            save: bool = False):
+            save: bool = False,
+            latex: bool = False):
         """
 
         Parameters
@@ -821,6 +828,11 @@ class BaseModel(object):
         save : bool, default=False
             If `True`, the plot will be saved. This argument is effective only
             if ``plot`` is `True`.
+
+        latex : bool, default=False
+            If `True`, the plot is rendered with LaTeX engine, assuming the
+            ``latex`` executable is available on the ``PATH``. Enabling this
+            option will slow the plot generation.
 
         Raises
         ------
@@ -924,7 +936,9 @@ class BaseModel(object):
         #     dim_name = '3D'
 
         # Visualize
-        with texplot.theme(rc={'font.family': 'sans-serif'}):
+        with texplot.theme(rc={'font.family': 'sans-serif'}, use_latex=latex):
+
+            fontsize = 9
 
             if dim == '2d':
 
@@ -940,7 +954,7 @@ class BaseModel(object):
                            alpha=0.55)
 
                 for i, name in enumerate(agents_ranked[:]):
-                    ax.text(x_[i], y_[i], name, fontsize=8, ha='center',
+                    ax.text(x_[i], y_[i], name, fontsize=fontsize, ha='center',
                             va='center')
 
                 # ax.set_aspect('equal', adjustable='box')
@@ -972,8 +986,8 @@ class BaseModel(object):
                            alpha=0.6)
 
                 for i, name in enumerate(agents_ranked[:]):
-                    ax.text(x_[i], y_[i], z_[i], name, fontsize=8, ha='center',
-                            va='center')
+                    ax.text(x_[i], y_[i], z_[i], name, fontsize=fontsize,
+                            ha='center', va='center')
 
                 ax.view_init(elev=elev, azim=azim, roll=roll)
 
@@ -994,11 +1008,13 @@ class BaseModel(object):
                 # ax.yaxis.pane.fill = False
                 # ax.zaxis.pane.fill = False
 
-                ax.xaxis.pane.set_edgecolor('black')  # Set edge color
+                # Set edge color
+                ax.xaxis.pane.set_edgecolor('black')
                 ax.yaxis.pane.set_edgecolor('black')
                 ax.zaxis.pane.set_edgecolor('black')
 
-                ax.xaxis.pane.set_linewidth(1)  # Set edge line width
+                # Set edge line width
+                ax.xaxis.pane.set_linewidth(1)
                 ax.yaxis.pane.set_linewidth(1)
                 ax.zaxis.pane.set_linewidth(1)
 

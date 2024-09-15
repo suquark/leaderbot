@@ -53,8 +53,8 @@ Quick Usage
 
 The package provides several statistical models (see
 :ref:`API reference <api>` for details). In the example below, we use
-:class:`leaderbot.Davidson` class to build a model. However, working with
-other models is similar.
+:class:`leaderbot.models.Davidson` class to build a model. However, working
+with other models is similar.
 
 Create and Train a Model
 ------------------------
@@ -75,7 +75,7 @@ Leaderboard Table
 -----------------
 
 To print leaderboard table of the chatbot agents, use
-:func:`leaderbot.Davidson.rank` function:
+:func:`leaderbot.models.Davidson.rank` function:
 
 .. code-block:: python
 
@@ -87,6 +87,9 @@ The above code prints the table below:
 .. literalinclude:: _static/data/rank.txt
     :language: none
 
+The above code also produces the following plot of the frequencies and
+probabilities of win, loss, and tie of the matches.
+
 .. image:: _static/images/plots/rank.png
     :align: center
     :class: custom-dark
@@ -95,7 +98,7 @@ Visualize Correlation
 ---------------------
 
 The correlation of the chatbot performances can be visualized with
-:func:`leaderbot.Davidson.visualize` using various methods. Here is an
+:func:`leaderbot.models.Davidson.visualize` using various methods. Here is an
 example with the Kernel PCA method:
 
 .. code-block:: python
@@ -114,7 +117,7 @@ Make Inference and Prediction
 -----------------------------
 
 Once a model is trained, you can make inference on the probabilities of win,
-loss, or tie for a pair of agents using :func:`leaderbot.Davidson.infer`
+loss, or tie for a pair of agents using :func:`leaderbot.models.Davidson.infer`
 method:
 
 .. code-block:: python
@@ -142,15 +145,15 @@ function:
     >>> data = lb.data.load_data()
 
     >>> # Create models to compare
-    >>> model_01 = lb.BradleyTerry(data)
-    >>> model_02 = lb.BradleyTerryScaled(data)
-    >>> model_03 = lb.BradleyTerryScaledR(data)
-    >>> model_04 = lb.RaoKupper(data)
-    >>> model_05 = lb.RaoKupperScaled(data)
-    >>> model_06 = lb.RaoKupperScaledR(data)
-    >>> model_07 = lb.Davidson(data)
-    >>> model_08 = lb.DavidsonScaled(data)
-    >>> model_09 = lb.DavidsonScaledR(data)
+    >>> model_01 = lb.models.BradleyTerry(data)
+    >>> model_02 = lb.models.BradleyTerryScaled(data)
+    >>> model_03 = lb.models.BradleyTerryScaledR(data)
+    >>> model_04 = lb.models.RaoKupper(data)
+    >>> model_05 = lb.models.RaoKupperScaled(data)
+    >>> model_06 = lb.models.RaoKupperScaledR(data)
+    >>> model_07 = lb.models.Davidson(data)
+    >>> model_08 = lb.models.DavidsonScaled(data)
+    >>> model_09 = lb.models.DavidsonScaledR(data)
 
     >>> # Create a list of models
     >>> models = [model_01, model_02, model_03,

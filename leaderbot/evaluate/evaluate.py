@@ -75,15 +75,15 @@ def evaluate(
         >>> data = lb.data.load_data()
 
         >>> # Create models to compare
-        >>> model_01 = lb.BradleyTerry(data)
-        >>> model_02 = lb.BradleyTerryScaled(data)
-        >>> model_03 = lb.BradleyTerryScaledR(data)
-        >>> model_04 = lb.RaoKupper(data)
-        >>> model_05 = lb.RaoKupperScaled(data)
-        >>> model_06 = lb.RaoKupperScaledR(data)
-        >>> model_07 = lb.Davidson(data)
-        >>> model_08 = lb.DavidsonScaled(data)
-        >>> model_09 = lb.DavidsonScaledR(data)
+        >>> model_01 = lb.models.BradleyTerry(data)
+        >>> model_02 = lb.models.BradleyTerryScaled(data)
+        >>> model_03 = lb.models.BradleyTerryScaledR(data)
+        >>> model_04 = lb.models.RaoKupper(data)
+        >>> model_05 = lb.models.RaoKupperScaled(data)
+        >>> model_06 = lb.models.RaoKupperScaledR(data)
+        >>> model_07 = lb.models.Davidson(data)
+        >>> model_08 = lb.models.DavidsonScaled(data)
+        >>> model_09 = lb.models.DavidsonScaledR(data)
 
         >>> # Create a list of models
         >>> models = [model_01, model_02, model_03,
@@ -153,11 +153,11 @@ def evaluate(
 
     if report:
         print('+-----------------------+---------+--------+--------+--------' +
-              '+----------+-----------+')
+              '+--------+---------+')
         print('| name                  | # param | loss   | KLD    | JSD    ' +
-              '| AIC      | BIC       |')
+              '| AIC    | BIC     |')
         print('+-----------------------+---------+--------+--------+--------' +
-              '+----------+-----------+')
+              '+--------+---------+')
 
         for i in range(len(name)):
 
@@ -180,11 +180,11 @@ def evaluate(
                   f'| {loss[i]:>0.4f} '
                   f'| {kld_str} '
                   f'| {jsd[i]:>0.4f} '
-                  f'| {aic[i]:>0.4f} '
-                  f'| {bic[i]:>9.4f} |')
+                  f'| {aic[i]:>0.2f} '
+                  f'| {bic[i]:>0.2f} |')
 
         print('+-----------------------+---------+--------+--------+--------' +
-              '+----------+-----------+')
+              '+-------+---------+')
 
     return metrics
 

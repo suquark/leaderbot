@@ -33,7 +33,8 @@ class DavidsonScaledR(BaseModel):
     ----------
 
     data : dict
-        A dictionary of data that is provided by :func:`leaderbot.load_data`.
+        A dictionary of data that is provided by
+        :func:`leaderbot.data.load_data`.
 
     Notes
     -----
