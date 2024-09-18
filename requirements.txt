@@ -6,3 +6,5 @@ texplot
 matplotlib
 numba
 scikit-learn
+tqdm
+requests
