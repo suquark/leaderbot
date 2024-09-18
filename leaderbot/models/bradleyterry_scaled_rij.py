@@ -104,10 +104,19 @@ class BradleyTerryScaledRIJ(BaseModel):
         Predict the output of a match between agents.
 
     rank
+        Return rank of the agents based on their score.
+
+    leaderboard
         Print leaderboard table and plot prediction for agents.
 
     visualize
         Visualize correlation and score of the agents.
+
+    plot_scores
+        Plots scores versus rank
+
+    match_matrix
+        Plot match matrices of win and tie counts of mutual matches.
 
     Examples
     --------

@@ -8,7 +8,8 @@
 
 from .load import load
 from .convert import convert
+from .split import split
 from .sample_whitelist import sample_whitelist
 from ._util import DataType
 
-__all__ = ['load', 'DataType', 'convert', 'sample_whitelist']
+__all__ = ['load', 'DataType', 'convert', 'split', 'sample_whitelist']

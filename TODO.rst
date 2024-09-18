@@ -43,12 +43,6 @@ Visualization
 
 * Add win-table from archive codes.
 
-Model Evaluation
-----------------
-
-Prototype function: ``evaluate(models: list, print: bool, train: bool)``. Not
-fully implemented yet.
-
 ``ScaledRIJ`` Optimization
 --------------------------
 

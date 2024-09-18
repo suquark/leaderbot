@@ -59,12 +59,12 @@ Leaderboard Table
 -----------------
 
 To print leaderboard table of the chatbot agents, use
-``leaderbot.models.Davidson.rank`` function:
+``leaderbot.models.Davidson.leaderboard`` function:
 
 .. code-block:: python
 
-    >>> # Leaderboard rank and plot
-    >>> model.rank(max_rank=30, plot=True)
+    >>> # Leaderboard table
+    >>> model.leaderboard(plot=True)
 
 The above code prints the table below:
 
@@ -110,6 +110,18 @@ The above code also produces the following plot of the frequencies and
 probabilities of win, loss, and tie of the matches.
 
 .. image:: docs/source/_static/images/plots/rank.png
+
+Score Plot
+----------
+
+The scores versus rank can be plotted by :func:`leaderbot.Davidson.plot_scores`
+function:
+
+.. code-block:: python
+
+    >>> model.plot_scores(max_rank=30)
+
+.. image:: docs/source/_static/images/plots/scores.png
     :align: center
     :class: custom-dark
 
@@ -129,6 +141,33 @@ The above code produces plot below demonstrating the Kernel PCA projection on
 three principal axes:
 
 .. image:: docs/source/_static/images/plots/kpca.png
+    :align: center
+    :class: custom-dark
+
+Match Matrices
+--------------
+
+The match matrices of the counts or densities of wins and ties can be
+visualized with ``leaderbot.models.Davidson.match_matrix`` function:
+
+.. code-block:: python
+
+    >>> # Match matrix for probability density of win and tie
+    >>> model.match_matrix(max_rank=20, density=True)
+
+.. image:: docs/_static/images/plots/match_matrix_density_true.png
+    :align: center
+    :class: custom-dark
+
+The same plot for the counts (as opposed to density) of the win and ties are
+plotted as follows:
+
+.. code-block:: python
+
+    >>> # Match matrix for frequency of win and tie
+    >>> model.match_matrix(max_rank=20, density=False)
+
+.. image:: docs/_static/images/plots/match_matrix_density_false.png
     :align: center
     :class: custom-dark
 
@@ -153,8 +192,8 @@ method:
 Model Evaluation
 ----------------
 
-Compare the performance of multiple models using ``leaderbot.evaluate``
-function:
+Performance of multiple models can be compared as follows. First, create a
+list of models and train them.
 
 .. code-block:: python
 
@@ -163,45 +202,122 @@ function:
     >>> # Obtain data
     >>> data = lb.data.load()
 
-    >>> # Create models to compare
-    >>> model_01 = lb.models.BradleyTerry(data)
-    >>> model_02 = lb.models.BradleyTerryScaled(data)
-    >>> model_03 = lb.models.BradleyTerryScaledR(data)
-    >>> model_04 = lb.models.RaoKupper(data)
-    >>> model_05 = lb.models.RaoKupperScaled(data)
-    >>> model_06 = lb.models.RaoKupperScaledR(data)
-    >>> model_07 = lb.models.Davidson(data)
-    >>> model_08 = lb.models.DavidsonScaled(data)
-    >>> model_09 = lb.models.DavidsonScaledR(data)
+    >>> # Split data to training and test data
+    >>> training_data, test_data = lb.data.split(data, test_ratio=0.2)
 
-    >>> # Create a list of models
-    >>> models = [model_01, model_02, model_03,
-    ...           model_04, model_05, model_06,
-    ...           model_07, model_08, model_09]
+    >>> # Create a list of models to compare
+    >>> models = [
+    ...    lb.models.BradleyTerry(training_data),
+    ...    lb.models.BradleyTerryScaled(training_data),
+    ...    lb.models.BradleyTerryScaledR(training_data),
+    ...    lb.models.RaoKupper(training_data),
+    ...    lb.models.RaoKupperScaled(training_data),
+    ...    lb.models.RaoKupperScaledR(training_data),
+    ...    lb.models.Davidson(training_data),
+    ...    lb.models.DavidsonScaled(training_data),
+    ...    lb.models.DavidsonScaledR(training_data)
+    ... ]
+
+    >>> # Train models
+    >>> for model in models:
+    ...    model.train()
+
+Model Selection
+...............
+
+Model selection can be performed with ``leaderbot.evaluate.model_selection``:
+
+.. code-block:: python
 
     >>> # Evaluate models
-    >>> metrics = lb.evaluate(models, train=True, report=True)
+    >>> metrics = lb.evaluate.model_selection(models, report=True)
 
-The above model evaluation performs the analysis of the goodness of fit using
-the value of loss function, KL divergence (KLD), Jensen-Shannon divergence
-(JSD), Bayesian information criterion (BIC), and Akaike information criterion
-(AIC), and prints a report these metrics the following table:
+The above model evaluation performs the analysis via various metric including
+the negative log-likelihood (NLL), cross entropy loss (CEL), Akaike information
+criterion (AIC), and Bayesian information criterion (BIC), and prints a report
+these metrics the following table:
 
 ::
 
-    +-----------------------+---------+--------+--------+--------+----------+-----------+
-    | name                  | # param | loss   | KLD    | JSD    | AIC      | BIC       |
-    +-----------------------+---------+--------+--------+--------+----------+-----------+
-    | BradleyTerry          |     129 | 0.6554 |    inf | 0.0724 | 256.6892 | 1049.7267 |
-    | BradleyTerryScaled    |     258 | 0.6552 |    inf | 0.0722 | 514.6896 | 2100.7646 |
-    | BradleyTerryScaledR   |     259 | 0.6552 |    inf | 0.0722 | 516.6896 | 2108.9122 |
-    | RaoKupper             |     130 | 1.0095 | 0.0332 | 0.0092 | 257.9810 | 1057.1661 |
-    | RaoKupperScaled       |     259 | 1.0092 | 0.0323 | 0.0090 | 515.9815 | 2108.2042 |
-    | RaoKupperScaledR      |     260 | 1.0092 | 0.0323 | 0.0090 | 517.9816 | 2116.3518 |
-    | Davidson              |     130 | 1.0100 | 0.0341 | 0.0094 | 257.9800 | 1057.1651 |
-    | DavidsonScaled        |     259 | 1.0098 | 0.0332 | 0.0092 | 515.9805 | 2108.2031 |
-    | DavidsonScaledR       |     260 | 1.0098 | 0.0332 | 0.0092 | 517.9805 | 2116.3507 |
-    +-----------------------+---------+--------+--------+--------+----------+-----------+
+    +-----------------------+---------+--------+--------+--------+---------+
+    | model                 | # param | NLL    | CEL    | AIC    | BIC     |
+    +-----------------------+---------+--------+--------+--------+---------+
+    | BradleyTerry          |     129 | 0.6544 |    inf | 256.69 | 1020.94 |
+    | BradleyTerryScaled    |     258 | 0.6542 |    inf | 514.69 | 2043.20 |
+    | BradleyTerryScaledR   |     259 | 0.6542 |    inf | 516.69 | 2051.12 |
+    | RaoKupper             |     130 | 1.0080 | 1.0080 | 257.98 | 1028.16 |
+    | RaoKupperScaled       |     259 | 1.0077 | 1.0077 | 515.98 | 2050.41 |
+    | RaoKupperScaledR      |     260 | 1.0077 | 1.0077 | 517.98 | 2058.34 |
+    | Davidson              |     130 | 1.0085 | 1.0085 | 257.98 | 1028.16 |
+    | DavidsonScaled        |     259 | 1.0083 | 1.0083 | 515.98 | 2050.41 |
+    | DavidsonScaledR       |     260 | 1.0083 | 1.0083 | 517.98 | 2058.34 |
+    +-----------------------+---------+--------+--------+--------+---------+
+
+Goodness of Fit
+...............
+
+The goodness of fit test can be performed with
+``leaderbot.evaluate.goodness_of_fit``:
+
+.. code-block:: python
+
+    >>> # Evaluate models
+    >>> metrics = lb.evaluate.goodness_of_fit(models, report=True)
+
+The above model evaluation performs the analysis of the goodness of fit using
+mean absolute error (MAE), KL divergence (KLD), Jensen-Shannon divergence
+(JSD), and prints the following summary table:
+
+::
+
+    +-----------------------+----------------------------+--------+--------+
+    |                       |    Mean Absolute Error     |        |        |
+    | model                 |   win   loss    tie    all | KLD    | JSD %  |
+    +-----------------------+----------------------------+--------+--------+
+    | BradleyTerry          | 10.98  10.98  -----  10.98 | 0.0199 | 0.5687 |
+    | BradleyTerryScaled    | 10.44  10.44  -----  10.44 | 0.0189 | 0.5409 |
+    | BradleyTerryScaledR   | 10.42  10.42  -----  10.42 | 0.0188 | 0.5396 |
+    | RaoKupper             |  8.77   9.10  11.66   9.84 | 0.0331 | 0.9176 |
+    | RaoKupperScaled       |  8.47   8.55  11.67   9.56 | 0.0322 | 0.8919 |
+    | RaoKupperScaledR      |  8.40   8.56  11.66   9.54 | 0.0322 | 0.8949 |
+    | Davidson              |  8.91   9.36  12.40  10.22 | 0.0341 | 0.9445 |
+    | DavidsonScaled        |  8.75   8.74  12.47   9.99 | 0.0332 | 0.9217 |
+    | DavidsonScaledR       |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
+    +-----------------------+----------------------------+--------+--------+
+
+Generalization
+..............
+
+The generalization test can be performed with
+``leaderbot.evaluate.generalization``:
+
+.. code-block:: python
+
+    >>> # Evaluate models
+    >>> metrics = lb.evaluate.generalization(models, test_data, report=True)
+
+The above model evaluation computes prediction error via mean absolute
+error (MAE), KL divergence (KLD), Jensen-Shannon divergence
+(JSD), and prints the following summary table:
+
+::
+
+    +-----------------------+----------------------------+--------+--------+
+    |                       |    Mean Absolute Error     |        |        |
+    | model                 |   win   loss    tie    all | KLD    | JSD %  |
+    +-----------------------+----------------------------+--------+--------+
+    | BradleyTerry          | 10.98  10.98  -----  10.98 | 0.0199 | 0.5687 |
+    | BradleyTerryScaled    | 10.44  10.44  -----  10.44 | 0.0189 | 0.5409 |
+    | BradleyTerryScaledR   | 10.42  10.42  -----  10.42 | 0.0188 | 0.5396 |
+    | RaoKupper             |  8.77   9.10  11.66   9.84 | 0.0331 | 0.9176 |
+    | RaoKupperScaled       |  8.47   8.55  11.67   9.56 | 0.0322 | 0.8919 |
+    | RaoKupperScaledR      |  8.40   8.56  11.66   9.54 | 0.0322 | 0.8949 |
+    | Davidson              |  8.91   9.36  12.40  10.22 | 0.0341 | 0.9445 |
+    | DavidsonScaled        |  8.75   8.74  12.47   9.99 | 0.0332 | 0.9217 |
+    | DavidsonScaledR       |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
+    +-----------------------+----------------------------+--------+--------+
+
+
 
 Test
 ====

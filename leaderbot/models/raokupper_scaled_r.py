@@ -98,10 +98,19 @@ class RaoKupperScaledR(BaseModel):
         Predict the output of a match between agents.
 
     rank
+        Return rank of the agents based on their score.
+
+    leaderboard
         Print leaderboard table and plot prediction for agents.
 
     visualize
         Visualize correlation and score of the agents.
+
+    plot_scores
+        Plots scores versus rank
+
+    match_matrix
+        Plot match matrices of win and tie counts of mutual matches.
 
     Examples
     --------
@@ -208,7 +217,7 @@ class RaoKupperScaledR(BaseModel):
 
         if inference_only:
             # p_tie = (np.exp(np.abs(eta) * 2) - 1) * p_win * p_loss
-            p_tie = 1 - p_win - p_loss
+            p_tie = 1.0 - p_win - p_loss
             probs = (p_win, p_loss, p_tie)
             return loss_, grads, probs
 
@@ -232,7 +241,7 @@ class RaoKupperScaledR(BaseModel):
             grad_scale = -0.5 * grad_z * z * scale ** 2
             grad_ti = grad_scale * 2 * (ti - s_r * np.sign(ti) * np.abs(tj))
             grad_tj = grad_scale * 2 * (tj - s_r * np.sign(tj) * np.abs(ti))
-            grad_r = -grad_scale * 2 * np.abs(ti * tj) * (1 - s_r ** 2)
+            grad_r = -grad_scale * 2 * np.abs(ti * tj) * (1.0 - s_r ** 2)
 
             # At eta=0, the gradient w.r.t eta is "-np.inf * np.sign(eta)".
             # However, for stability of the optimizer, we set its gradient to

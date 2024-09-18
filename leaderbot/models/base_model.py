@@ -13,6 +13,7 @@
 import numpy as np
 import scipy.optimize
 from ..data import DataType
+from ._plot_utils import plot_match_matrices
 from typing import List, Union
 import matplotlib.pyplot as plt
 import texplot
@@ -86,10 +87,19 @@ class BaseModel(object):
         Predict the output of a match between agents.
 
     rank
+        Return rank of the agents based on their score.
+
+    leaderboard
         Print leaderboard table and plot prediction for agents.
 
     visualize
         Visualize correlation and score of the agents.
+
+    plot_scores
+        Plots scores versus rank
+
+    match_matrix
+        Plot match matrices of win and tie counts of mutual matches.
     """
 
     # ====
@@ -609,14 +619,210 @@ class BaseModel(object):
     # rank
     # ====
 
-    def rank(
+    def rank(self):
+        """
+        Rank agents based on their scores.
+
+        Returns
+        -------
+
+        rnk : np.ndarray
+            A 1D array of the size ``n_agents``, containing the zero-based
+            indices that rank agents from the higher to lowest scores.
+
+        Raises
+        ------
+
+        RuntimeError
+            If the model is not trained before calling this method.
+
+        See Also
+        --------
+
+        leaderboard
+        visualize
+
+        Examples
+        --------
+
+        .. code-block:: python
+            :emphasize-lines: 12
+
+            >>> from leaderbot.data import load
+            >>> from leaderbot.models import DavidsonScaled
+
+            >>> # Create a model
+            >>> data = load()
+            >>> model = DavidsonScaled(data)
+
+            >>> # Train the model
+            >>> model.train()
+
+            >>> # Leaderboard rank and plot
+            >>> rnk = model.rank()
+        """
+
+        if self.param is None:
+            raise RuntimeError('train model first.')
+
+        # Scores are the x_i, x_j parameters across all models
+        score = self.param[:self.n_agents]
+        rnk = np.argsort(score)[::-1]
+
+        return rnk
+
+    # ===========
+    # plot scores
+    # ===========
+
+    def plot_scores(
+            self,
+            max_rank: bool = None,
+            horizontal: bool = True,
+            save: bool = False,
+            latex: bool = False):
+        """
+        Plots agents scores by rank.
+
+        Parameters
+        ----------
+
+        max_rank : int, default=None
+            The maximum number of agents to be displayed. If `None`, all
+            agents in the input dataset will be ranked and shown.
+
+        horizontal : bool, default=True
+            If `True`, horizontal bars will be plotted, otherwise, vertical
+            bars will be plotted.
+
+        save : bool, default=False
+            If `True`, the plot will be saved. This argument is effective only
+            if ``plot`` is `True`.
+
+        latex : bool, default=False
+            If `True`, the plot is rendered with LaTeX engine, assuming the
+            ``latex`` executable is available on the ``PATH``. Enabling this
+            option will slow the plot generation.
+
+        Raises
+        ------
+
+        RuntimeError
+            If the model is not trained before calling this method.
+
+        See Also
+        --------
+
+        rank
+        visualize
+        leaderboard
+
+        Examples
+        --------
+
+        .. code-block:: python
+            :emphasize-lines: 12
+
+            >>> from leaderbot.data import load
+            >>> from leaderbot.models import DavidsonScaled
+
+            >>> # Create a model
+            >>> data = load()
+            >>> model = DavidsonScaled(data)
+
+            >>> # Train the model
+            >>> model.train()
+
+            >>> # Plot scores by rank
+            >>> model.plot_scores(max_rank=30)
+
+        The above code provides the text output and plot below.
+
+        .. literalinclude:: ../_static/data/leaderboard.txt
+            :language: none
+
+        .. image:: ../_static/images/plots/scores.png
+            :align: center
+            :class: custom-dark
+        """
+
+        if self.param is None:
+            raise RuntimeError('train model first.')
+
+        # Check input arguments
+        if max_rank is None:
+            max_rank = self.n_agents
+        elif max_rank > self.n_agents:
+            raise ValueError('"max_rank" can be at most equal to the number ' +
+                             ' of agents.')
+
+        # Scores are the x_i, x_j parameters across all models
+        scores = self.param[:self.n_agents]
+        rank_ = np.argsort(scores)[::-1]
+        rank_ = rank_[:max_rank]
+        scores_ranked = scores[rank_]
+        agents_ranked = np.array(self.agents)[rank_]
+
+        with texplot.theme(rc={'font.family': 'sans-serif'}, use_latex=latex):
+
+            num_bars = len(agents_ranked)
+            fig_length = num_bars * 0.20
+            fig_width = 5
+
+            if horizontal:
+                figsize = (fig_width, fig_length)
+            else:
+                figsize = (fig_length, fig_width)
+
+            fig, ax = plt.subplots(figsize=figsize)
+
+            if horizontal:
+                # Horizontal bars
+                ax.barh(agents_ranked[::-1], scores_ranked[::-1],
+                        color='firebrick')
+                ax.set_xlabel('Score', fontsize=10)
+                ax.set_ylim([-0.75, len(agents_ranked) - 0.25])
+                ax.tick_params(axis='y', which='both', length=0)
+                ax.grid(True, axis='x', linestyle='--', alpha=0.6)
+
+            else:
+                # Vertical bars
+                ax.bar(agents_ranked, scores_ranked, color='firebrick')
+                ax.set_ylabel('Score', fontsize=10)
+                ax.set_xlim([-0.75, len(agents_ranked) - 0.25])
+                ax.tick_params(axis='x', which='both', length=0)
+                ax.grid(True, axis='y', linestyle='--', alpha=0.6)
+                ax.tick_params(axis='x', rotation=90, labelsize=9,
+                               labelright=False)
+
+            # ax.spines['top'].set_visible(False)
+            # ax.spines['right'].set_visible(False)
+            # ax.spines['left'].set_visible(False)
+
+            ax.tick_params(axis='y', labelsize=9)
+            ax.tick_params(axis='x', labelsize=9)
+
+            plt.tight_layout()
+
+            plt.show()
+
+            texplot.show_or_save_plot(plt, default_filename='scores',
+                                      transparent_background=False,
+                                      dpi=200, show_and_save=save,
+                                      verbose=True)
+
+    # ===========
+    # leaderboard
+    # ===========
+
+    def leaderboard(
             self,
             max_rank: bool = None,
             plot: bool = False,
             save: bool = False,
             latex: bool = False):
         """
-        Rank agents based on their scores.
+        Print leaderboard of the agent matches.
 
         Parameters
         ----------
@@ -665,12 +871,12 @@ class BaseModel(object):
             >>> # Train the model
             >>> model.train()
 
-            >>> # Leaderboard rank and plot
-            >>> model.rank(max_rank=30, plot=True)
+            >>> # Leaderboard report and plot
+            >>> model.leaderboard(max_rank=30, plot=True)
 
         The above code provides the text output and plot below.
 
-        .. literalinclude:: ../_static/data/rank.txt
+        .. literalinclude:: ../_static/data/leaderboard.txt
             :language: none
 
         .. image:: ../_static/images/plots/rank.png
@@ -688,6 +894,11 @@ class BaseModel(object):
             raise ValueError('"max_rank" can be at most equal to the number ' +
                              ' of agents.')
 
+        # Scores are the x_i, x_j parameters across all models
+        score = self.param[:self.n_agents]
+        rank_ = np.argsort(score)[::-1]
+        rank_ = rank_[:max_rank]
+
         # Cumulative count of observed data
         p_wins, p_losses, p_ties = self._cumulative_counts(density=True)
         n_wins, n_losses, n_ties = self._cumulative_counts(density=False)
@@ -699,11 +910,6 @@ class BaseModel(object):
         n_pred = np.sum(self.y, axis=1, keepdims=True) * prob
         p_wins_pred, p_losses_pred, p_ties_pred = \
             self._cumulative_counts(self.x, n_pred, density=True)
-
-        # Scores are the x_i, x_j parameters across all models
-        score = self.param[:self.n_agents]
-        rank_ = np.argsort(score)[::-1]
-        rank_ = rank_[:max_rank]
 
         print('+---------------------------+--------+--------+--------------' +
               '-+---------------+')
@@ -796,6 +1002,327 @@ class BaseModel(object):
                                           dpi=200, show_and_save=save,
                                           verbose=True)
 
+    # ============
+    # match matrix
+    # ============
+
+    def match_matrix(
+            self,
+            max_rank: bool = None,
+            density: bool = True,
+            source: str = 'both',
+            win_range: tuple = None,
+            tie_range: tuple = None,
+            horizontal: bool = True,
+            save: bool = False,
+            latex: bool = False):
+        """
+        Plot match matrices of win and tie counts of mutual matches.
+
+        Parameters
+        ----------
+
+        max_rank : int, default=None
+            The maximum number of agents to be displayed. If `None`, all
+            agents in the input dataset will be ranked and shown.
+
+        density : bool, default=True
+            If `False`, the frequency (count) of win and tie are plotted. If
+            `True`, the probability of the win and tie are plotted.
+
+        source : {``'observed'``, ``'predicted'``, ``'both'``},\
+                default= ``'both'``
+
+            The source of data to be used:
+
+            * ``'observed'``: The observed win and tie counts based on the
+              input training data to the model.
+            * ``'predicted'``: The prediction of win and tie counts by the
+              trained model.
+            * ``'both'``: Plots both of the observed and predicted data.
+
+        win_range : tuple, default=None
+            The tuple of two float numbers ``(vmin, vmax)`` determining the
+            range of the heatmap plot for win matrix. If `None`, the minimum
+            and maximum range of data is used.
+
+        tie_range : tuple, default=None
+            The tuple of two float numbers ``(vmin, vmax)`` determining the
+            range of the heatmap plot for tie matrix. If `None`, the minimum
+            and maximum range of data is used.
+
+        horizontal : bool, default=True
+            If `True`, the subplots for win and tie are placed row-wise. If
+            `False`, they are plotted in column-wise.
+
+        save : bool, default=False
+            If `True`, the plot will be saved. This argument is effective only
+            if ``plot`` is `True`.
+
+        latex : bool, default=False
+            If `True`, the plot is rendered with LaTeX engine, assuming the
+            ``latex`` executable is available on the ``PATH``. Enabling this
+            option will slow the plot generation.
+
+        Raises
+        ------
+
+        RuntimeError
+            If the model is not trained before calling this method.
+
+        See Also
+        --------
+
+        visualize
+
+        Examples
+        --------
+
+        .. code-block:: python
+            :emphasize-lines: 12, 13, 14
+
+            >>> from leaderbot.data import load
+            >>> from leaderbot.models import Davidson
+
+            >>> # Create a model
+            >>> data = load()
+            >>> model = Davidson(data)
+
+            >>> # Train the model
+            >>> model.train()
+
+            >>> # Plot match matrices for win and tie
+            >>> model.match_matrix(max_rank=20, density=True, source='both',
+            ...                    latex=True, save=True, horizontal=True,
+            ...                    win_range=[0.2, 0.6], tie_range=[0.15, 0.4])
+
+        The above code provides the text output and plot below.
+
+        .. image:: ../_static/images/plots/match_matrix_density_true.png
+            :align: center
+            :class: custom-dark
+
+        Similarly, plots for win and tie frequencies can be obtained as
+        follows:
+
+        .. code-block:: python
+
+            >>> # Plot match matrices for win and tie
+            >>> model.match_matrix(max_rank=20, density=False, source='both',
+            ...                    latex=True, save=True, horizontal=True,
+            ...                    win_range=[0, 3000], tie_range=[0, 1500])
+
+        .. image:: ../_static/images/plots/match_matrix_density_false.png
+            :align: center
+            :class: custom-dark
+        """
+
+        scores = self.param[:self.n_agents]
+        rank_ = np.argsort(scores)[::-1]
+        rank_ = rank_[:max_rank]
+
+        x = self.x
+        y = self.y
+
+        y_sum = y.sum(axis=1, keepdims=True)
+        y_sum = np.tile(y_sum, (1, y.shape[1]))
+        p_obs = y / y_sum
+
+        # Find which rows of X has (i, j) indices both from rank_
+        mask = np.isin(x[:, 0], rank_) & np.isin(x[:, 1], rank_)
+        row_indices = np.where(mask)[0]
+
+        # The map j = rank_[i] indicates the rank of i of j. Conversely, the
+        # inverse map i = inverse_rank_[j] indicates the one element with ran
+        # j is the i-th data
+        inverse_rank = {value: idx for idx, value in enumerate(rank_)}
+
+        # Check arguments
+        if source not in ['observed', 'predicted', 'both']:
+            raise ValueError('Invalid "source" argument.')
+
+        # Generate match matrices for observed data
+        if source in ['observed', 'both']:
+
+            # Initialize matrices
+            if density:
+                # probability of observations
+                p_obs_win = np.ma.masked_all((max_rank, max_rank), dtype=float)
+                p_obs_tie = np.ma.masked_all((max_rank, max_rank), dtype=float)
+            else:
+                # Count (frequency) of observations
+                n_obs_win = np.ma.masked_all((max_rank, max_rank), dtype=int)
+                n_obs_tie = np.ma.masked_all((max_rank, max_rank), dtype=int)
+
+            # Iterate over all rows of input data x containing rank_ indices
+            for row in row_indices:
+
+                # Get the actual indices
+                i, j = x[row, :]
+
+                # Get the rank of these indices
+                rank_i = inverse_rank.get(i, None)
+                rank_j = inverse_rank.get(j, None)
+
+                if density:
+                    # Probability of observations
+                    p_obs_win[rank_i, rank_j] = p_obs[row, 0]
+                    p_obs_win[rank_j, rank_i] = p_obs[row, 1]  # use loss
+                    p_obs_tie[rank_i, rank_j] = p_obs[row, 2]
+                    p_obs_tie[rank_j, rank_i] = p_obs[row, 2]  # symmetry
+                else:
+                    # Count (frequency) of observations
+                    n_obs_win[rank_i, rank_j] = y[row, 0]
+                    n_obs_win[rank_j, rank_i] = y[row, 1]  # use loss
+                    n_obs_tie[rank_i, rank_j] = y[row, 2]
+                    n_obs_tie[rank_j, rank_i] = y[row, 2]  # symmetry
+
+        # Generate match matrices for predicted data
+        if source in ['predicted', 'both']:
+
+            if density:
+                # Construct the list of all pairs between elements in the rank_
+                # array, even though they might not have had real match. We
+                # will make prediction for these pairs.
+                x_all = []
+
+                for i in range(max_rank-1):
+                    for j in range(i+1, max_rank):
+                        x_all.append([rank_[i], rank_[j]])
+
+                x_all = np.array(x_all)
+
+                # Make prediction for all matches
+                p_pred = self.infer(x_all)
+
+                # Initialize matrices
+                p_pred_win = np.ma.masked_all((max_rank, max_rank),
+                                              dtype=float)
+                p_pred_tie = np.ma.masked_all((max_rank, max_rank),
+                                              dtype=float)
+
+                for row in range(x_all.shape[0]):
+                    i, j = x_all[row, :]
+                    rank_i = inverse_rank.get(i, None)
+                    rank_j = inverse_rank.get(j, None)
+
+                    # Probabilities of predictions
+                    p_pred_win[rank_i, rank_j] = p_pred[row, 0]
+                    p_pred_win[rank_j, rank_i] = p_pred[row, 1]
+                    p_pred_tie[rank_i, rank_j] = p_pred[row, 2]
+                    p_pred_tie[rank_j, rank_i] = p_pred[row, 2]
+
+            else:
+                # Make prediction only on those pairs that had actual match.
+                p_pred = self.infer(x)
+                n_pred = p_pred * y_sum
+
+                # Initialize matrices
+                n_pred_win = np.ma.masked_all((max_rank, max_rank),
+                                              dtype=float)
+                n_pred_tie = np.ma.masked_all((max_rank, max_rank),
+                                              dtype=float)
+
+                for row in row_indices:
+                    i, j = x[row, :]
+                    rank_i = inverse_rank.get(i, None)
+                    rank_j = inverse_rank.get(j, None)
+
+                    # Count (frequency) of predictions
+                    n_pred_win[rank_i, rank_j] = n_pred[row, 0]
+                    n_pred_win[rank_j, rank_i] = n_pred[row, 1]
+                    n_pred_tie[rank_i, rank_j] = n_pred[row, 2]
+                    n_pred_tie[rank_j, rank_i] = n_pred[row, 2]
+
+        with texplot.theme(rc={'font.family': 'sans-serif'}, use_latex=latex):
+
+            # Determine figure size and number of rows and column in the figure
+            size = 4.5
+            if source == 'both':
+                figsize = (2*size, 2*size)
+                nrows = 2
+                ncols = 2
+            else:
+                if horizontal:
+                    figsize = (2*size, size)
+                    nrows = 1
+                    ncols = 2
+                else:
+                    figsize = (size, 2*size)
+                    nrows = 2
+                    ncols = 1
+
+            fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+
+            if source != 'both':
+                ax = np.atleast_2d(ax)
+                if not horizontal:
+                    ax = ax.T
+
+            win_idx = np.array([0, 0])
+            if horizontal:
+                tie_idx = np.array([0, 1])
+                nxt_idx = np.array([1, 0])
+            else:
+                tie_idx = np.array([1, 0])
+                nxt_idx = np.array([0, 1])
+
+            if source in ['observed', 'both']:
+                ax_win = ax[tuple(win_idx)]
+                ax_tie = ax[tuple(tie_idx)]
+
+                if density:
+                    plot_match_matrices(fig, ax_win, ax_tie, p_obs_win,
+                                        p_obs_tie, density=density,
+                                        win_range=win_range,
+                                        tie_range=tie_range,
+                                        horizontal=horizontal,
+                                        extra_title=' (Observed Data)',
+                                        cbar_label='Probability')
+                else:
+                    plot_match_matrices(fig, ax_win, ax_tie, n_obs_win,
+                                        n_obs_tie, density=density,
+                                        win_range=win_range,
+                                        tie_range=tie_range,
+                                        horizontal=horizontal,
+                                        extra_title=' (Observed Data)',
+                                        cbar_label='Frequency')
+
+                # Move to the next row or column for the next plots (if 'both')
+                win_idx = win_idx + nxt_idx
+                tie_idx = tie_idx + nxt_idx
+
+            if source in ['predicted', 'both']:
+                ax_win = ax[tuple(win_idx)]
+                ax_tie = ax[tuple(tie_idx)]
+
+                if density:
+                    plot_match_matrices(fig, ax_win, ax_tie, p_pred_win,
+                                        p_pred_tie, density=density,
+                                        win_range=win_range,
+                                        tie_range=tie_range,
+                                        horizontal=horizontal,
+                                        extra_title=' (Model Prediction)',
+                                        cbar_label='Probability')
+                else:
+                    plot_match_matrices(fig, ax_win, ax_tie, n_pred_win,
+                                        n_pred_tie, density=density,
+                                        win_range=win_range,
+                                        tie_range=tie_range,
+                                        horizontal=horizontal,
+                                        extra_title=' (Model Prediction)',
+                                        cbar_label='Frequency')
+
+            plt.tight_layout()
+
+            if (not horizontal) or (source == 'both'):
+                plt.subplots_adjust(hspace=-0.1)
+
+            texplot.show_or_save_plot(plt, default_filename='match_matrix',
+                                      transparent_background=False,
+                                      dpi=200, show_and_save=save,
+                                      verbose=True)
+
     # =========
     # visualize
     # =========
@@ -808,6 +1335,8 @@ class BaseModel(object):
             save: bool = False,
             latex: bool = False):
         """
+        Visualize correlation between agents using manifold learning
+        projection.
 
         Parameters
         ----------

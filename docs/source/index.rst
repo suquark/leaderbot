@@ -75,22 +75,36 @@ Leaderboard Table
 -----------------
 
 To print leaderboard table of the chatbot agents, use
-:func:`leaderbot.models.Davidson.rank` function:
+:func:`leaderbot.models.Davidson.leaderboard` function:
 
 .. code-block:: python
 
-    >>> # Leaderboard rank and plot
-    >>> model.rank(max_rank=30, plot=True)
+    >>> # Leaderboard table
+    >>> model.leaderboard(plot=True)
 
 The above code prints the table below:
 
-.. literalinclude:: _static/data/rank.txt
+.. literalinclude:: _static/data/leaderboard.txt
     :language: none
 
 The above code also produces the following plot of the frequencies and
 probabilities of win, loss, and tie of the matches.
 
 .. image:: _static/images/plots/rank.png
+    :align: center
+    :class: custom-dark
+
+Score Plot
+----------
+
+The scores versus rank can be plotted by
+:func:`leaderbot.models.Davidson.plot_scores` function:
+
+.. code-block:: python
+
+    >>> model.plot_scores(max_rank=30)
+
+.. image:: _static/images/plots/scores.png
     :align: center
     :class: custom-dark
 
@@ -110,6 +124,33 @@ The above code produces plot below demonstrating the Kernel PCA projection on
 three principal axes:
 
 .. image:: _static/images/plots/kpca.png
+    :align: center
+    :class: custom-dark
+
+Match Matrices
+--------------
+
+The match matrices of the counts or densities of wins and ties can be
+visualized with :func:`leaderbot.models.Davidson.match_matrix` function:
+
+.. code-block:: python
+
+    >>> # Match matrix for probability density of win and tie
+    >>> model.match_matrix(max_rank=20, density=True)
+
+.. image:: _static/images/plots/match_matrix_density_true.png
+    :align: center
+    :class: custom-dark
+
+The same plot for the counts (as opposed to density) of the win and ties are
+plotted as follows:
+
+.. code-block:: python
+
+    >>> # Match matrix for frequency of win and tie
+    >>> model.match_matrix(max_rank=20, density=False)
+
+.. image:: _static/images/plots/match_matrix_density_false.png
     :align: center
     :class: custom-dark
 
@@ -134,8 +175,8 @@ method:
 Model Evaluation
 ----------------
 
-Compare the performance of multiple models using :func:`leaderbot.evaluate`
-function:
+Performance of multiple models can be compared as follows. First, create a
+list of models and train them.
 
 .. code-block:: python
 
@@ -144,31 +185,79 @@ function:
     >>> # Obtain data
     >>> data = lb.data.load()
 
-    >>> # Create models to compare
-    >>> model_01 = lb.models.BradleyTerry(data)
-    >>> model_02 = lb.models.BradleyTerryScaled(data)
-    >>> model_03 = lb.models.BradleyTerryScaledR(data)
-    >>> model_04 = lb.models.RaoKupper(data)
-    >>> model_05 = lb.models.RaoKupperScaled(data)
-    >>> model_06 = lb.models.RaoKupperScaledR(data)
-    >>> model_07 = lb.models.Davidson(data)
-    >>> model_08 = lb.models.DavidsonScaled(data)
-    >>> model_09 = lb.models.DavidsonScaledR(data)
+    >>> # Split data to training and test data
+    >>> training_data, test_data = lb.data.split(data, test_ratio=0.2)
 
-    >>> # Create a list of models
-    >>> models = [model_01, model_02, model_03,
-    ...           model_04, model_05, model_06,
-    ...           model_07, model_08, model_09]
+    >>> # Create a list of models to compare
+    >>> models = [
+    ...    lb.models.BradleyTerry(training_data),
+    ...    lb.models.BradleyTerryScaled(training_data),
+    ...    lb.models.BradleyTerryScaledR(training_data),
+    ...    lb.models.RaoKupper(training_data),
+    ...    lb.models.RaoKupperScaled(training_data),
+    ...    lb.models.RaoKupperScaledR(training_data),
+    ...    lb.models.Davidson(training_data),
+    ...    lb.models.DavidsonScaled(training_data),
+    ...    lb.models.DavidsonScaledR(training_data)
+    ... ]
+
+    >>> # Train models
+    >>> for model in models:
+    ...    model.train()
+
+Model Selection
+...............
+
+Model selection can be performed with
+:func:`leaderbot.evaluate.model_selection`:
+
+.. code-block:: python
 
     >>> # Evaluate models
-    >>> metrics = lb.evaluate(models, train=True, report=True)
+    >>> metrics = lb.evaluate.model_selection(models, report=True)
+
+The above model evaluation performs the analysis via various metric including
+the negative log-likelihood (NLL), cross entropy loss (CEL), Akaike information
+criterion (AIC), and Bayesian information criterion (BIC), and prints a report
+these metrics the following table:
+
+.. literalinclude:: _static/data/model_selection.txt
+    :language: none
+
+Goodness of Fit
+...............
+
+The goodness of fit test can be performed with
+:func:`leaderbot.evaluate.goodness_of_fit`:
+
+.. code-block:: python
+
+    >>> # Evaluate models
+    >>> metrics = lb.evaluate.goodness_of_fit(models, report=True)
 
 The above model evaluation performs the analysis of the goodness of fit using
-the value of loss function, KL divergence (KLD), Jensen-Shannon divergence
-(JSD), Bayesian information criterion (BIC), and Akaike information criterion
-(AIC), and prints a report these metrics the following table:
+mean absolute error (MAE), KL divergence (KLD), Jensen-Shannon divergence
+(JSD), and prints the following summary table:
 
-.. literalinclude:: _static/data/evaluate.txt
+.. literalinclude:: _static/data/goodness_of_fit.txt
+    :language: none
+
+Generalization
+..............
+
+The generalization test can be performed with
+:func:`leaderbot.evaluate.generalization`:
+
+.. code-block:: python
+
+    >>> # Evaluate models
+    >>> metrics = lb.evaluate.generalization(models, test_data, report=True)
+
+The above model evaluation computes prediction error via mean absolute
+error (MAE), KL divergence (KLD), Jensen-Shannon divergence
+(JSD), and prints the following summary table:
+
+.. literalinclude:: _static/data/goodness_of_fit.txt
     :language: none
 
 API Reference

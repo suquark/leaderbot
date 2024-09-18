@@ -6,15 +6,16 @@
 # directory of this source tree.
 
 
-from .data import load
+from .data import load, convert, split
 from .models import BradleyTerry, BradleyTerryScaled, \
     BradleyTerryScaledR, BradleyTerryScaledRIJ, RaoKupper, RaoKupperScaled, \
     RaoKupperScaledR, RaoKupperScaledRIJ, Davidson, DavidsonScaled, \
     DavidsonScaledR, DavidsonScaledRIJ
-from .evaluate import evaluate
+from .evaluate import model_selection, goodness_of_fit, generalization
 
-__all__ = ['load', 'BradleyTerry', 'BradleyTerryScaled', 'BradleyTerryScaledR',
-           'BradleyTerryScaledRIJ', 'RaoKupper', 'RaoKupperScaled',
-           'RaoKupperScaledR', 'RaoKupperScaledRIJ', 'Davidson',
-           'DavidsonScaled', 'DavidsonScaledR', 'DavidsonScaledRIJ',
-           'evaluate']
+__all__ = ['load', 'convert', 'split', 'BradleyTerry', 'BradleyTerryScaled',
+           'BradleyTerryScaledR', 'BradleyTerryScaledRIJ', 'RaoKupper',
+           'RaoKupperScaled', 'RaoKupperScaledR', 'RaoKupperScaledRIJ',
+           'Davidson', 'DavidsonScaled', 'DavidsonScaledR',
+           'DavidsonScaledRIJ', 'model_selection', 'goodness_of_fit',
+           'generalization']
