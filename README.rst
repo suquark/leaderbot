@@ -167,7 +167,7 @@ plotted as follows:
     >>> # Match matrix for frequency of win and tie
     >>> model.match_matrix(max_rank=20, density=False)
 
-.. image:: docs/source_static/images/plots/match_matrix_density_false.png
+.. image:: docs/source/_static/images/plots/match_matrix_density_false.png
     :align: center
     :class: custom-dark
 
