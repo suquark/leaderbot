@@ -5,6 +5,7 @@
 # under the terms of the license found in the LICENSE.txt file in the root
 # directory of this source tree.
 
+
 # =======
 # imports
 # =======
@@ -17,10 +18,10 @@ from .base_model import BaseModel
 
 __all__ = ['FactorModel']
 
+
 # ==========
 # Base Model
 # ==========
-
 
 class FactorModel(BaseModel):
     """
@@ -66,6 +67,9 @@ class FactorModel(BaseModel):
     Methods
     -------
 
+    loss
+        Loss function of the model.
+
     train
         Train model parameters.
 
@@ -76,10 +80,19 @@ class FactorModel(BaseModel):
         Predict the output of a match between agents.
 
     rank
+        Return rank of the agents based on their score.
+
+    leaderboard
         Print leaderboard table and plot prediction for agents.
 
     visualize
         Visualize correlation and score of the agents.
+
+    plot_scores
+        Plots scores versus rank
+
+    match_matrix
+        Plot match matrices of win and tie counts of mutual matches.
     """
 
     # ====
@@ -100,7 +113,8 @@ class FactorModel(BaseModel):
         # for seeding multi-initial points in global optimization methods.
         self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
                              [(0.01, 1.0) for _ in range(self.n_agents)] + \
-                             [(-1.0, 1.0) for _ in range(self.n_agents * n_factors)]
+                             [(-1.0, 1.0) for _ in range(
+                                 self.n_agents * n_factors)]
 
     # ================
     # initialize param

@@ -5,6 +5,7 @@
 # under the terms of the license found in the LICENSE.txt file in the root
 # directory of this source tree.
 
+
 # =======
 # imports
 # =======
@@ -18,15 +19,15 @@ from typing import List, Union
 
 __all__ = ['BradleyTerryFactor']
 
-# =======================
-# Bradleyterry Factor
-# =======================
 
+# ===================
+# Bradleyterry Factor
+# ===================
 
 class BradleyTerryFactor(FactorModel):
     """
     Paired comparison based on Bradley-Terry and Thurstonian model with
-    matrix factoring.
+    factored covariance.
 
     Parameters
     ----------
@@ -63,6 +64,7 @@ class BradleyTerryFactor(FactorModel):
     BradleyTerry
     BradleyTerryScaled
     BradleyTerryScaledR
+    BradleyTerryScaledRIJ
 
     Attributes
     ----------
@@ -109,10 +111,19 @@ class BradleyTerryFactor(FactorModel):
         Predict the output of a match between agents.
 
     rank
+        Return rank of the agents based on their score.
+
+    leaderboard
         Print leaderboard table and plot prediction for agents.
 
     visualize
         Visualize correlation and score of the agents.
+
+    plot_scores
+        Plots scores versus rank
+
+    match_matrix
+        Plot match matrices of win and tie counts of mutual matches.
 
     Examples
     --------
@@ -137,7 +148,10 @@ class BradleyTerryFactor(FactorModel):
     # init
     # ====
 
-    def __init__(self, data: DataType, n_factors: int = 3):
+    def __init__(
+            self,
+            data: DataType,
+            n_factors: int = 3):
         """
         Constructor.
         """

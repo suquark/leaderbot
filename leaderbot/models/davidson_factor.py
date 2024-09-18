@@ -5,6 +5,7 @@
 # under the terms of the license found in the LICENSE.txt file in the root
 # directory of this source tree.
 
+
 # =======
 # imports
 # =======
@@ -18,15 +19,15 @@ from typing import List, Union
 
 __all__ = ['DavidsonFactor']
 
+
 # ===================
 # Davidson Scaled RIJ
 # ===================
 
-
 class DavidsonFactor(FactorModel):
     """
     Paired comparison based on Davidson model and Thurstonian model with
-    full-rank covariance.
+    factored covariance.
 
     Parameters
     ----------
@@ -63,6 +64,7 @@ class DavidsonFactor(FactorModel):
     Davidson
     DavidsonScaled
     DavidsonScaledR
+    DavidsonScaledRIJ
 
     Attributes
     ----------
@@ -109,10 +111,19 @@ class DavidsonFactor(FactorModel):
         Predict the output of a match between agents.
 
     rank
+        Return rank of the agents based on their score.
+
+    leaderboard
         Print leaderboard table and plot prediction for agents.
 
     visualize
         Visualize correlation and score of the agents.
+
+    plot_scores
+        Plots scores versus rank
+
+    match_matrix
+        Plot match matrices of win and tie counts of mutual matches.
 
     Examples
     --------
@@ -137,7 +148,10 @@ class DavidsonFactor(FactorModel):
     # init
     # ====
 
-    def __init__(self, data: DataType, n_factors: int = 3):
+    def __init__(
+            self,
+            data: DataType,
+            n_factors: int = 3):
         """
         Constructor.
         """
@@ -325,7 +339,8 @@ class DavidsonFactor(FactorModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj, grad_mu = grads
+            grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj, grad_mu = \
+                grads
             i, j = self.x.T
             n = self.x.shape[0]
             ax = np.arange(n)
