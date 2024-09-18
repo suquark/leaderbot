@@ -114,7 +114,7 @@ probabilities of win, loss, and tie of the matches.
 Score Plot
 ----------
 
-The scores versus rank can be plotted by :func:`leaderbot.Davidson.plot_scores`
+The scores versus rank can be plotted by ``leaderbot.Davidson.plot_scores``
 function:
 
 .. code-block:: python
@@ -155,7 +155,7 @@ visualized with ``leaderbot.models.Davidson.match_matrix`` function:
     >>> # Match matrix for probability density of win and tie
     >>> model.match_matrix(max_rank=20, density=True)
 
-.. image:: docs/_static/images/plots/match_matrix_density_true.png
+.. image:: docs/source/_static/images/plots/match_matrix_density_true.png
     :align: center
     :class: custom-dark
 
@@ -167,7 +167,7 @@ plotted as follows:
     >>> # Match matrix for frequency of win and tie
     >>> model.match_matrix(max_rank=20, density=False)
 
-.. image:: docs/_static/images/plots/match_matrix_density_false.png
+.. image:: docs/source_static/images/plots/match_matrix_density_false.png
     :align: center
     :class: custom-dark
 
