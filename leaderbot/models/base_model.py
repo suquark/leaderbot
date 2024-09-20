@@ -15,6 +15,7 @@ import scipy.optimize
 from ..data import DataType
 from ._plot_utils import plot_match_matrices
 from typing import List, Union
+import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
 import texplot
 from sklearn.manifold import MDS
@@ -220,6 +221,33 @@ class BaseModel(object):
         init_scores = init_scores - np.mean(init_scores)
 
         return init_scores
+
+    # ==============
+    # generate basis
+    # ==============
+
+    def _generate_basis(
+            self,
+            n_tie_factors: int):
+        """
+        Generate an orhtonormal matrix for tie factor model.
+
+        The basis is generated using discrete cosine transform of type four.
+
+        This function is called in those models that have tie incorporated in
+        their formulation.
+        """
+
+        basis = np.zeros((self.n_agents, n_tie_factors), dtype=float)
+        if n_tie_factors > 0:
+
+            # Discrete cosine transform basis of type four (DCT-IV)
+            for i in range(1, self.n_agents + 1):
+                for j in range(1, self.n_tie_factors + 1):
+                    basis[i-1, j-1] = np.sqrt(2.0 / self.n_agents) * \
+                        np.cos(np.pi * (i-0.5) * (j-0.5) / (self.n_agents))
+
+        return basis
 
     # ==========
     # covariance
@@ -528,9 +556,19 @@ class BaseModel(object):
             x = self.x
 
         # Call sample loss to only compute probabilities, but not loss itself
-        # _, _, probs = self._sample_loss(self.param, x, None, self.n_agents,
-        _, _, probs = self._sample_loss(self.param, x, self.y, self.n_agents,
-                                        return_jac=False, inference_only=True)
+        y = np.empty_like(self.y)  # use used
+
+        if hasattr(self, "basis") and hasattr(self, "n_tie_factors"):
+            # For those models that have factored tie
+            _, _, probs = self._sample_loss(self.param, x, self.y,
+                                            self.n_agents, self.n_tie_factors,
+                                            self.basis, return_jac=False,
+                                            inference_only=True)
+        else:
+            # For those models that do not have factored tie
+            _, _, probs = self._sample_loss(self.param, x, y, self.n_agents,
+                                            return_jac=False,
+                                            inference_only=True)
 
         return np.column_stack(probs)
 
@@ -966,29 +1004,37 @@ class BaseModel(object):
                               label='Predicted')
 
                 # Second plot row: probabilities
-                ax[1, 0].plot(rng, p_wins[rank_], color='maroon',
+                ax[1, 0].plot(rng, 100.0 * p_wins[rank_], color='maroon',
                               label='Observed')
-                ax[1, 0].plot(rng, p_wins_pred[rank_], color='black',
+                ax[1, 0].plot(rng, 100.0 * p_wins_pred[rank_], color='black',
                               label='Predicted')
-                ax[1, 1].plot(rng, p_losses[rank_], color='maroon',
+                ax[1, 1].plot(rng, 100.0 * p_losses[rank_], color='maroon',
                               label='Observed')
-                ax[1, 1].plot(rng, p_losses_pred[rank_], color='black',
+                ax[1, 1].plot(rng, 100.0 * p_losses_pred[rank_], color='black',
                               label='Predicted')
-                ax[1, 2].plot(rng, p_ties[rank_], color='maroon',
+                ax[1, 2].plot(rng, 100.0 * p_ties[rank_], color='maroon',
                               label='Observed')
-                ax[1, 2].plot(rng, p_ties_pred[rank_], color='black',
+                ax[1, 2].plot(rng, 100.0 * p_ties_pred[rank_], color='black',
                               label='Predicted')
 
                 for j in range(3):
-                    ax[1, j].set_ylim(top=1)
+                    ax[1, j].set_ylim(top=100)
                     ax[0, j].set_ylabel('Frequency')
                     ax[1, j].set_ylabel('Probability')
+
+                    # Format y axis to use 10k labels instead of 10000
+                    ax[0, j].yaxis.set_major_formatter(mticker.FuncFormatter(
+                        lambda x, _: f'{int(x/1000)}k'))
+
+                    # Format y axis to use percent
+                    ax[1, j].yaxis.set_major_formatter(
+                        mticker.PercentFormatter(decimals=0))
 
                     for i in range(2):
                         ax[i, j].legend(fontsize='small')
                         ax[i, j].set_xlim([rng[0], rng[-1]])
                         ax[i, j].set_ylim(bottom=0)
-                        ax[i, j].set_xlabel('Agent Rank')
+                        ax[i, j].set_xlabel('Rank')
 
                 for i in range(2):
                     ax[i, 0].set_title('Wins')

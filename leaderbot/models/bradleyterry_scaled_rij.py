@@ -113,7 +113,7 @@ class BradleyTerryScaledRIJ(BaseModel):
         Visualize correlation and score of the agents.
 
     plot_scores
-        Plots scores versus rank
+        Plots scores versus rank.
 
     match_matrix
         Plot match matrices of win and tie counts of mutual matches.
@@ -150,15 +150,15 @@ class BradleyTerryScaledRIJ(BaseModel):
 
         super().__init__(data)
 
-        n_pairs = self.n_agents * (self.n_agents - 1) // 2
-        self.n_param = 2 * self.n_agents + n_pairs
+        self._n_pairs = self.n_agents * (self.n_agents - 1) // 2
+        self.n_param = 2 * self.n_agents + self._n_pairs
 
         # Approximate bound for parameters (only needed for shgo optimization
         # method). Note that these bounds are not enforced, rather, only used
         # for seeding multi-initial points in global optimization methods.
         self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
                              [(0.01, 1.0) for _ in range(self.n_agents)] + \
-                             [(-1.0, 1.0) for _ in range(n_pairs)]
+                             [(-1.0, 1.0) for _ in range(self._n_pairs)]
 
     # ================
     # initialize param

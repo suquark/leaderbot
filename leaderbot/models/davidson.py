@@ -35,6 +35,10 @@ class Davidson(BaseModel):
         A dictionary of data that is provided by
         :func:`leaderbot.data.load`.
 
+    n_tie_factor : int, default=1
+        Number of factors to be used in tie parameters. If ``0``, no factor is
+        used and the model falls back to the original Davidson formulation.
+
     Notes
     -----
 
@@ -80,6 +84,9 @@ class Davidson(BaseModel):
 
     n_param : int
         Number of parameters
+
+    n_tie_factor : int
+        Number of factors used in tie parameters.
 
     Methods
     -------
@@ -136,20 +143,31 @@ class Davidson(BaseModel):
 
     def __init__(
             self,
-            data: DataType):
+            data: DataType,
+            n_tie_factors: int = 1):
         """
         Constructor.
         """
 
         super().__init__(data)
 
-        self.n_param = self.n_agents + 1
+        # Number of factors for tie (rank of matrix in factor analysis)
+        self.n_tie_factors = n_tie_factors
+
+        # Total number of parameters for modeling tie
+        self._n_tie_param = max(1, self.n_agents * self.n_tie_factors)
+
+        # Total number of parameters
+        self.n_param = self.n_agents + self._n_tie_param
+
+        # Basis functions for tie factor model
+        self.basis = self._generate_basis(self.n_tie_factors)
 
         # Approximate bound for parameters (only needed for shgo optimization
         # method). Note that these bounds are not enforced, rather, only used
         # for seeding multi-initial points in global optimization methods.
         self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
-                             [(-1.0, 1.0)]
+                             [(-1.0, 1.0) for _ in range(self._n_tie_param)]
 
     # ================
     # initialize param
@@ -177,6 +195,8 @@ class Davidson(BaseModel):
             x: np.ndarray[np.integer],
             y: np.ndarray[np.integer],
             n_agents: int,
+            n_tie_factors: int,
+            basis: np.ndarray[np.floating],
             return_jac: bool = True,
             inference_only: bool = False):
         """
@@ -187,10 +207,21 @@ class Davidson(BaseModel):
         loss_ = None
         grads = None
         probs = None
+        grad_mu_i = None
+        grad_mu_j = None
 
         i, j = x.T
         xi, xj = w[i], w[j]
-        mu = w[-1]
+
+        if n_tie_factors == 0:
+            mu = np.full_like(xi, w[-1])
+        else:
+            g = w[n_agents:].reshape(n_agents, n_tie_factors)
+            gi = g[i]
+            gj = g[j]
+            bi = basis[i]
+            bj = basis[j]
+            mu = np.sum(gi * bj, axis=1) + np.sum(bi * gj, axis=1)
 
         z = xi - xj
         u = 0.5 * z - mu
@@ -231,7 +262,11 @@ class Davidson(BaseModel):
             grad_xi = grad_z
             grad_xj = -grad_z
 
-            grads = (grad_xi, grad_xj, grad_mu)
+            if n_tie_factors > 0:
+                grad_mu_i = grad_mu[:, None] * bj
+                grad_mu_j = grad_mu[:, None] * bi
+
+            grads = (grad_xi, grad_xj, grad_mu, grad_mu_i, grad_mu_j)
 
         return loss_, grads, probs
 
@@ -315,6 +350,7 @@ class Davidson(BaseModel):
             w = self.param
 
         loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
+                                            self.n_tie_factors, self.basis,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -323,14 +359,22 @@ class Davidson(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_mu = grads
+            grad_xi, grad_xj, grad_mu, grad_mu_i, grad_mu_j = grads
             i, j = self.x.T
             n = self.x.shape[0]
             ax = np.arange(n)
             jac = np.zeros((n, w.shape[0]))
             jac[ax, i] += grad_xi
             jac[ax, j] += grad_xj
-            jac[ax, -1] += grad_mu
+
+            if self.n_tie_factors == 0:
+                jac[ax, -1] += grad_mu
+            else:
+                dg = np.zeros((n, self.n_agents, self.n_tie_factors))
+                dg[ax, i] += grad_mu_i
+                dg[ax, j] += grad_mu_j
+                jac[ax, self.n_agents:self.n_agents + self._n_tie_param] = \
+                    dg.reshape(n, self.n_agents * self.n_tie_factors)
 
             jac = jac.sum(axis=0) / self._count
 

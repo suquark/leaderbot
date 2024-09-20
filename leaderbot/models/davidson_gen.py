@@ -13,21 +13,20 @@
 import numba
 import numpy as np
 from .base_model import BaseModel
-from .util import sigmoid, cross_entropy
+from .util import double_sigmoid, cross_entropy
 from ..data import DataType
 from typing import List, Union
 
-__all__ = ['RaoKupperScaledRIJ']
+__all__ = ['DavidsonGen']
 
 
-# =====================
-# Rao Kupper Scaled RIJ
-# =====================
+# ============
+# Davidson Gen
+# ============
 
-class RaoKupperScaledRIJ(BaseModel):
+class DavidsonGen(BaseModel):
     """
-    Paired comparison based on Rao-Kupper model and Thurstonian model with
-    full-rank covariance.
+    Paired comparison based on generalized Davidson model.
 
     Parameters
     ----------
@@ -39,28 +38,23 @@ class RaoKupperScaledRIJ(BaseModel):
     Notes
     -----
 
-    The Rao-Kupper model of paired comparison is based on [1]_.
-
-    .. note::
-
-        When training this model, for faster convergence, set
-        ``method='L-BFGS-B'`` method in :func:`train` function instead of the
-        default ``'BFGS'`` method.
+    The Davidson model of paired comparison is based on [1]_.
 
     References
     ----------
 
-    .. [1] Rao, P. V., Kupper, L. L. (1967). Ties in Paired-Comparison
-           Experiments: A Generalization of the Bradley-Terry Model. `Journal
-           of the American Statistical Association`, 62(317), 194–204.
-           https://doi.org/10.1080/01621459.1967.10482901
+    .. [1] Davidson, R. R. (1970). On Extending the Bradley-Terry Model to
+           Accommodate Ties in Paired Comparison Experiments. `Journal of the
+           American Statistical Association`, 65(329), 317–328.
+           https://doi.org/10.2307/2283595
 
     See Also
     --------
 
-    RaoKupper
-    RaoKupperScaled
-    RaoKupperScaledR
+    Davidson
+    DavidsonScaled
+    DavidsonScaledR
+    DavidsonScaledRIJ
 
     Attributes
     ----------
@@ -124,11 +118,11 @@ class RaoKupperScaledRIJ(BaseModel):
     .. code-block:: python
 
         >>> from leaderbot.data import load
-        >>> from leaderbot.models import RaoKupperScaledRIJ
+        >>> from leaderbot.models import DavidsonGen
 
         >>> # Create a model
         >>> data = load()
-        >>> model = RaoKupperScaledRIJ(data)
+        >>> model = DavidsonGen(data)
 
         >>> # Train the model
         >>> model.train()
@@ -143,23 +137,28 @@ class RaoKupperScaledRIJ(BaseModel):
 
     def __init__(
             self,
-            data: DataType):
+            data: DataType,
+            n_factors: int = 1):
         """
         Constructor.
         """
 
         super().__init__(data)
+        self.n_factors = n_factors
 
-        self._n_pairs = self.n_agents * (self.n_agents - 1) // 2
-        self.n_param = 2 * self.n_agents + self._n_pairs + 1
+        self.n_param = self.n_agents + self.n_agents * self.n_factors
+
+        # TEST
+        A = np.random.randn(self.n_agents, self.n_factors)
+        self.basis = np.linalg.qr(A)[0]
+        self.basis[:, 0] = 1.0
 
         # Approximate bound for parameters (only needed for shgo optimization
         # method). Note that these bounds are not enforced, rather, only used
         # for seeding multi-initial points in global optimization methods.
-        self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
-                             [(0.01, 1.0) for _ in range(self.n_agents)] + \
-                             [(-1.0, 1.0) for _ in range(self._n_pairs)] + \
-                             [(0.0, 1.0)]
+        self._param_bounds = \
+            [(-1.0, 1.0) for _ in range(self.n_agents)] + \
+            [(-1.0, 1.0) for _ in range(self.n_agents)] * self.n_factors
 
     # ================
     # initialize param
@@ -173,8 +172,6 @@ class RaoKupperScaledRIJ(BaseModel):
         # Initial parameters
         init_param = np.zeros(self.n_param)
         init_param[:self.n_agents] = self._initialize_scores()
-        init_param[self.n_agents:self.n_agents * 2] = \
-            np.full(self.n_agents, np.sqrt(1.0 / self.n_agents))
 
         return init_param
 
@@ -189,14 +186,12 @@ class RaoKupperScaledRIJ(BaseModel):
             x: np.ndarray[np.integer],
             y: np.ndarray[np.integer],
             n_agents: int,
+            n_factors: int,
+            basis: np.ndarray[np.floating],
             return_jac: bool = True,
             inference_only: bool = False):
         """
         Loss per each sample data (instance).
-
-        Note: in Rao-Kupper model, eta should be no-negative so that p_tie be
-        non-begative. To enforce this, we add absolute value and adjust its
-        gradient with sign of eta.
         """
 
         # Initialize outputs so numba does not complain
@@ -205,63 +200,65 @@ class RaoKupperScaledRIJ(BaseModel):
         probs = None
 
         i, j = x.T
-        k = j * (j - 1) // 2 + i  # pair index
-
         xi, xj = w[i], w[j]
-        ti, tj = w[i + n_agents], w[j + n_agents]
-        rij = w[k + n_agents * 2]
-        min_eta = 1e-2
-        eta = np.maximum(w[-1], min_eta)  # clip eta
+        # mu_i, mu_j = w[n_agents + i], w[n_agents + j]
+        # mu = mu_i + mu_j
 
-        s_rij = np.tanh(rij)
-        scale = 1.0 / np.sqrt(ti ** 2 + tj ** 2 - 2 * s_rij * np.abs(ti * tj))
-        z = (xi - xj) * scale
+        m = w[n_agents:].reshape(n_agents, n_factors)
+        ri = m[i]
+        rj = m[j]
+        bi = basis[i]
+        bj = basis[j]
+        mu = np.sum(ri * bj, axis=1) + np.sum(bi * rj, axis=1)
 
-        d_win = z - np.abs(eta)
-        d_loss = -z - np.abs(eta)
+        z = xi - xj
+        u = 0.5 * z - mu
+        v = -0.5 * z - mu
 
         # Probabilities
-        p_win = sigmoid(d_win)
-        p_loss = sigmoid(d_loss)
+        p_win = double_sigmoid(z, u)
+        p_loss = double_sigmoid(-z, v)
+        p_tie = double_sigmoid(-u, -v)
 
         if inference_only:
-            # p_tie = (np.exp(np.abs(eta) * 2) - 1) * p_win * p_loss
-            p_tie = 1.0 - p_win - p_loss
             probs = (p_win, p_loss, p_tie)
             return loss_, grads, probs
 
         # loss for each sample ij
         win_ij, loss_ij, tie_ij = y.T
-        loss_ = - cross_entropy((win_ij + tie_ij), p_win) \
-                - cross_entropy((loss_ij + tie_ij), p_loss) \
-                - cross_entropy(tie_ij, (np.exp(2.0 * np.abs(eta)) - 1.0))
+        loss_ = - cross_entropy(win_ij, p_win) \
+                - cross_entropy(loss_ij, p_loss) \
+                - cross_entropy(tie_ij, p_tie)
 
         if return_jac:
-            grad_dwin = (win_ij + tie_ij) * (1.0 - p_win)
-            grad_dloss = (loss_ij + tie_ij) * (1.0 - p_loss)
-            grad_z = -grad_dwin + grad_dloss
+            grad_p_win_z = -(np.exp(-z) + 0.5 * np.exp(-u)) * p_win
+            grad_p_loss_z = (np.exp(z) + 0.5 * np.exp(-v)) * p_loss
+            grad_p_tie_z = 0.5 * (np.exp(u) - np.exp(v)) * p_tie
+            grad_z = \
+                win_ij * grad_p_win_z + \
+                loss_ij * grad_p_loss_z + \
+                tie_ij * grad_p_tie_z
 
-            grad_xi = grad_z * scale
-            grad_xj = -grad_xi
+            grad_p_win_u = np.exp(-u) * p_win
+            grad_p_loss_u = np.exp(-v) * p_loss
+            grad_p_tie_u = -(np.exp(u) + np.exp(v)) * p_tie
+            grad_mu = \
+                win_ij * grad_p_win_u + \
+                loss_ij * grad_p_loss_u + \
+                tie_ij * grad_p_tie_u
 
-            grad_scale = -0.5 * grad_z * z * scale ** 2
-            grad_ti = grad_scale * 2 * ti
-            grad_tj = grad_scale * 2 * tj
-            grad_scale = -0.5 * grad_z * z * scale ** 2
-            grad_ti = grad_scale * 2 * (ti - s_rij * np.sign(ti) * np.abs(tj))
-            grad_tj = grad_scale * 2 * (tj - s_rij * np.sign(tj) * np.abs(ti))
-            grad_rij = -grad_scale * 2 * np.abs(ti * tj) * (1.0 - s_rij ** 2)
+            grad_xi = grad_z
+            grad_xj = -grad_z
 
-            # At eta=0, the gradient w.r.t eta is "-np.inf * np.sign(eta)".
-            # However, for stability of the optimizer, we set its gradient to
-            # zero in the clipped interval where it is assumed to be constant.
-            if np.abs(eta) < min_eta:
-                grad_eta = np.zeros((xi.shape[0]), dtype=float)
-            else:
-                grad_eta = (grad_dwin + grad_dloss - (2.0 * tie_ij) /
-                            (1.0 - np.exp(-2.0 * np.abs(eta)))) * np.sign(eta)
+            # grad_mu_i = grad_mu
+            # grad_mu_j = grad_mu
+            # grad_mu_i = grad_mu * bj
+            # grad_mu_j = grad_mu * bi
 
-            grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_eta)
+            grad_mu_i = grad_mu[:, None] * bj
+            grad_mu_j = grad_mu[:, None] * bi
+
+            grads = (grad_xi, grad_xj, grad_mu_i, grad_mu_j)
 
         return loss_, grads, probs
 
@@ -325,11 +322,11 @@ class RaoKupperScaledRIJ(BaseModel):
             :emphasize-lines: 13
 
             >>> from leaderbot.data import load
-            >>> from leaderbot.models import RaoKupperScaledRIJ
+            >>> from leaderbot.models import DavidsonGen
 
             >>> # Create a model
             >>> data = load()
-            >>> model = RaoKupperScaledRIJ(data)
+            >>> model = DavidsonGen(data)
 
             >>> # Generate an array of parameters
             >>> import numpy as np
@@ -345,6 +342,7 @@ class RaoKupperScaledRIJ(BaseModel):
             w = self.param
 
         loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
+                                            self.n_factors, self.basis,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -353,18 +351,29 @@ class RaoKupperScaledRIJ(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_eta = grads
+            grad_xi, grad_xj, grad_mu_i, grad_mu_j = grads
             i, j = self.x.T
-            k = j * (j - 1) // 2 + i  # pair index
             n = self.x.shape[0]
             ax = np.arange(n)
             jac = np.zeros((n, w.shape[0]))
             jac[ax, i] += grad_xi
             jac[ax, j] += grad_xj
-            jac[ax, i + self.n_agents] += grad_ti
-            jac[ax, j + self.n_agents] += grad_tj
-            jac[ax, k + self.n_agents * 2] += grad_rij
-            jac[ax, -1] += grad_eta
+
+            # TEST
+            # print('-----------')
+            # print()
+            # print(jac.shape)
+            # print(grad_mu_i.shape)
+
+            # jac[ax, self.n_agents + i] += grad_mu_i
+            # jac[ax, self.n_agents + j] += grad_mu_j
+
+            dm = np.zeros((n, self.n_agents, self.n_factors))
+            dm[ax, i] += grad_mu_i
+            dm[ax, j] += grad_mu_j
+            # jac[ax, self.n_agents:self.n_agents * self.n_factors] = \
+            jac[ax, self.n_agents:] = \
+                dm.reshape(n, self.n_agents * self.n_factors)
 
             jac = jac.sum(axis=0) / self._count
 
@@ -375,24 +384,83 @@ class RaoKupperScaledRIJ(BaseModel):
             constraint_loss = constraint_diff ** 2
             loss_ += constraint_loss
 
-            # Constraining scale parameters
-            constraint_scale = \
-                np.sum(w[self.n_agents:2*self.n_agents]**2) - 1.0
-            constraint_scale_loss = constraint_scale**2
-            loss_ += constraint_scale_loss
-
             if return_jac:
-                # constraining score parameters
                 # constraint_jac = 2 * constraint_diff * np.exp(w[:n_agents])
                 constraint_jac = 2.0 * constraint_diff
                 jac[:self.n_agents] += constraint_jac
-
-                # Constraining scale parameters
-                constraint_scale_jac = \
-                    4.0 * constraint_scale * w[self.n_agents:2*self.n_agents]
-                jac[self.n_agents:2*self.n_agents] += constraint_scale_jac
 
         if return_jac:
             return loss_, jac
         else:
             return loss_
+
+    # =====
+    # infer
+    # =====
+
+    def infer(
+            self,
+            x: Union[List[int], np.ndarray[np.integer]] = None):
+        """
+        Make inference on probabilities of outcome of win, loss, or tie.
+
+        Parameters
+        ----------
+
+        x : np.ndarray
+            A 2D array of integers with the shape ``(n_pairs, 2)`` where each
+            row consists of indices ``[i, j]`` representing a match between a
+            pair of agents with the indices ``i`` and ``j``. If `None`, the
+            ``X`` variable from the input data is used.
+
+        Returns
+        -------
+
+        prob : np.array
+            An array of the shape ``(n_pairs, 3)`` where the columns
+            represent the win, loss, and tie probabilities for the model `i`
+            against model `j` in order that appears in the input `x`.
+
+        Raises
+        ------
+
+        RuntimeError
+            If the model is not trained before calling this method.
+
+        See Also
+        --------
+
+        train : train model parameters.
+
+        Examples
+        --------
+
+        .. code-block:: python
+            :emphasize-lines: 12
+
+            >>> from leaderbot.data import load
+            >>> from leaderbot.models import DavidsonScaled
+
+            >>> # Create a model
+            >>> data = load()
+            >>> model = DavidsonScaled(data)
+
+            >>> # Train the model
+            >>> model.train()
+
+            >>> # Make inference
+            >>> prob = model.infer()
+        """
+
+        if self.param is None:
+            raise RuntimeError('train model first.')
+
+        if x is None:
+            x = self.x
+
+        # Call sample loss to only compute probabilities, but not loss itself
+        _, _, probs = self._sample_loss(self.param, x, self.y, self.n_agents,
+                                        self.n_factors, self.basis,
+                                        return_jac=False, inference_only=True)
+
+        return np.column_stack(probs)

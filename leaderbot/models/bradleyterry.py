@@ -106,7 +106,7 @@ class BradleyTerry(BaseModel):
         Visualize correlation and score of the agents.
 
     plot_scores
-        Plots scores versus rank
+        Plots scores versus rank.
 
     match_matrix
         Plot match matrices of win and tie counts of mutual matches.

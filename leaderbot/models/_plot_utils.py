@@ -83,7 +83,16 @@ def plot_match_matrices(
 
     divider1 = make_axes_locatable(win_ax)
     cax1 = divider1.append_axes("right", size="5%", pad=0.06)
-    cbar1 = fig.colorbar(im1, cax=cax1)
+
+    # Diagonals (which are masked) have value of zero. If vmin is larger than
+    # zero, ensure to use a colomap that reaches white color and make colorbar
+    # to show the extend mark.
+    if win_vmin > 0.0:
+        extend = 'min'
+    else:
+        extend = 'neither'
+
+    cbar1 = fig.colorbar(im1, cax=cax1, extend=extend)
     cbar1.set_label(cbar_label)
 
     if density:
@@ -114,7 +123,16 @@ def plot_match_matrices(
 
     divider2 = make_axes_locatable(tie_ax)
     cax2 = divider2.append_axes("right", size="5%", pad=0.06)
-    cbar2 = fig.colorbar(im2, cax=cax2)
+
+    # Diagonals (which are masked) have value of zero. If vmin is larger than
+    # zero, ensure to use a colomap that reaches white color and make colorbar
+    # to show the extend mark.
+    if tie_vmin > 0.0:
+        extend = 'min'
+    else:
+        extend = 'neither'
+
+    cbar2 = fig.colorbar(im2, cax=cax2, extend=extend)
     cbar2.set_label(cbar_label)
 
     if density:

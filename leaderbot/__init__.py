@@ -10,12 +10,12 @@ from .data import load, convert, split
 from .models import BradleyTerry, BradleyTerryScaled, \
     BradleyTerryScaledR, BradleyTerryScaledRIJ, RaoKupper, RaoKupperScaled, \
     RaoKupperScaledR, RaoKupperScaledRIJ, Davidson, DavidsonScaled, \
-    DavidsonScaledR, DavidsonScaledRIJ
+    DavidsonScaledR, DavidsonScaledRIJ, DavidsonGen
 from .evaluate import model_selection, goodness_of_fit, generalization
 
 __all__ = ['load', 'convert', 'split', 'BradleyTerry', 'BradleyTerryScaled',
            'BradleyTerryScaledR', 'BradleyTerryScaledRIJ', 'RaoKupper',
            'RaoKupperScaled', 'RaoKupperScaledR', 'RaoKupperScaledRIJ',
            'Davidson', 'DavidsonScaled', 'DavidsonScaledR',
-           'DavidsonScaledRIJ', 'model_selection', 'goodness_of_fit',
-           'generalization']
+           'DavidsonScaledRIJ', 'DavidsonGen', 'model_selection',
+           'goodness_of_fit', 'generalization']

@@ -35,6 +35,10 @@ class RaoKupper(BaseModel):
         A dictionary of data that is provided by
         :func:`leaderbot.data.load`.
 
+    n_tie_factor : int, default=1
+        Number of factors to be used in tie parameters. If ``0``, no factor is
+        used and the model falls back to the original Davidson formulation.
+
     Notes
     -----
 
@@ -81,6 +85,9 @@ class RaoKupper(BaseModel):
     n_param : int
         Number of parameters
 
+    n_tie_factor : int
+        Number of factors used in tie parameters.
+
     Methods
     -------
 
@@ -106,7 +113,7 @@ class RaoKupper(BaseModel):
         Visualize correlation and score of the agents.
 
     plot_scores
-        Plots scores versus rank
+        Plots scores versus rank.
 
     match_matrix
         Plot match matrices of win and tie counts of mutual matches.
@@ -136,20 +143,31 @@ class RaoKupper(BaseModel):
 
     def __init__(
             self,
-            data: DataType):
+            data: DataType,
+            n_tie_factors: int = 1):
         """
         Constructor.
         """
 
         super().__init__(data)
 
-        self.n_param = self.n_agents + 1
+        # Number of factors for tie (rank of matrix in factor analysis)
+        self.n_tie_factors = n_tie_factors
+
+        # Total number of parameters for modeling tie
+        self._n_tie_param = max(1, self.n_agents * self.n_tie_factors)
+
+        # Total number of parameters
+        self.n_param = self.n_agents + self._n_tie_param
+
+        # Basis functions for tie factor model
+        self.basis = self._generate_basis(self.n_tie_factors)
 
         # Approximate bound for parameters (only needed for shgo optimization
         # method). Note that these bounds are not enforced, rather, only used
         # for seeding multi-initial points in global optimization methods.
         self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
-                             [(0.0, 1.0)]
+                             [(-1.0, 1.0) for _ in range(self._n_tie_param)]
 
     # ================
     # initialize param
@@ -177,6 +195,8 @@ class RaoKupper(BaseModel):
             x: np.ndarray[np.integer],
             y: np.ndarray[np.integer],
             n_agents: int,
+            n_tie_factors: int,
+            basis: np.ndarray[np.floating],
             return_jac: bool = True,
             inference_only: bool = False):
         """
@@ -191,11 +211,25 @@ class RaoKupper(BaseModel):
         loss_ = None
         grads = None
         probs = None
+        grad_eta_i = None
+        grad_eta_j = None
 
         i, j = x.T
         xi, xj = w[i], w[j]
         min_eta = 1e-2
-        eta = np.maximum(w[-1], min_eta)  # clip eta
+        # eta = np.maximum(w[-1], min_eta)  # clip eta
+
+        if n_tie_factors == 0:
+            eta_ = np.maximum(w[-1], min_eta)  # clip eta
+            eta = np.full_like(xi, eta_)
+        else:
+            g = w[n_agents:].reshape(n_agents, n_tie_factors)
+            gi = g[i]
+            gj = g[j]
+            bi = basis[i]
+            bj = basis[j]
+            eta = np.sum(gi * bj, axis=1) + np.sum(bi * gj, axis=1)
+            eta[np.abs(eta) < min_eta] = min_eta   # clip eta
 
         d_win = xi - xj - np.abs(eta)
         d_loss = xj - xi - np.abs(eta)
@@ -224,14 +258,23 @@ class RaoKupper(BaseModel):
             # At eta=0, the gradient w.r.t eta is "-np.inf * np.sign(eta)".
             # However, for stability of the optimizer, we set its gradient to
             # zero in the clipped interval where it is assumed to be constant.
-            if np.abs(eta) < min_eta:
-                grad_eta = np.zeros((xi.shape[0]), dtype=float)
-            else:
-                grad_eta = (grad_win + grad_loss -
-                            (2.0 * tie_ij) / (1.0 - np.exp(-2.0 * eta))) * \
-                            np.sign(eta)
+            # if np.abs(eta) < min_eta:
+            #     grad_eta = np.zeros((xi.shape[0]), dtype=float)
+            # else:
+            #     grad_eta = (grad_win + grad_loss -
+            #                 (2.0 * tie_ij) / (1.0 - np.exp(-2.0 * eta))) * \
+            #                 np.sign(eta)
+            grad_eta = (grad_win + grad_loss -
+                        (2.0 * tie_ij) / (1.0 - np.exp(-2.0 * eta))) * \
+                np.sign(eta)
+            grad_eta[np.abs(eta) < min_eta] = 0.0
 
-            grads = (grad_xi, grad_xj, grad_eta)
+            if n_tie_factors > 0:
+                grad_eta_i = grad_eta[:, None] * bj
+                grad_eta_j = grad_eta[:, None] * bi
+
+            # grads = (grad_xi, grad_xj, grad_eta)
+            grads = (grad_xi, grad_xj, grad_eta, grad_eta_i, grad_eta_j)
 
         return loss_, grads, probs
 
@@ -315,6 +358,7 @@ class RaoKupper(BaseModel):
             w = self.param
 
         loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
+                                            self.n_tie_factors, self.basis,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -323,14 +367,22 @@ class RaoKupper(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_eta = grads
+            grad_xi, grad_xj, grad_eta, grad_eta_i, grad_eta_j = grads
             i, j = self.x.T
             n = self.x.shape[0]
             ax = np.arange(n)
             jac = np.zeros((n, w.shape[0]))
             jac[ax, i] += grad_xi
             jac[ax, j] += grad_xj
-            jac[ax, self.n_agents] += grad_eta
+
+            if self.n_tie_factors == 0:
+                jac[ax, self.n_agents] += grad_eta
+            else:
+                dg = np.zeros((n, self.n_agents, self.n_tie_factors))
+                dg[ax, i] += grad_eta_i
+                dg[ax, j] += grad_eta_j
+                jac[ax, self.n_agents:self.n_agents + self._n_tie_param] = \
+                    dg.reshape(n, self.n_agents * self.n_tie_factors)
 
             jac = jac.sum(axis=0) / self._count
 

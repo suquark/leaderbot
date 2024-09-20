@@ -36,6 +36,10 @@ class DavidsonScaledR(BaseModel):
         A dictionary of data that is provided by
         :func:`leaderbot.data.load`.
 
+    n_tie_factor : int, default=1
+        Number of factors to be used in tie parameters. If ``0``, no factor is
+        used and the model falls back to the original Davidson formulation.
+
     Notes
     -----
 
@@ -82,6 +86,9 @@ class DavidsonScaledR(BaseModel):
     n_param : int
         Number of parameters
 
+    n_tie_factor : int
+        Number of factors used in tie parameters.
+
     Methods
     -------
 
@@ -107,7 +114,7 @@ class DavidsonScaledR(BaseModel):
         Visualize correlation and score of the agents.
 
     plot_scores
-        Plots scores versus rank
+        Plots scores versus rank.
 
     match_matrix
         Plot match matrices of win and tie counts of mutual matches.
@@ -137,14 +144,25 @@ class DavidsonScaledR(BaseModel):
 
     def __init__(
             self,
-            data: DataType):
+            data: DataType,
+            n_tie_factors: int = 1):
         """
         Constructor.
         """
 
         super().__init__(data)
 
-        self.n_param = 2 * self.n_agents + 2
+        # Number of factors for tie (rank of matrix in factor analysis)
+        self.n_tie_factors = n_tie_factors
+
+        # Total number of parameters for modeling tie
+        self._n_tie_param = max(1, self.n_agents * self.n_tie_factors)
+
+        # Total number of parameters
+        self.n_param = 2 * self.n_agents + 1 + self._n_tie_param
+
+        # Basis functions for tie factor model
+        self.basis = self._generate_basis(self.n_tie_factors)
 
         # Approximate bound for parameters (only needed for shgo optimization
         # method). Note that these bounds are not enforced, rather, only used
@@ -152,7 +170,7 @@ class DavidsonScaledR(BaseModel):
         self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
                              [(0.01, 1.0) for _ in range(self.n_agents)] + \
                              [(-1.0, 1.0)] + \
-                             [(-1.0, 1.0)]
+                             [(-1.0, 1.0) for _ in range(self._n_tie_param)]
 
     # ================
     # initialize param
@@ -182,6 +200,8 @@ class DavidsonScaledR(BaseModel):
             x: np.ndarray[np.integer],
             y: np.ndarray[np.integer],
             n_agents: int,
+            n_tie_factors: int,
+            basis: np.ndarray[np.floating],
             return_jac: bool = True,
             inference_only: bool = False):
         """
@@ -192,12 +212,23 @@ class DavidsonScaledR(BaseModel):
         loss_ = None
         grads = None
         probs = None
+        grad_mu_i = None
+        grad_mu_j = None
 
         i, j = x.T
         xi, xj = w[i], w[j]
         ti, tj = w[i + n_agents], w[j + n_agents]
-        r = w[-2]
-        mu = w[-1]
+        r = w[2 * n_agents]
+
+        if n_tie_factors == 0:
+            mu = np.full_like(xi, w[-1])
+        else:
+            g = w[2*n_agents+1:].reshape(n_agents, n_tie_factors)
+            gi = g[i]
+            gj = g[j]
+            bi = basis[i]
+            bj = basis[j]
+            mu = np.sum(gi * bj, axis=1) + np.sum(bi * gj, axis=1)
 
         s_r = np.tanh(r)
         scale = 1.0 / np.sqrt(ti ** 2 + tj ** 2 - 2 * s_r * np.abs(ti * tj))
@@ -237,6 +268,10 @@ class DavidsonScaledR(BaseModel):
                 loss_ij * grad_p_loss_u + \
                 tie_ij * grad_p_tie_u
 
+            if n_tie_factors > 0:
+                grad_mu_i = grad_mu[:, None] * bj
+                grad_mu_j = grad_mu[:, None] * bi
+
             grad_xi = grad_z * scale
             grad_xj = -grad_xi
 
@@ -245,7 +280,8 @@ class DavidsonScaledR(BaseModel):
             grad_tj = grad_scale * 2 * (tj - s_r * np.sign(tj) * np.abs(ti))
             grad_r = -grad_scale * 2 * np.abs(ti * tj) * (1 - s_r ** 2)
 
-            grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_r, grad_mu)
+            grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_r, grad_mu,
+                     grad_mu_i, grad_mu_j)
 
         return loss_, grads, probs
 
@@ -329,6 +365,7 @@ class DavidsonScaledR(BaseModel):
             w = self.param
 
         loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
+                                            self.n_tie_factors, self.basis,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -337,7 +374,8 @@ class DavidsonScaledR(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_ti, grad_tj, grad_r, grad_mu = grads
+            grad_xi, grad_xj, grad_ti, grad_tj, grad_r, grad_mu, grad_mu_i, \
+                grad_mu_j = grads
             i, j = self.x.T
             n = self.x.shape[0]
             ax = np.arange(n)
@@ -346,8 +384,17 @@ class DavidsonScaledR(BaseModel):
             jac[ax, j] += grad_xj
             jac[ax, i + self.n_agents] += grad_ti
             jac[ax, j + self.n_agents] += grad_tj
-            jac[ax, -2] += grad_r
-            jac[ax, -1] += grad_mu
+            jac[ax, 2 * self.n_agents] += grad_r
+
+            if self.n_tie_factors == 0:
+                jac[ax, -1] += grad_mu
+            else:
+                dg = np.zeros((n, self.n_agents, self.n_tie_factors))
+                dg[ax, i] += grad_mu_i
+                dg[ax, j] += grad_mu_j
+                jac[ax, 2 * self.n_agents + 1:2 * self.n_agents + 1 +
+                    self._n_tie_param] = \
+                    dg.reshape(n, self.n_agents * self.n_tie_factors)
 
             jac = jac.sum(axis=0) / self._count
 
