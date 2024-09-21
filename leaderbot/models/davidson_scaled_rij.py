@@ -221,8 +221,8 @@ class DavidsonScaledRIJ(BaseModel):
         loss_ = None
         grads = None
         probs = None
-        grad_mu_i = None
-        grad_mu_j = None
+        grad_gi = None
+        grad_gj = None
 
         i, j = x.T
         k = j * (j - 1) // 2 + i  # pair index
@@ -235,12 +235,12 @@ class DavidsonScaledRIJ(BaseModel):
             mu = np.full_like(xi, w[-1])
         else:
             n_pairs = n_agents * (n_agents - 1) // 2
-            g = w[2*n_agents+n_pairs:].reshape(n_agents, n_tie_factors)
+            g = w[2 * n_agents + n_pairs:].reshape(n_agents, n_tie_factors)
             gi = g[i]
             gj = g[j]
-            bi = basis[i]
-            bj = basis[j]
-            mu = np.sum(gi * bj, axis=1) + np.sum(bi * gj, axis=1)
+            phi_i = basis[i]
+            phi_j = basis[j]
+            mu = np.sum(gi * phi_j, axis=1) + np.sum(gj * phi_i, axis=1)
 
         s_rij = np.tanh(rij)
         scale = 1.0 / np.sqrt(ti ** 2 + tj ** 2 - 2 * s_rij * np.abs(ti * tj))
@@ -280,20 +280,20 @@ class DavidsonScaledRIJ(BaseModel):
                 loss_ij * grad_p_loss_u + \
                 tie_ij * grad_p_tie_u
 
-            if n_tie_factors > 0:
-                grad_mu_i = grad_mu[:, None] * bj
-                grad_mu_j = grad_mu[:, None] * bi
-
             grad_xi = grad_z * scale
             grad_xj = -grad_xi
 
             grad_scale = -0.5 * grad_z * z * scale ** 2
             grad_ti = grad_scale * 2 * (ti - s_rij * np.sign(ti) * np.abs(tj))
             grad_tj = grad_scale * 2 * (tj - s_rij * np.sign(tj) * np.abs(ti))
-            grad_rij = -grad_scale * 2 * np.abs(ti * tj) * (1 - s_rij ** 2)
+            grad_rij = -grad_scale * 2 * np.abs(ti * tj) * (1.0 - s_rij ** 2)
+
+            if n_tie_factors > 0:
+                grad_gi = grad_mu[:, None] * phi_j
+                grad_gj = grad_mu[:, None] * phi_i
 
             grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_mu,
-                     grad_mu_i, grad_mu_j)
+                     grad_gi, grad_gj)
 
         return loss_, grads, probs
 
@@ -386,8 +386,8 @@ class DavidsonScaledRIJ(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_mu, \
-                grad_mu_i, grad_mu_j = grads
+            grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_mu, grad_gi, \
+                grad_gj = grads
             i, j = self.x.T
             k = j * (j - 1) // 2 + i  # pair index
             n = self.x.shape[0]
@@ -403,8 +403,8 @@ class DavidsonScaledRIJ(BaseModel):
                 jac[ax, -1] += grad_mu
             else:
                 dg = np.zeros((n, self.n_agents, self.n_tie_factors))
-                dg[ax, i] += grad_mu_i
-                dg[ax, j] += grad_mu_j
+                dg[ax, i] += grad_gi
+                dg[ax, j] += grad_gj
                 jac[ax, 2 * self.n_agents + self._n_pairs:2 * self.n_agents +
                     self._n_pairs + self._n_tie_param] = \
                     dg.reshape(n, self.n_agents * self.n_tie_factors)

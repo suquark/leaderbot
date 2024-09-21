@@ -212,8 +212,8 @@ class DavidsonScaledR(BaseModel):
         loss_ = None
         grads = None
         probs = None
-        grad_mu_i = None
-        grad_mu_j = None
+        grad_gi = None
+        grad_gj = None
 
         i, j = x.T
         xi, xj = w[i], w[j]
@@ -223,12 +223,12 @@ class DavidsonScaledR(BaseModel):
         if n_tie_factors == 0:
             mu = np.full_like(xi, w[-1])
         else:
-            g = w[2*n_agents+1:].reshape(n_agents, n_tie_factors)
+            g = w[2 * n_agents + 1:].reshape(n_agents, n_tie_factors)
             gi = g[i]
             gj = g[j]
-            bi = basis[i]
-            bj = basis[j]
-            mu = np.sum(gi * bj, axis=1) + np.sum(bi * gj, axis=1)
+            phi_i = basis[i]
+            phi_j = basis[j]
+            mu = np.sum(gi * phi_j, axis=1) + np.sum(gj * phi_i, axis=1)
 
         s_r = np.tanh(r)
         scale = 1.0 / np.sqrt(ti ** 2 + tj ** 2 - 2 * s_r * np.abs(ti * tj))
@@ -268,20 +268,20 @@ class DavidsonScaledR(BaseModel):
                 loss_ij * grad_p_loss_u + \
                 tie_ij * grad_p_tie_u
 
-            if n_tie_factors > 0:
-                grad_mu_i = grad_mu[:, None] * bj
-                grad_mu_j = grad_mu[:, None] * bi
-
             grad_xi = grad_z * scale
             grad_xj = -grad_xi
 
             grad_scale = -0.5 * grad_z * z * scale ** 2
             grad_ti = grad_scale * 2 * (ti - s_r * np.sign(ti) * np.abs(tj))
             grad_tj = grad_scale * 2 * (tj - s_r * np.sign(tj) * np.abs(ti))
-            grad_r = -grad_scale * 2 * np.abs(ti * tj) * (1 - s_r ** 2)
+            grad_r = -grad_scale * 2 * np.abs(ti * tj) * (1.0 - s_r ** 2)
+
+            if n_tie_factors > 0:
+                grad_gi = grad_mu[:, None] * phi_j
+                grad_gj = grad_mu[:, None] * phi_i
 
             grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_r, grad_mu,
-                     grad_mu_i, grad_mu_j)
+                     grad_gi, grad_gj)
 
         return loss_, grads, probs
 
@@ -374,8 +374,8 @@ class DavidsonScaledR(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_ti, grad_tj, grad_r, grad_mu, grad_mu_i, \
-                grad_mu_j = grads
+            grad_xi, grad_xj, grad_ti, grad_tj, grad_r, grad_mu, grad_gi, \
+                grad_gj = grads
             i, j = self.x.T
             n = self.x.shape[0]
             ax = np.arange(n)
@@ -390,8 +390,8 @@ class DavidsonScaledR(BaseModel):
                 jac[ax, -1] += grad_mu
             else:
                 dg = np.zeros((n, self.n_agents, self.n_tie_factors))
-                dg[ax, i] += grad_mu_i
-                dg[ax, j] += grad_mu_j
+                dg[ax, i] += grad_gi
+                dg[ax, j] += grad_gj
                 jac[ax, 2 * self.n_agents + 1:2 * self.n_agents + 1 +
                     self._n_tie_param] = \
                     dg.reshape(n, self.n_agents * self.n_tie_factors)

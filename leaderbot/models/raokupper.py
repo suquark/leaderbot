@@ -203,7 +203,7 @@ class RaoKupper(BaseModel):
         Loss per each sample data (instance).
 
         Note: in Rao-Kupper model, eta should be no-negative so that p_tie be
-        non-begative. To enforce this, we add absolute value and adjust its
+        non-negative. To enforce this, we add absolute value and adjust its
         gradient with sign of eta.
         """
 
@@ -211,24 +211,23 @@ class RaoKupper(BaseModel):
         loss_ = None
         grads = None
         probs = None
-        grad_eta_i = None
-        grad_eta_j = None
+        grad_gi = None
+        grad_gj = None
 
         i, j = x.T
         xi, xj = w[i], w[j]
         min_eta = 1e-2
-        # eta = np.maximum(w[-1], min_eta)  # clip eta
 
         if n_tie_factors == 0:
-            eta_ = np.maximum(w[-1], min_eta)  # clip eta
-            eta = np.full_like(xi, eta_)
+            eta_scalar = np.maximum(w[-1], min_eta)  # clip eta
+            eta = np.full_like(xi, eta_scalar)
         else:
             g = w[n_agents:].reshape(n_agents, n_tie_factors)
             gi = g[i]
             gj = g[j]
-            bi = basis[i]
-            bj = basis[j]
-            eta = np.sum(gi * bj, axis=1) + np.sum(bi * gj, axis=1)
+            phi_i = basis[i]
+            phi_j = basis[j]
+            eta = np.sum(gi * phi_j, axis=1) + np.sum(gj * phi_i, axis=1)
             eta[np.abs(eta) < min_eta] = min_eta   # clip eta
 
         d_win = xi - xj - np.abs(eta)
@@ -254,27 +253,19 @@ class RaoKupper(BaseModel):
             grad_loss = (loss_ij + tie_ij) * (1.0 - p_loss)
             grad_xi = -grad_win + grad_loss
             grad_xj = -grad_xi
+            grad_eta = (grad_win + grad_loss - (2.0 * tie_ij) /
+                        (1.0 - np.exp(-2.0 * eta))) * np.sign(eta)
 
             # At eta=0, the gradient w.r.t eta is "-np.inf * np.sign(eta)".
             # However, for stability of the optimizer, we set its gradient to
             # zero in the clipped interval where it is assumed to be constant.
-            # if np.abs(eta) < min_eta:
-            #     grad_eta = np.zeros((xi.shape[0]), dtype=float)
-            # else:
-            #     grad_eta = (grad_win + grad_loss -
-            #                 (2.0 * tie_ij) / (1.0 - np.exp(-2.0 * eta))) * \
-            #                 np.sign(eta)
-            grad_eta = (grad_win + grad_loss -
-                        (2.0 * tie_ij) / (1.0 - np.exp(-2.0 * eta))) * \
-                np.sign(eta)
             grad_eta[np.abs(eta) < min_eta] = 0.0
 
             if n_tie_factors > 0:
-                grad_eta_i = grad_eta[:, None] * bj
-                grad_eta_j = grad_eta[:, None] * bi
+                grad_gi = grad_eta[:, None] * phi_j
+                grad_gj = grad_eta[:, None] * phi_i
 
-            # grads = (grad_xi, grad_xj, grad_eta)
-            grads = (grad_xi, grad_xj, grad_eta, grad_eta_i, grad_eta_j)
+            grads = (grad_xi, grad_xj, grad_eta, grad_gi, grad_gj)
 
         return loss_, grads, probs
 
@@ -367,7 +358,7 @@ class RaoKupper(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_eta, grad_eta_i, grad_eta_j = grads
+            grad_xi, grad_xj, grad_eta, grad_gi, grad_gj = grads
             i, j = self.x.T
             n = self.x.shape[0]
             ax = np.arange(n)
@@ -379,8 +370,8 @@ class RaoKupper(BaseModel):
                 jac[ax, self.n_agents] += grad_eta
             else:
                 dg = np.zeros((n, self.n_agents, self.n_tie_factors))
-                dg[ax, i] += grad_eta_i
-                dg[ax, j] += grad_eta_j
+                dg[ax, i] += grad_gi
+                dg[ax, j] += grad_gj
                 jac[ax, self.n_agents:self.n_agents + self._n_tie_param] = \
                     dg.reshape(n, self.n_agents * self.n_tie_factors)
 

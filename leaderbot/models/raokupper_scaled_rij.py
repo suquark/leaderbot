@@ -36,6 +36,10 @@ class RaoKupperScaledRIJ(BaseModel):
         A dictionary of data that is provided by
         :func:`leaderbot.data.load`.
 
+    n_tie_factor : int, default=1
+        Number of factors to be used in tie parameters. If ``0``, no factor is
+        used and the model falls back to the original Davidson formulation.
+
     Notes
     -----
 
@@ -87,6 +91,9 @@ class RaoKupperScaledRIJ(BaseModel):
 
     n_param : int
         Number of parameters
+
+    n_tie_factor : int
+        Number of factors used in tie parameters.
 
     Methods
     -------
@@ -143,15 +150,28 @@ class RaoKupperScaledRIJ(BaseModel):
 
     def __init__(
             self,
-            data: DataType):
+            data: DataType,
+            n_tie_factors: int = 1):
         """
         Constructor.
         """
 
         super().__init__(data)
 
+        # Number of rij parameters
         self._n_pairs = self.n_agents * (self.n_agents - 1) // 2
-        self.n_param = 2 * self.n_agents + self._n_pairs + 1
+
+        # Number of factors for tie (rank of matrix in factor analysis)
+        self.n_tie_factors = n_tie_factors
+
+        # Total number of parameters for modeling tie
+        self._n_tie_param = max(1, self.n_agents * self.n_tie_factors)
+
+        # Total number of parameters
+        self.n_param = 2 * self.n_agents + self._n_pairs + self._n_tie_param
+
+        # Basis functions for tie factor model
+        self.basis = self._generate_basis(self.n_tie_factors)
 
         # Approximate bound for parameters (only needed for shgo optimization
         # method). Note that these bounds are not enforced, rather, only used
@@ -159,7 +179,7 @@ class RaoKupperScaledRIJ(BaseModel):
         self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
                              [(0.01, 1.0) for _ in range(self.n_agents)] + \
                              [(-1.0, 1.0) for _ in range(self._n_pairs)] + \
-                             [(0.0, 1.0)]
+                             [(-1.0, 1.0) for _ in range(self._n_tie_param)]
 
     # ================
     # initialize param
@@ -189,13 +209,15 @@ class RaoKupperScaledRIJ(BaseModel):
             x: np.ndarray[np.integer],
             y: np.ndarray[np.integer],
             n_agents: int,
+            n_tie_factors: int,
+            basis: np.ndarray[np.floating],
             return_jac: bool = True,
             inference_only: bool = False):
         """
         Loss per each sample data (instance).
 
         Note: in Rao-Kupper model, eta should be no-negative so that p_tie be
-        non-begative. To enforce this, we add absolute value and adjust its
+        non-negative. To enforce this, we add absolute value and adjust its
         gradient with sign of eta.
         """
 
@@ -203,6 +225,8 @@ class RaoKupperScaledRIJ(BaseModel):
         loss_ = None
         grads = None
         probs = None
+        grad_gi = None
+        grad_gj = None
 
         i, j = x.T
         k = j * (j - 1) // 2 + i  # pair index
@@ -211,7 +235,19 @@ class RaoKupperScaledRIJ(BaseModel):
         ti, tj = w[i + n_agents], w[j + n_agents]
         rij = w[k + n_agents * 2]
         min_eta = 1e-2
-        eta = np.maximum(w[-1], min_eta)  # clip eta
+
+        if n_tie_factors == 0:
+            eta_scalar = np.maximum(w[-1], min_eta)  # clip eta
+            eta = np.full_like(xi, eta_scalar)
+        else:
+            n_pairs = n_agents * (n_agents - 1) // 2
+            g = w[2 * n_agents + n_pairs:].reshape(n_agents, n_tie_factors)
+            gi = g[i]
+            gj = g[j]
+            phi_i = basis[i]
+            phi_j = basis[j]
+            eta = np.sum(gi * phi_j, axis=1) + np.sum(gj * phi_i, axis=1)
+            eta[np.abs(eta) < min_eta] = min_eta   # clip eta
 
         s_rij = np.tanh(rij)
         scale = 1.0 / np.sqrt(ti ** 2 + tj ** 2 - 2 * s_rij * np.abs(ti * tj))
@@ -252,16 +288,20 @@ class RaoKupperScaledRIJ(BaseModel):
             grad_tj = grad_scale * 2 * (tj - s_rij * np.sign(tj) * np.abs(ti))
             grad_rij = -grad_scale * 2 * np.abs(ti * tj) * (1.0 - s_rij ** 2)
 
+            grad_eta = (grad_dwin + grad_dloss - (2.0 * tie_ij) /
+                        (1.0 - np.exp(-2.0 * np.abs(eta)))) * np.sign(eta)
+
             # At eta=0, the gradient w.r.t eta is "-np.inf * np.sign(eta)".
             # However, for stability of the optimizer, we set its gradient to
             # zero in the clipped interval where it is assumed to be constant.
-            if np.abs(eta) < min_eta:
-                grad_eta = np.zeros((xi.shape[0]), dtype=float)
-            else:
-                grad_eta = (grad_dwin + grad_dloss - (2.0 * tie_ij) /
-                            (1.0 - np.exp(-2.0 * np.abs(eta)))) * np.sign(eta)
+            grad_eta[np.abs(eta) < min_eta] = 0.0
 
-            grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_eta)
+            if n_tie_factors > 0:
+                grad_gi = grad_eta[:, None] * phi_j
+                grad_gj = grad_eta[:, None] * phi_i
+
+            grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_eta,
+                     grad_gi, grad_gj)
 
         return loss_, grads, probs
 
@@ -345,6 +385,7 @@ class RaoKupperScaledRIJ(BaseModel):
             w = self.param
 
         loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
+                                            self.n_tie_factors, self.basis,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -353,7 +394,8 @@ class RaoKupperScaledRIJ(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_eta = grads
+            grad_xi, grad_xj, grad_ti, grad_tj, grad_rij, grad_eta, grad_gi, \
+                grad_gj = grads
             i, j = self.x.T
             k = j * (j - 1) // 2 + i  # pair index
             n = self.x.shape[0]
@@ -364,7 +406,16 @@ class RaoKupperScaledRIJ(BaseModel):
             jac[ax, i + self.n_agents] += grad_ti
             jac[ax, j + self.n_agents] += grad_tj
             jac[ax, k + self.n_agents * 2] += grad_rij
-            jac[ax, -1] += grad_eta
+
+            if self.n_tie_factors == 0:
+                jac[ax, -1] += grad_eta
+            else:
+                dg = np.zeros((n, self.n_agents, self.n_tie_factors))
+                dg[ax, i] += grad_gi
+                dg[ax, j] += grad_gj
+                jac[ax, 2 * self.n_agents + self._n_pairs:2 * self.n_agents +
+                    self._n_pairs + self._n_tie_param] = \
+                    dg.reshape(n, self.n_agents * self.n_tie_factors)
 
             jac = jac.sum(axis=0) / self._count
 

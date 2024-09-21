@@ -207,8 +207,8 @@ class Davidson(BaseModel):
         loss_ = None
         grads = None
         probs = None
-        grad_mu_i = None
-        grad_mu_j = None
+        grad_gi = None
+        grad_gj = None
 
         i, j = x.T
         xi, xj = w[i], w[j]
@@ -219,9 +219,9 @@ class Davidson(BaseModel):
             g = w[n_agents:].reshape(n_agents, n_tie_factors)
             gi = g[i]
             gj = g[j]
-            bi = basis[i]
-            bj = basis[j]
-            mu = np.sum(gi * bj, axis=1) + np.sum(bi * gj, axis=1)
+            phi_i = basis[i]
+            phi_j = basis[j]
+            mu = np.sum(gi * phi_j, axis=1) + np.sum(gj * phi_i, axis=1)
 
         z = xi - xj
         u = 0.5 * z - mu
@@ -263,10 +263,10 @@ class Davidson(BaseModel):
             grad_xj = -grad_z
 
             if n_tie_factors > 0:
-                grad_mu_i = grad_mu[:, None] * bj
-                grad_mu_j = grad_mu[:, None] * bi
+                grad_gi = grad_mu[:, None] * phi_j
+                grad_gj = grad_mu[:, None] * phi_i
 
-            grads = (grad_xi, grad_xj, grad_mu, grad_mu_i, grad_mu_j)
+            grads = (grad_xi, grad_xj, grad_mu, grad_gi, grad_gj)
 
         return loss_, grads, probs
 
@@ -359,7 +359,7 @@ class Davidson(BaseModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_mu, grad_mu_i, grad_mu_j = grads
+            grad_xi, grad_xj, grad_mu, grad_gi, grad_gj = grads
             i, j = self.x.T
             n = self.x.shape[0]
             ax = np.arange(n)
@@ -371,8 +371,8 @@ class Davidson(BaseModel):
                 jac[ax, -1] += grad_mu
             else:
                 dg = np.zeros((n, self.n_agents, self.n_tie_factors))
-                dg[ax, i] += grad_mu_i
-                dg[ax, j] += grad_mu_j
+                dg[ax, i] += grad_gi
+                dg[ax, j] += grad_gj
                 jac[ax, self.n_agents:self.n_agents + self._n_tie_param] = \
                     dg.reshape(n, self.n_agents * self.n_tie_factors)
 
