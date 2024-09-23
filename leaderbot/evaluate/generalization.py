@@ -11,7 +11,7 @@
 # =======
 
 import numpy as np
-from ._util import float_to_str, evaluate_kld, evaluate_jsd, evaluate_mae
+from ._util import float_to_str, evaluate_kld, evaluate_jsd, evaluate_error
 from ..data import DataType
 
 __all__ = ['generalization']
@@ -26,6 +26,8 @@ def generalization(
         test_data: DataType = None,
         train: bool = False,
         tie: bool = True,
+        density: bool = False,
+        metric: str = 'MAE',
         report: bool = True):
     """
     Evaluate metrics for generalization performance.
@@ -55,6 +57,24 @@ def generalization(
         :class:`leaderbot.models.BradleyTerry` model, and has no effect on the
         other models.
 
+    density : bool, default=False
+        If `False`, the frequency (count) of events are evaluated. If `True`,
+        the probability density of the events are evaluated.
+
+        .. note::
+            When ``density`` is set to `True`, the probability density values
+            are multiplied by ``100.0``, and the results of errors should be
+            interpreted in percent.
+
+    metric : {``'MAE'``, ``'MAPE'``, ``'SMAPE'``, ``'RMSE'``}, \
+            default= ``'MAE'``
+        The metric of comparison:
+
+        * ``'MAE'``: Mean absolute error.
+        * ``'MAPE'``: Mean absolute percentage error.
+        * ``'SMAPE'``: Symmetric mean absolute percentage error.
+        * ``'RMSE'``: Root mean square error.
+
     report : bool, default=False
         If `True`, a table of the analysis is printed.
 
@@ -67,10 +87,10 @@ def generalization(
         * ``'name'``: list of names of the models.
         * ``'kld'``: list of Kullback-Leiber divergences of the models.
         * ``'jsd'``: list of Jensen-Shannon divergences of the models.
-        * ``'mae_win'``: list of mean absolute error for win predictions.
-        * ``'mae_loss'``: list of mean absolute error for loss predictions.
-        * ``'mae_tie'``: list of mean absolute error for tie predictions.
-        * ``'mae_all'``: list of mean absolute error for overall predictions.
+        * ``'err_win'``: list of errors for win predictions.
+        * ``'err_loss'``: list of errors for loss predictions.
+        * ``'err_tie'``: list of errors for tie predictions.
+        * ``'err_all'``: list of errors for overall predictions.
 
     Raises
     ------
@@ -134,10 +154,10 @@ def generalization(
     name = []
     kld = []  # Kullback-Leiber divergence
     jsd = []  # Jensen-Shannon divergence
-    mae_win = []  # Mean absolute error, win
-    mae_loss = []  # Mean absolute error, loss
-    mae_tie = []  # Mean absolute error, tie
-    mae_all = []  # Mean absolute error, all
+    err_win = []  # Mean absolute error, win
+    err_loss = []  # Mean absolute error, loss
+    err_tie = []  # Mean absolute error, tie
+    err_all = []  # Mean absolute error, all
 
     for model in models:
 
@@ -156,30 +176,30 @@ def generalization(
         kld.append(evaluate_kld(model, data=test_data, tie=tie_))
 
         # Mean absolute error of the prediction on test data
-        mae_, mae_all_ = evaluate_mae(model, data=test_data, tie=tie_,
-                                      density=False)
+        err_, err_all_ = evaluate_error(model, data=test_data, metric=metric,
+                                        tie=tie_, density=density)
 
-        mae_win.append(mae_[0])
-        mae_loss.append(mae_[1])
-        mae_tie.append(mae_[2])
-        mae_all.append(mae_all_)
+        err_win.append(err_[0])
+        err_loss.append(err_[1])
+        err_tie.append(err_[2])
+        err_all.append(err_all_)
 
     # Output
     metrics = {
         'name': name,
         'kld': kld,
         'jsd': jsd,
-        'mae_win': mae_win,
-        'mae_loss': mae_loss,
-        'mae_tie': mae_tie,
-        'mae_all': mae_all,
+        'err_win': err_win,
+        'err_loss': err_loss,
+        'err_tie': err_tie,
+        'err_all': err_all,
     }
 
     if report:
         print('+-----------------------+----------------------------+-------' +
               '-+--------+')
-        print('|                       |    Mean Absolute Error     |       ' +
-              ' |        |')
+        print(f'|                       |           {metric:>5s}            ' +
+              '|        |        |')
         print('| model                 |   win   loss    tie    all | KLD   ' +
               ' | JSD %  |')
         print('+-----------------------+----------------------------+-------' +
@@ -195,16 +215,16 @@ def generalization(
 
             kld_str = float_to_str(kld[i])
 
-            if np.isnan(mae_tie[i]):
+            if np.isnan(err_tie[i]):
                 tie_str = '-----'
             else:
-                tie_str = f'{mae_tie[i]:>5.2f}'
+                tie_str = f'{err_tie[i]:>5.2f}'
 
             print(f'| {name_str:<21s} '
-                  f'| {mae_win[i]:>5.2f} '
-                  f' {mae_loss[i]:>5.2f} '
+                  f'| {err_win[i]:>5.2f} '
+                  f' {err_loss[i]:>5.2f} '
                   f' {tie_str} '
-                  f' {mae_all[i]:>5.2f} '
+                  f' {err_all[i]:>5.2f} '
                   f'| {kld_str} '
                   f'| {100.0 * jsd[i]:>0.4f} |')
 

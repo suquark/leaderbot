@@ -14,7 +14,7 @@ import numpy as np
 from ..models.util import kl_divergence
 
 __all__ = ['float_to_str', 'evaluate_cel', 'evaluate_kld', 'evaluate_jsd',
-           'evaluate_mae']
+           'evaluate_error']
 
 
 # ============
@@ -38,11 +38,16 @@ def float_to_str(x):
     return x_str
 
 
-# ============
-# evaluate mae
-# ============
+# ==============
+# evaluate error
+# ==============
 
-def evaluate_mae(model, data=None, tie=True, density=False):
+def evaluate_error(
+        model,
+        data=None,
+        metric='MAE',
+        tie=True,
+        density=False):
     """
     Mean absolute error.
     """
@@ -68,18 +73,49 @@ def evaluate_mae(model, data=None, tie=True, density=False):
 
     n_pred = n_obs_sum * p_pred
 
+    # Determine which quantities to compare
     if density:
-        abs_diff = np.abs(p_obs - p_pred)
+        obs = p_obs * 100.0
+        pred = p_pred * 100.0
     else:
-        abs_diff = np.abs(n_obs - n_pred)
+        obs = n_obs
+        pred = n_pred
 
-    mae = np.mean(abs_diff, axis=0)
-    mae_all = np.mean(abs_diff)
+    # For MAPE and SMAPE, to avoid division by zero
+    epsilon = 1e-8
+
+    if metric == 'MAE':
+        # Mean absolute error
+        sample_error = np.abs(obs - pred)
+        error = np.nanmean(sample_error, axis=0)
+        error_all = np.nanmean(sample_error)
+
+    elif metric == 'MAPE':
+        # Mean absolute percentage error
+        obs[obs == 0] = epsilon
+        sample_error = 100.0 * np.abs((obs - pred) / obs)
+        error = np.nanmean(sample_error, axis=0)
+        error_all = np.nanmean(sample_error)
+
+    elif metric == 'SMAPE':
+        obs[obs == 0] = epsilon
+        sample_error = 100.0 * np.abs(obs - pred) / \
+            ((np.abs(obs) + np.abs(pred)) / 2.0)
+        error = np.nanmean(sample_error, axis=0)
+        error_all = np.nanmean(sample_error)
+
+    elif metric == 'RMSE':
+        sample_error = (obs - pred)**2
+        error = np.sqrt(np.nanmean(sample_error, axis=0))
+        error_all = np.sqrt(np.nanmean(sample_error))
+
+    else:
+        raise TypeError('"metric" is invalid.')
 
     if not tie:
-        mae = np.r_[mae, np.nan]
+        error = np.r_[error, np.nan]
 
-    return mae, mae_all
+    return error, error_all
 
 
 # ============

@@ -23,6 +23,8 @@ def goodness_of_fit(
         models: list,
         train: bool = False,
         tie: bool = True,
+        density: bool = False,
+        metric: str = 'MAE',
         report: bool = True):
     """
     Evaluate metrics for goodness of fit.
@@ -49,6 +51,24 @@ def goodness_of_fit(
         :class:`leaderbot.models.BradleyTerry` model, and has no effect on the
         other models.
 
+    density : bool, default=False
+        If `False`, the frequency (count) of events are evaluated. If `True`,
+        the probability density of the events are evaluated.
+
+        .. note::
+            When ``density`` is set to `True`, the probability density values
+            are multiplied by ``100.0``, and the results of errors should be
+            interpreted in percent.
+
+    metric : {``'err'``, ``'MAPE'``, ``'SMAPE'``, ``'RMSE'``}, \
+            default= ``'MAE'``
+        The metric of comparison:
+
+        * ``'MAE'``: Mean absolute error.
+        * ``'MAPE'``: Mean absolute percentage error.
+        * ``'SMAPE'``: Symmetric mean absolute percentage error.
+        * ``'RMSE'``: Root mean square error.
+
     report : bool, default=False
         If `True`, a table of the analysis is printed.
 
@@ -59,12 +79,12 @@ def goodness_of_fit(
         A dictionary containing the following keys and values:
 
         * ``'name'``: list of names of the models.
-        * ``'n_param'``: list of number of parameters of the models.
-        * ``'nll'``: list of negative log-likelihood values of the models.
-        * ``'jsd'``: list of Jensen-Shannon divergences of the models.
         * ``'kld'``: list of Kullback-Leiber divergences of the models.
-        * ``'aic'``: list of Akaike information criterion of the models.
-        * ``'bic'``: list of Bayesian information criterion of the models.
+        * ``'jsd'``: list of Jensen-Shannon divergences of the models.
+        * ``'err_win'``: list of errors for win predictions.
+        * ``'err_loss'``: list of errors for loss predictions.
+        * ``'err_tie'``: list of errors for tie predictions.
+        * ``'err_all'``: list of errors for overall predictions.
 
     Raises
     ------
@@ -109,6 +129,6 @@ def goodness_of_fit(
 
     # When setting data to None, the model's data is used.
     metrics = generalization(models, test_data=None, train=train, tie=tie,
-                             report=report)
+                             density=density, metric=metric, report=report)
 
     return metrics
