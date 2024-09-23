@@ -122,6 +122,13 @@ class BaseModel(object):
         self.param = None
 
         # Protected members
+        self._score_idx = slice(None, self.n_agents)
+        self._scale_idx = slice(None, None)
+        self._cov_factor_idx = slice(None, None)
+        self._tie_factor_idx = slice(None, None)
+        self._has_scale = False
+        self._has_cov_factor = False
+        self._has_tie_factor = False
         self._count = np.sum(self.y)
         self._result = None
 
@@ -228,9 +235,10 @@ class BaseModel(object):
 
     def _generate_basis(
             self,
-            n_tie_factors: int):
+            n_rows: int,
+            n_cols: int):
         """
-        Generate an orhtonormal matrix for tie factor model.
+        Generate an orthonormal matrix for tie factor model.
 
         The basis is generated using discrete cosine transform of type four.
 
@@ -238,23 +246,24 @@ class BaseModel(object):
         their formulation.
         """
 
-        basis = np.zeros((self.n_agents, n_tie_factors), dtype=float)
-        if n_tie_factors > 0:
+        basis = np.zeros((n_rows, n_cols), dtype=float)
+        if n_cols > 0:
 
             # Discrete cosine transform basis of type four (DCT-IV)
-            for i in range(1, self.n_agents + 1):
-                for j in range(1, self.n_tie_factors + 1):
-                    basis[i-1, j-1] = np.sqrt(2.0 / self.n_agents) * \
-                        np.cos(np.pi * (i-0.5) * (j-0.5) / (self.n_agents))
+            for i in range(1, n_rows + 1):
+                for j in range(1, n_cols + 1):
+                    basis[i-1, j-1] = np.sqrt(2.0 / n_rows) * \
+                        np.cos((np.pi / n_rows) * (i-0.5) * (j-0.5))
 
         return basis
 
-    # ==========
-    # covariance
-    # ==========
+    # ==============
+    # get covariance
+    # ==============
 
-    def _covariance(
+    def _get_covariance(
             self,
+            param: np.ndarray = None,
             centered: bool = False):
         """
         Covariance matrix
@@ -262,28 +271,37 @@ class BaseModel(object):
         Parameters
         ----------
 
+        param : np.ndarray, default=None
+            Model parameters. If `None`, the trained model parameters are used.
+
         centered : bool, default = False
             If `True`, the doubly-centered operator is applied to the
             covariance matrix, making it doubly-stochastic Gramian matrix
             with null space of dim 1 and zero sum rows and columns.
         """
 
-        if self.param is None:
-            raise RuntimeError('train model first.')
+        if param is None:
+            if self.param is None:
+                raise RuntimeError('train model first.')
+            param = self.param
 
-        if self.param.size < 2 * self.n_agents:
+        if param.size < 2 * self.n_agents:
             # The model does not have Thurstonian covariance.
             return None
 
+        if not self._has_scale:
+            raise RuntimeError('model does have scale parameters.')
+
         # Diagonals of covariance matrix
-        ti = np.abs(self.param[self.n_agents:2*self.n_agents])
+        ti = np.abs(param[self._scale_idx])
 
         # Off-diagonals of correlation matrix
-        n_pairs = self.n_agents * (self.n_agents - 1) // 2
-        if self.param.size >= 2*self.n_agents + n_pairs:
-            rij = self.param[2*self.n_agents:2*self.n_agents + n_pairs]
-        else:
-            rij = None
+        if not self.has_cov_factor:
+            n_pairs = self.n_agents * (self.n_agents - 1) // 2
+            if param.size >= 2*self.n_agents + n_pairs:
+                rij = param[2*self.n_agents:2*self.n_agents + n_pairs]
+            else:
+                rij = None
 
         # S is Covariance
         S = np.zeros((self.n_agents, self.n_agents), dtype=float)
@@ -307,7 +325,9 @@ class BaseModel(object):
         if centered:
             # double-centering operator C
             v = np.ones((self.n_agents, 1))
-            C = np.eye(self.n_agents) - v @ v.T / self.n_agents
+            J = v @ v.T  # matrix of all ones
+            Id = np.eye(self.n_agents)
+            C = Id - J / self.n_agents
 
             # double-centering Gram matrix
             S = C @ S @ C
@@ -327,7 +347,7 @@ class BaseModel(object):
             raise RuntimeError('train model first.')
 
         # Get covariance matrix
-        S = self._covariance(centered=True)
+        S = self._get_covariance(param=self.param, centered=True)
 
         # Scores
         xi = self.param[:self.n_agents]
@@ -556,7 +576,7 @@ class BaseModel(object):
             x = self.x
 
         # Call sample loss to only compute probabilities, but not loss itself
-        y = np.empty_like(self.y)  # use used
+        y = np.empty_like(self.y)  # not used
 
         if hasattr(self, "basis") and hasattr(self, "n_tie_factors"):
             # For those models that have factored tie

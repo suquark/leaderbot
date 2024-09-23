@@ -54,6 +54,7 @@ class BradleyTerry(BaseModel):
     BradleyTerryScaled
     BradleyTerryScaledR
     BradleyTerryScaledRIJ
+    BradleyTerryFactor
 
     Attributes
     ----------
@@ -142,7 +143,14 @@ class BradleyTerry(BaseModel):
         """
 
         super().__init__(data)
+
+        # Total number of parameters
         self.n_param = self.n_agents
+
+        # Approximate bound for parameters (only needed for shgo optimization
+        # method). Note that these bounds are not enforced, rather, only used
+        # for seeding multi-initial points in global optimization methods.
+        self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)]
 
     # ===========
     # sample loss
@@ -275,7 +283,10 @@ class BradleyTerry(BaseModel):
                 raise RuntimeError('train model first.')
             w = self.param
 
-        loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
+        loss_, grads, _ = self._sample_loss(w,
+                                            self.x,
+                                            self.y,
+                                            self.n_agents,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -286,9 +297,9 @@ class BradleyTerry(BaseModel):
         if return_jac:
             grad_xi, grad_xj = grads
             i, j = self.x.T
-            n = self.x.shape[0]
-            ax = np.arange(n)
-            jac = np.zeros((n, w.shape[0]))
+            n_samples = self.x.shape[0]
+            ax = np.arange(n_samples)
+            jac = np.zeros((n_samples, w.shape[0]))
             jac[ax, i] += grad_xi
             jac[ax, j] += grad_xj
 
@@ -296,16 +307,14 @@ class BradleyTerry(BaseModel):
 
         if constraint:
             # constraining score parameters
-            # constraint_diff = np.sum(np.exp(w[:n_agents])) - 1
-            constraint_diff = np.sum(w[:self.n_agents])
+            constraint_diff = np.sum(w[self._score_idx])
             constraint_loss = constraint_diff ** 2
             loss_ += constraint_loss
 
             if return_jac:
                 # constraining score parameters
-                # constraint_jac = 2 * constraint_diff * np.exp(w[:n_agents])
                 constraint_jac = 2.0 * constraint_diff
-                jac[:self.n_agents] += constraint_jac
+                jac[self._score_idx] += constraint_jac
 
         if return_jac:
             return loss_, jac

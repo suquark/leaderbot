@@ -123,7 +123,7 @@ def model_selection(
     name = []
     n_param = []
     nll = []  # Negative log-likelihood
-    cel = []  # Cross-Eentropy loss
+    cel = []  # Cross-entropy loss
     kld = []  # Kullback-Leibler divergence
     jsd = []  # Jensen-Shannon divergence
     aic = []  # Akaike information criterion

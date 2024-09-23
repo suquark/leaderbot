@@ -29,7 +29,6 @@ Classes to define statistical models to train on data.
     leaderbot.models.DavidsonScaledR
     leaderbot.models.DavidsonScaledRIJ
     leaderbot.models.DavidsonFactor
-    leaderbot.models.DavidsonGen
 
 Model Evaluation
 ----------------

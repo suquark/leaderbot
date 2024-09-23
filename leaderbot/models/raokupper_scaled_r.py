@@ -59,6 +59,7 @@ class RaoKupperScaledR(BaseModel):
     RaoKupper
     RaoKupperScaled
     RaoKupperScaledRIJ
+    RaoKupperFactor
 
     Attributes
     ----------
@@ -161,8 +162,18 @@ class RaoKupperScaledR(BaseModel):
         # Total number of parameters
         self.n_param = 2 * self.n_agents + 1 + self._n_tie_param
 
+        # Indices of parameters
+        self._scale_idx = slice(self.n_agents, self.n_agents * 2)
+        self._tie_factor_idx = slice(
+            1 + self.n_agents * 2,
+            1 + self.n_agents * (2 + self.n_tie_factors))
+
         # Basis functions for tie factor model
-        self.basis = self._generate_basis(self.n_tie_factors)
+        self.basis = self._generate_basis(self.n_agents, self.n_tie_factors)
+
+        # Containing which features
+        self._has_scale = True
+        self._has_tie_factor = True
 
         # Approximate bound for parameters (only needed for shgo optimization
         # method). Note that these bounds are not enforced, rather, only used
@@ -372,8 +383,12 @@ class RaoKupperScaledR(BaseModel):
                 raise RuntimeError('train model first.')
             w = self.param
 
-        loss_, grads, _ = self._sample_loss(w, self.x, self.y, self.n_agents,
-                                            self.n_tie_factors, self.basis,
+        loss_, grads, _ = self._sample_loss(w,
+                                            self.x,
+                                            self.y,
+                                            self.n_agents,
+                                            self.n_tie_factors,
+                                            self.basis,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -385,9 +400,9 @@ class RaoKupperScaledR(BaseModel):
             grad_xi, grad_xj, grad_ti, grad_tj, grad_r, grad_eta, grad_gi, \
                 grad_gj = grads
             i, j = self.x.T
-            n = self.x.shape[0]
-            ax = np.arange(n)
-            jac = np.zeros((n, w.shape[0]))
+            n_samples = self.x.shape[0]
+            ax = np.arange(n_samples)
+            jac = np.zeros((n_samples, w.shape[0]))
             jac[ax, i] += grad_xi
             jac[ax, j] += grad_xj
             jac[ax, i + self.n_agents] += grad_ti
@@ -397,38 +412,34 @@ class RaoKupperScaledR(BaseModel):
             if self.n_tie_factors == 0:
                 jac[ax, -1] += grad_eta
             else:
-                dg = np.zeros((n, self.n_agents, self.n_tie_factors))
+                dg = np.zeros((n_samples, self.n_agents, self.n_tie_factors))
                 dg[ax, i] += grad_gi
                 dg[ax, j] += grad_gj
-                jac[ax, 2 * self.n_agents + 1:2 * self.n_agents + 1 +
-                    self._n_tie_param] = \
-                    dg.reshape(n, self.n_agents * self.n_tie_factors)
+                jac[ax, self._tie_factor_idx] = \
+                    dg.reshape(n_samples, self.n_agents * self.n_tie_factors)
 
             jac = jac.sum(axis=0) / self._count
 
         if constraint:
             # constraining score parameters
-            # constraint_diff = np.sum(np.exp(w[:n_agents])) - 1
-            constraint_diff = np.sum(w[:self.n_agents])
+            constraint_diff = np.sum(w[self._score_idx])
             constraint_loss = constraint_diff ** 2
             loss_ += constraint_loss
 
             # Constraining scale parameters
-            constraint_scale = \
-                np.sum(w[self.n_agents:2*self.n_agents]**2) - 1.0
+            constraint_scale = np.sum(w[self._scale_idx]**2) - 1.0
             constraint_scale_loss = constraint_scale**2
             loss_ += constraint_scale_loss
 
             if return_jac:
                 # constraining score parameters
-                # constraint_jac = 2 * constraint_diff * np.exp(w[:n_agents])
                 constraint_jac = 2.0 * constraint_diff
-                jac[:self.n_agents] += constraint_jac
+                jac[self._score_idx] += constraint_jac
 
                 # Constraining scale parameters
                 constraint_scale_jac = \
-                    4.0 * constraint_scale * w[self.n_agents:2*self.n_agents]
-                jac[self.n_agents:2*self.n_agents] += constraint_scale_jac
+                    4.0 * constraint_scale * w[self._scale_idx]
+                jac[self._scale_idx] += constraint_scale_jac
 
         if return_jac:
             return loss_, jac
