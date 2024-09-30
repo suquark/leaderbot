@@ -53,16 +53,18 @@ def evaluate_error(
     """
 
     if data is not None:
-        x = data['X']
-        y = data['Y']
+        x = np.copy(data['X'])
+        y = np.copy(data['Y'])
     else:
-        x = model.x
-        y = model.y
+        x = np.copy(model.x)
+        y = np.copy(model.y)
 
     p_pred = model.infer(x)
 
     if not tie:
         # Remove the third column that corresponds to the tie data
+        y[:, 0] = y[:, 0] + 0.5 * y[:, 2]
+        y[:, 1] = y[:, 1] + 0.5 * y[:, 2]
         y = y[:, :-1]
         p_pred = p_pred[:, :-1]
 
@@ -84,30 +86,44 @@ def evaluate_error(
     # For MAPE and SMAPE, to avoid division by zero
     epsilon = 1e-8
 
+    # Weighted error
+    weight = n_obs_sum / n_obs_sum[:, 0].sum()
+    n_col = weight.shape[1]
+
     if metric == 'MAE':
         # Mean absolute error
-        sample_error = np.abs(obs - pred)
-        error = np.nanmean(sample_error, axis=0)
-        error_all = np.nanmean(sample_error)
+        sample_error = np.abs(obs - pred) * weight
+        error = np.nansum(sample_error, axis=0)
+        error_all = np.nansum(sample_error) / n_col
+        # error = np.nanmean(sample_error, axis=0)
+        # error_all = np.nanmean(sample_error)
 
     elif metric == 'MAPE':
         # Mean absolute percentage error
         obs[obs == 0] = epsilon
-        sample_error = 100.0 * np.abs((obs - pred) / obs)
-        error = np.nanmean(sample_error, axis=0)
-        error_all = np.nanmean(sample_error)
+        sample_error = 100.0 * np.abs((obs - pred) / obs) * weight
+        error = np.nansum(sample_error, axis=0)
+        error_all = np.nansum(sample_error) / n_col
+        # error = np.nanmean(sample_error, axis=0)
+        # error_all = np.nanmean(sample_error)
 
     elif metric == 'SMAPE':
+        # Symmetric mean absolute percentage error
         obs[obs == 0] = epsilon
         sample_error = 100.0 * np.abs(obs - pred) / \
-            ((np.abs(obs) + np.abs(pred)) / 2.0)
-        error = np.nanmean(sample_error, axis=0)
-        error_all = np.nanmean(sample_error)
+            ((np.abs(obs) + np.abs(pred)) / 2.0) * weight
+        error = np.nansum(sample_error, axis=0)
+        error_all = np.nansum(sample_error) / n_col
+        # error = np.nanmean(sample_error, axis=0)
+        # error_all = np.nanmean(sample_error)
 
     elif metric == 'RMSE':
-        sample_error = (obs - pred)**2
-        error = np.sqrt(np.nanmean(sample_error, axis=0))
-        error_all = np.sqrt(np.nanmean(sample_error))
+        # Root mean square error
+        sample_error = (obs - pred)**2 * weight
+        error = np.sqrt(np.nansum(sample_error, axis=0))
+        error_all = np.sqrt(np.nansum(sample_error) / n_col)
+        # error = np.sqrt(np.nanmean(sample_error, axis=0))
+        # error_all = np.sqrt(np.nanmean(sample_error))
 
     else:
         raise TypeError('"metric" is invalid.')
@@ -137,24 +153,30 @@ def evaluate_cel(model, data=None, tie=True):
     """
 
     if data is not None:
-        x = data['X']
-        y = data['Y']
+        x = np.copy(data['X'])
+        y = np.copy(data['Y'])
     else:
-        x = model.x
-        y = model.y
+        x = np.copy(model.x)
+        y = np.copy(model.y)
 
     p_pred = model.infer(x)
 
     if not tie:
         # Remove the third column that corresponds to the tie data
+        y[:, 0] = y[:, 0] + 0.5 * y[:, 2]
+        y[:, 1] = y[:, 1] + 0.5 * y[:, 2]
         y = y[:, :-1]
         p_pred = p_pred[:, :-1]
 
-    cel = y * np.log(p_pred)
-    cel[y == 0] = 0.0
-    cel = -cel.sum() / y.sum()
+    cel_samples = y * np.log(p_pred)
+    cel_samples[y == 0] = 0.0
+    cel = -cel_samples.sum(axis=0) / y.sum()
+    cel_all = -cel_samples.sum() / y.sum()
 
-    return cel
+    if not tie:
+        cel = np.r_[cel, np.inf]
+
+    return cel, cel_all
 
 
 # ============
@@ -167,16 +189,18 @@ def evaluate_kld(model, data=None, tie=True):
     """
 
     if data is not None:
-        x = data['X']
-        y = data['Y']
+        x = np.copy(data['X'])
+        y = np.copy(data['Y'])
     else:
-        x = model.x
-        y = model.y
+        x = np.copy(model.x)
+        y = np.copy(model.y)
 
     p_pred = model.infer(x)
 
     if not tie:
         # Remove the third column that corresponds to the tie data
+        y[:, 0] = y[:, 0] + 0.5 * y[:, 2]
+        y[:, 1] = y[:, 1] + 0.5 * y[:, 2]
         y = y[:, :-1]
         p_pred = p_pred[:, :-1]
 
@@ -204,16 +228,18 @@ def evaluate_jsd(model, data=None, tie=True):
     """
 
     if data is not None:
-        x = data['X']
-        y = data['Y']
+        x = np.copy(data['X'])
+        y = np.copy(data['Y'])
     else:
-        x = model.x
-        y = model.y
+        x = np.copy(model.x)
+        y = np.copy(model.y)
 
     p_pred = model.infer(x)
 
     if not tie:
         # Remove the third column that corresponds to the tie data
+        y[:, 0] = y[:, 0] + 0.5 * y[:, 2]
+        y[:, 1] = y[:, 1] + 0.5 * y[:, 2]
         y = y[:, :-1]
         p_pred = p_pred[:, :-1]
 

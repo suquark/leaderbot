@@ -97,7 +97,7 @@ nitpicky = True
 # does not seem to do anything. To fix this, I added a javascript (see in
 # /docs/source/_static/js/custom-pydata.js) which overwrites
 # <a href"path/contents.html"> to <a href="path/index.html>".
-root_doc = "contents"
+# root_doc = "contents"
 
 # Common definitions for the whole pages
 rst_epilog = '''
@@ -120,7 +120,7 @@ rst_epilog = '''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'custom_domain',
+    # 'custom_domain',  # Gives error: no module names leaderbot
     'sphinx.ext.autodoc',
     # 'sphinx_math_dollar',
     'sphinx.ext.mathjax',
@@ -220,7 +220,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "PyPI",
-            "url": "https://pypi.org/project",
+            "url": "https://pypi.org/project/leaderbot/",
             "icon": "fab fa-python",
             "type": "fontawesome",
         },

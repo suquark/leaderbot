@@ -11,7 +11,7 @@
 # =======
 
 import numpy as np
-from ._util import float_to_str, evaluate_kld, evaluate_jsd, evaluate_error
+from ._util import evaluate_kld, evaluate_jsd, evaluate_error
 from ..data import DataType
 
 __all__ = ['generalization']
@@ -196,14 +196,14 @@ def generalization(
     }
 
     if report:
-        print('+-----------------------+----------------------------+-------' +
-              '-+--------+')
-        print(f'|                       |           {metric:>5s}            ' +
-              '|        |        |')
-        print('| model                 |   win   loss    tie    all | KLD   ' +
-              ' | JSD %  |')
-        print('+-----------------------+----------------------------+-------' +
-              '-+--------+')
+        print('+----+-----------------------+----------------------------+--' +
+              '----+------+')
+        print(f'|    |                       |           {metric:>5s}       ' +
+              '     |      |      |')
+        print('| id | model                 |   win   loss    tie    all | K' +
+              'LD% | JSD% |')
+        print('+----+-----------------------+----------------------------+--' +
+              '----+------+')
 
         for i in range(len(name)):
 
@@ -213,22 +213,34 @@ def generalization(
                 name_str = name_str[:(name_length - 3)] + '...'
             name_str = name_str.ljust(name_length)
 
-            kld_str = float_to_str(kld[i])
-
             if np.isnan(err_tie[i]):
                 tie_str = '-----'
             else:
-                tie_str = f'{err_tie[i]:>5.2f}'
+                if density:
+                    tie_str = f'{err_tie[i]:>5.2f}'
+                else:
+                    tie_str = f'{err_tie[i]:>5.1f}'
 
-            print(f'| {name_str:<21s} '
-                  f'| {err_win[i]:>5.2f} '
-                  f' {err_loss[i]:>5.2f} '
-                  f' {tie_str} '
-                  f' {err_all[i]:>5.2f} '
-                  f'| {kld_str} '
-                  f'| {100.0 * jsd[i]:>0.4f} |')
+            if density:
+                print(f'| {i+1:>2d} '
+                      f'| {name_str:<21s} '
+                      f'| {err_win[i]:>5.2f} '
+                      f' {err_loss[i]:>5.2f} '
+                      f' {tie_str} '
+                      f' {err_all[i]:>5.2f} '
+                      f'| {100.0 * kld[i]:>4.2f} '
+                      f'| {100.0 * jsd[i]:>4.2f} |')
+            else:
+                print(f'| {i+1:>2d} '
+                      f'| {name_str:<21s} '
+                      f'| {err_win[i]:>5.1f} '
+                      f' {err_loss[i]:>5.1f} '
+                      f' {tie_str} '
+                      f' {err_all[i]:>5.1f} '
+                      f'| {100.0 * kld[i]:>4.2f} '
+                      f'| {100.0 * jsd[i]:>4.2f} |')
 
-        print('+-----------------------+----------------------------+-------' +
-              '-+--------+')
+        print('+----+-----------------------+----------------------------+--' +
+              '----+------+')
 
     return metrics

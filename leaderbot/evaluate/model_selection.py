@@ -63,6 +63,10 @@ def model_selection(
         * ``'nll'``: list of negative log-likelihood values of the models.
         * ``'aic'``: list of Akaike information criterion of the models.
         * ``'bic'``: list of Bayesian information criterion of the models.
+        * ``'cel_win'``: list of cross entropies for win outcomes.
+        * ``'cel_loss'``: list of cross entropies for loss outcomes.
+        * ``'cel_tie'``: list of cross entropies for tie outcomes.
+        * ``'cel_all'``: list of cross entropies for all outcomes.
 
     Raises
     ------
@@ -123,7 +127,10 @@ def model_selection(
     name = []
     n_param = []
     nll = []  # Negative log-likelihood
-    cel = []  # Cross-entropy loss
+    cel_win = []  # Cross-entropy loss for win
+    cel_loss = []  # Cross-entropy loss for loss
+    cel_tie = []  # Cross-entropy loss for tie
+    cel_all = []  # Cross-entropy loss for all win, loss, and tie
     kld = []  # Kullback-Leibler divergence
     jsd = []  # Jensen-Shannon divergence
     aic = []  # Akaike information criterion
@@ -143,7 +150,12 @@ def model_selection(
             tie_ = tie
 
         # Cross entropy loss
-        cel.append(evaluate_cel(model, data=None, tie=tie_))
+        cel_, cel_all_ = evaluate_cel(model, data=None, tie=tie_)
+
+        cel_win.append(cel_[0])
+        cel_loss.append(cel_[1])
+        cel_tie.append(cel_[2])
+        cel_all.append(cel_all_)
 
         # Loss with no constraint (just likelihood)
         nll_ = model.loss(return_jac=False, constraint=False)
@@ -158,7 +170,10 @@ def model_selection(
         'name': name,
         'n_param': n_param,
         'nll': nll,
-        'cel': cel,
+        'cel_win': cel_win,
+        'cel_loss': cel_loss,
+        'cel_tie': cel_tie,
+        'cel_all': cel_all,
         'jsd': jsd,
         'kld': kld,
         'aic': aic,
@@ -166,12 +181,14 @@ def model_selection(
     }
 
     if report:
-        print('+-----------------------+---------+--------+--------+--------' +
-              '-+---------+')
-        print('| model                 | # param | NLL    | CEL    | AIC    ' +
-              ' | BIC     |')
-        print('+-----------------------+---------+--------+--------+--------' +
-              '-+---------+')
+        print('+----+-----------------------+---------+--------+------------' +
+              '--------------------+---------+---------+')
+        print('|    |                       |         |        |            ' +
+              '   CEL              |         |         |')
+        print('| id | model                 | # param |    NLL |    all     ' +
+              'win    loss     tie |     AIC |     BIC |')
+        print('+----+-----------------------+---------+--------+------------' +
+              '--------------------+---------+---------+')
 
         for i in range(len(name)):
 
@@ -181,17 +198,24 @@ def model_selection(
                 name_str = name_str[:(name_length - 3)] + '...'
             name_str = name_str.ljust(name_length)
 
-            cel_str = float_to_str(cel[i])
+            cel_win_str = float_to_str(cel_win[i])
+            cel_loss_str = float_to_str(cel_loss[i])
+            cel_tie_str = float_to_str(cel_tie[i])
+            cel_all_str = float_to_str(cel_all[i])
 
-            print(f'| {name_str:<21s} '
+            print(f'| {i+1:>2d} '
+                  f'| {name_str:<21s} '
                   f'| {n_param[i]:>7} '
                   f'| {nll[i]:>0.4f} '
-                  f'| {cel_str} '
-                  f'| {aic[i]:>7.2f} '
-                  f'| {bic[i]:>7.2f} |')
+                  f'| {cel_all_str}'
+                  f'  {cel_win_str}'
+                  f'  {cel_loss_str}'
+                  f'  {cel_tie_str} '
+                  f'| {aic[i]:>7.1f} '
+                  f'| {bic[i]:>7.1f} |')
 
-        print('+-----------------------+---------+--------+--------+--------' +
-              '-+---------+')
+        print('+----+-----------------------+---------+--------+------------' +
+              '--------------------+---------+---------+')
 
     return metrics
 

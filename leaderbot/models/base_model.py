@@ -296,7 +296,7 @@ class BaseModel(object):
         ti = np.abs(param[self._scale_idx])
 
         # Off-diagonals of correlation matrix
-        if not self.has_cov_factor:
+        if not self._has_cov_factor:
             n_pairs = self.n_agents * (self.n_agents - 1) // 2
             if param.size >= 2*self.n_agents + n_pairs:
                 rij = param[2*self.n_agents:2*self.n_agents + n_pairs]
@@ -862,8 +862,6 @@ class BaseModel(object):
 
             plt.tight_layout()
 
-            plt.show()
-
             texplot.show_or_save_plot(plt, default_filename='scores',
                                       transparent_background=False,
                                       dpi=200, show_and_save=save,
@@ -1036,6 +1034,17 @@ class BaseModel(object):
                               label='Observed')
                 ax[1, 2].plot(rng, 100.0 * p_ties_pred[rank_], color='black',
                               label='Predicted')
+
+                # Twin axes # TEST
+                ax_t = np.empty((2, 3), dtype=object)
+
+                for i in range(2):
+                    for j in range(3):
+                        ax_t[i, j] = ax[i, j].twinx()
+
+                ax_t[1, 0].plot(rng, 100.0 * np.abs(
+                    1.0 - p_wins_pred[rank_] / p_wins[rank_]), color='cyan',
+                    label='Error')
 
                 for j in range(3):
                     ax[1, j].set_ylim(top=100)
