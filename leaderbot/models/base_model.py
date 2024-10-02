@@ -1529,6 +1529,12 @@ class BaseModel(object):
         score_ranked = score[rank_]
         colors = np.linspace(0.0, 1.0, max_rank)
 
+        # Cut long names
+        max_length = 20
+        for i in range(agents_ranked.size):
+            if len(agents_ranked[i]) > max_length:
+                agents_ranked[i] = agents_ranked[i][:max_length-3] + '...'
+
         # Plot titles
         # if method == 'mds':
         #     method_name = 'Multi-Dimensional Projection'
