@@ -517,18 +517,20 @@ class BaseModel(object):
 
     def infer(
             self,
-            x: Union[List[int], np.ndarray[np.integer]] = None):
+            x: Union[List[int], np.ndarray[np.integer], DataType] = None):
         """
         Make inference on probabilities of outcome of win, loss, or tie.
 
         Parameters
         ----------
 
-        x : np.ndarray
+        x : np.ndarray or leaderbot.data.DataType
             A 2D array of integers with the shape ``(n_pairs, 2)`` where each
             row consists of indices ``[i, j]`` representing a match between a
-            pair of agents with the indices ``i`` and ``j``. If `None`, the
-            ``X`` variable from the input data is used.
+            pair of agents with the indices ``i`` and ``j``. Alternatively,
+            a dictionary of the type :class:`leaderbot.data.DataType` can
+            be provided. If `None`, the ``X`` variable from the input data is
+            used.
 
         Returns
         -------
@@ -573,20 +575,26 @@ class BaseModel(object):
             raise RuntimeError('train model first.')
 
         if x is None:
-            x = self.x
+            x_ = self.x
+        elif isinstance(x, dict) and \
+                all(key in x for key in DataType.__annotations__):
+            x_ = x['X']
+        else:
+            x_ = x
 
         # Call sample loss to only compute probabilities, but not loss itself
-        y = np.empty_like(self.y)  # not used
+        y = np.empty((x_.shape[0], self.y.shape[1]),
+                     dtype=self.y.dtype)  # not used
 
         if hasattr(self, "basis") and hasattr(self, "n_tie_factors"):
             # For those models that have factored tie
-            _, _, probs = self._sample_loss(self.param, x, self.y,
+            _, _, probs = self._sample_loss(self.param, x_, self.y,
                                             self.n_agents, self.n_tie_factors,
                                             self.basis, return_jac=False,
                                             inference_only=True)
         else:
             # For those models that do not have factored tie
-            _, _, probs = self._sample_loss(self.param, x, y, self.n_agents,
+            _, _, probs = self._sample_loss(self.param, x_, y, self.n_agents,
                                             return_jac=False,
                                             inference_only=True)
 
@@ -605,11 +613,13 @@ class BaseModel(object):
         Parameters
         ----------
 
-        x : np.ndarray
+        x : np.ndarray or leaderbot.data.DataType
             A 2D array of integers with the shape ``(n_pairs, 2)`` where each
             row consists of indices ``[i, j]`` representing a match between a
-            pair of agents with the indices ``i`` and ``j``. If `None`, the
-            ``X`` variable from the input data is used.
+            pair of agents with the indices ``i`` and ``j``. Alternatively,
+            a dictionary of the type :class:`leaderbot.data.DataType` can
+            be provided. If `None`, the ``X`` variable from the input data is
+            used.
 
         Returns
         -------
@@ -659,9 +669,14 @@ class BaseModel(object):
             raise RuntimeError('train model first.')
 
         if x is None:
-            x = self.x
+            x_ = self.x
+        elif isinstance(x, dict) and \
+                all(key in x for key in DataType.__annotations__):
+            x_ = x['X']
+        else:
+            x_ = x
 
-        probs = self.infer(x)
+        probs = self.infer(x_)
         max_ind = np.argmax(probs, axis=1)
 
         pred = np.zeros((probs.shape[0], ), dtype=int)

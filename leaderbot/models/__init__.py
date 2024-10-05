@@ -20,12 +20,11 @@ from .davidson_scaled import DavidsonScaled
 from .davidson_scaled_r import DavidsonScaledR
 from .davidson_scaled_rij import DavidsonScaledRIJ
 from .davidson_factor import DavidsonFactor
-from .davidson_gen import DavidsonGen
 
 __all__ = [
     'BradleyTerry', 'BradleyTerryScaled', 'BradleyTerryScaledR',
     'BradleyTerryScaledRIJ', 'BradleyTerryFactor', 'RaoKupper',
     'RaoKupperScaled', 'RaoKupperScaledR', 'RaoKupperScaledRIJ',
     'RaoKupperFactor', 'Davidson', 'DavidsonScaled', 'DavidsonScaledR',
-    'DavidsonScaledRIJ', 'DavidsonFactor', 'DavidsonGen',
+    'DavidsonScaledRIJ', 'DavidsonFactor',
 ]

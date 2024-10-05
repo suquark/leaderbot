@@ -9,7 +9,7 @@ chat\ **bot**\ s based on `Chatbot Arena <https://lmarena.ai/>`_ project.
 Install
 =======
 
-Install with ``pip`` from `PyPI <https://pypi.org/project/leaderbot/>`_:
+Install with ``pip``:
 
 .. code-block::
 
