@@ -1022,44 +1022,39 @@ class BaseModel(object):
 
                 fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(12, 5.5))
 
+                obs_color = 'black'
+                pred_color = 'maroon'
+
+                obs_label = 'Observed Data'
+                pred_label = 'Model Prediction'
+
                 # First plot row: frequencies
-                ax[0, 0].plot(rng, n_wins[rank_], color='maroon',
-                              label='Observed')
-                ax[0, 0].plot(rng, n_wins_pred[rank_], color='black',
-                              label='Predicted')
-                ax[0, 1].plot(rng, n_losses[rank_], color='maroon',
-                              label='Observed')
-                ax[0, 1].plot(rng, n_losses_pred[rank_], color='black',
-                              label='Predicted')
-                ax[0, 2].plot(rng, n_ties[rank_], color='maroon',
-                              label='Observed')
-                ax[0, 2].plot(rng, n_ties_pred[rank_], color='black',
-                              label='Predicted')
+                ax[0, 0].plot(rng, n_wins[rank_], color=obs_color,
+                              label=obs_label)
+                ax[0, 0].plot(rng, n_wins_pred[rank_], color=pred_color,
+                              label=pred_label)
+                ax[0, 1].plot(rng, n_losses[rank_], color=obs_color,
+                              label=obs_label)
+                ax[0, 1].plot(rng, n_losses_pred[rank_], color=pred_color,
+                              label=pred_label)
+                ax[0, 2].plot(rng, n_ties[rank_], color=obs_color,
+                              label=obs_label)
+                ax[0, 2].plot(rng, n_ties_pred[rank_], color=pred_color,
+                              label=pred_label)
 
                 # Second plot row: probabilities
-                ax[1, 0].plot(rng, 100.0 * p_wins[rank_], color='maroon',
-                              label='Observed')
-                ax[1, 0].plot(rng, 100.0 * p_wins_pred[rank_], color='black',
-                              label='Predicted')
-                ax[1, 1].plot(rng, 100.0 * p_losses[rank_], color='maroon',
-                              label='Observed')
-                ax[1, 1].plot(rng, 100.0 * p_losses_pred[rank_], color='black',
-                              label='Predicted')
-                ax[1, 2].plot(rng, 100.0 * p_ties[rank_], color='maroon',
-                              label='Observed')
-                ax[1, 2].plot(rng, 100.0 * p_ties_pred[rank_], color='black',
-                              label='Predicted')
-
-                # Twin axes # TEST
-                ax_t = np.empty((2, 3), dtype=object)
-
-                for i in range(2):
-                    for j in range(3):
-                        ax_t[i, j] = ax[i, j].twinx()
-
-                ax_t[1, 0].plot(rng, 100.0 * np.abs(
-                    1.0 - p_wins_pred[rank_] / p_wins[rank_]), color='cyan',
-                    label='Error')
+                ax[1, 0].plot(rng, 100.0 * p_wins[rank_], color=obs_color,
+                              label=obs_label)
+                ax[1, 0].plot(rng, 100.0 * p_wins_pred[rank_],
+                              color=pred_color, label=pred_label)
+                ax[1, 1].plot(rng, 100.0 * p_losses[rank_], color=obs_color,
+                              label=obs_label)
+                ax[1, 1].plot(rng, 100.0 * p_losses_pred[rank_],
+                              color=pred_color, label=pred_label)
+                ax[1, 2].plot(rng, 100.0 * p_ties[rank_], color=obs_color,
+                              label=obs_label)
+                ax[1, 2].plot(rng, 100.0 * p_ties_pred[rank_],
+                              color=pred_color, label=pred_label)
 
                 for j in range(3):
                     ax[1, j].set_ylim(top=100)
@@ -1075,15 +1070,15 @@ class BaseModel(object):
                         mticker.PercentFormatter(decimals=0))
 
                     for i in range(2):
-                        ax[i, j].legend(fontsize='small')
+                        ax[i, j].legend(fontsize='x-small')
                         ax[i, j].set_xlim([rng[0], rng[-1]])
                         ax[i, j].set_ylim(bottom=0)
                         ax[i, j].set_xlabel('Rank')
 
                 for i in range(2):
-                    ax[i, 0].set_title('Wins')
-                    ax[i, 1].set_title('Losses')
-                    ax[i, 2].set_title('Ties')
+                    ax[i, 0].set_title('Win')
+                    ax[i, 1].set_title('Loss')
+                    ax[i, 2].set_title('Tie')
 
                 plt.tight_layout()
 
@@ -1103,7 +1098,7 @@ class BaseModel(object):
             source: str = 'both',
             win_range: tuple = None,
             tie_range: tuple = None,
-            horizontal: bool = True,
+            horizontal: bool = False,
             save: bool = False,
             latex: bool = False):
         """
@@ -1141,7 +1136,7 @@ class BaseModel(object):
             range of the heatmap plot for tie matrix. If `None`, the minimum
             and maximum range of data is used.
 
-        horizontal : bool, default=True
+        horizontal : bool, default=False
             If `True`, the subplots for win and tie are placed row-wise. If
             `False`, they are plotted in column-wise.
 
@@ -1585,8 +1580,8 @@ class BaseModel(object):
                 # ax.set_aspect('equal', adjustable='box')
                 # ax.set_xlim([-0.021, 0])
                 # ax.set_ylim([-0.005, 0.0125])
-                ax.set_xlabel(r'$x_1$')
-                ax.set_ylabel(r'$x_2$')
+                ax.set_xlabel(r'$\xi_1$')
+                ax.set_ylabel(r'$\xi_2$')
                 # ax.set_title(f'{method_name} in {dim_name}')
 
             elif dim == '3d':
@@ -1623,9 +1618,9 @@ class BaseModel(object):
 
                 # ax.grid(False)
 
-                ax.set_xlabel(r'$x_1$')
-                ax.set_ylabel(r'$x_2$')
-                ax.set_zlabel(r'$x_3$')
+                ax.set_xlabel(r'$\xi_1$')
+                ax.set_ylabel(r'$\xi_2$')
+                ax.set_zlabel(r'$\xi_3$')
                 # ax.set_title(f'{method_name} in {dim_name}')
 
                 # Remove axis panes (background of the plot)

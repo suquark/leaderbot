@@ -323,8 +323,8 @@ class RaoKupperScaledRIJ(BaseModel):
     def loss(
             self,
             w: Union[List[float], np.ndarray[np.floating]] = None,
-            return_jac: bool = True,
-            constraint: bool = True):
+            return_jac: bool = False,
+            constraint: bool = False):
         """
         Total loss for all data instances.
 
@@ -335,11 +335,11 @@ class RaoKupperScaledRIJ(BaseModel):
             Parameters. If `None`, the pre-trained parameters are used,
             provided is already trained.
 
-        return_jac : bool, default=True
+        return_jac : bool, default=False
             if `True`, the Jacobian of loss with respect to the parameters is
             also returned.
 
-        constraint : bool, default=True
+        constraint : bool, default=False
             If `True`, the constrain on the parameters is also added to the
             loss.
 

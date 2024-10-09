@@ -25,7 +25,7 @@ def generalization(
         models: list,
         test_data: DataType = None,
         train: bool = False,
-        tie: bool = True,
+        tie: bool = False,
         density: bool = False,
         metric: str = 'MAE',
         report: bool = True):
@@ -51,7 +51,7 @@ def generalization(
         If `True`, the models will be trained. If `False`, it is assumed that
         the models are pre-trained.
 
-    tie : bool, default=True
+    tie : bool, default=False
         If `False`, ties in the data are not counted toward model evaluation.
         This option is only effective on
         :class:`leaderbot.models.BradleyTerry` model, and has no effect on the

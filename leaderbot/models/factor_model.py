@@ -220,11 +220,13 @@ class FactorModel(BaseModel):
         Parameters
         ----------
 
-        x : np.ndarray
+        x : np.ndarray or leaderbot.data.DataType
             A 2D array of integers with the shape ``(n_pairs, 2)`` where each
             row consists of indices ``[i, j]`` representing a match between a
-            pair of agents with the indices ``i`` and ``j``. If `None`, the
-            ``X`` variable from the input data is used.
+            pair of agents with the indices ``i`` and ``j``. Alternatively,
+            a dictionary of the type :class:`leaderbot.data.DataType` can
+            be provided. If `None`, the ``X`` variable from the input data is
+            used.
 
         Returns
         -------
@@ -269,13 +271,18 @@ class FactorModel(BaseModel):
             raise RuntimeError('train model first.')
 
         if x is None:
-            x = self.x
+            x_ = self.x
+        elif isinstance(x, dict) and \
+                all(key in x for key in DataType.__annotations__):
+            x_ = x['X']
+        else:
+            x_ = x
 
         # Call sample loss to only compute probabilities, but not loss itself
         # _, _, probs = self._sample_loss(self.param, x, None, self.n_agents,
         if hasattr(self, "basis") and hasattr(self, "n_tie_factors"):
             _, _, probs = self._sample_loss(self.param,
-                                            x,
+                                            x_,
                                             self.y,
                                             self.n_agents,
                                             self.n_cov_factors,
@@ -285,7 +292,7 @@ class FactorModel(BaseModel):
                                             inference_only=True)
         else:
             _, _, probs = self._sample_loss(self.param,
-                                            x,
+                                            x_,
                                             self.y,
                                             self.n_agents,
                                             self.n_cov_factors,

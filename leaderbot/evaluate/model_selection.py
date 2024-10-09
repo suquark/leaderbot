@@ -23,7 +23,7 @@ __all__ = 'model_selection'
 def model_selection(
         models: list,
         train: bool = False,
-        tie: bool = True,
+        tie: bool = False,
         report: bool = True):
     """
     Evaluate model selection.
@@ -43,7 +43,7 @@ def model_selection(
         If `True`, the models will be trained. If `False`, it is assumed that
         the models are pre-trained.
 
-    tie : bool, default=True
+    tie : bool, default=False
         If `False`, ties in the data are not counted toward model evaluation.
         This option is only effective on
         :class:`leaderbot.models.BradleyTerry` model, and has no effect on the

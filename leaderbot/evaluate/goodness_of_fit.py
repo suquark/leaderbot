@@ -22,7 +22,7 @@ __all__ = ['goodness_of_fit']
 def goodness_of_fit(
         models: list,
         train: bool = False,
-        tie: bool = True,
+        tie: bool = False,
         density: bool = False,
         metric: str = 'MAE',
         report: bool = True):
@@ -45,7 +45,7 @@ def goodness_of_fit(
         the models are pre-trained.
 
 
-    tie : bool, default=True
+    tie : bool, default=False
         If `False`, ties in the data are not counted toward model evaluation.
         This option is only effective on
         :class:`leaderbot.models.BradleyTerry` model, and has no effect on the
