@@ -1,12 +1,12 @@
 import leaderbot as lb
 
-# Load default dataset shipped with the package
+# Load dataset
 data = lb.data.load()
 
 # Split data to training and test data
 training_data, test_data = lb.data.split(data, test_ratio=0.1, seed=20)
 
-# Create a list of models, corresdponding to models 2, 11, 12, 23, and 24 in ;# \Cref{tab:model-selection} #;
+# Create a list of models, corresponding to models 2, 11, 12, 23, and 24 in ;# \Cref{tab:model-selection} #;
 models = [
     lb.models.BradleyTerryFactor(training_data, n_cov_factors=0),
     lb.models.RaoKupperFactor(training_data, n_cov_factors=0, n_tie_factors=0),

@@ -11,11 +11,12 @@ from .models import BradleyTerry, BradleyTerryScaled, \
     BradleyTerryScaledR, BradleyTerryScaledRIJ, RaoKupper, RaoKupperScaled, \
     RaoKupperScaledR, RaoKupperScaledRIJ, Davidson, DavidsonScaled, \
     DavidsonScaledR, DavidsonScaledRIJ
-from .evaluate import model_selection, goodness_of_fit, generalization
+from .evaluate import model_selection, goodness_of_fit, generalization, \
+    compare_ranks
 
 __all__ = ['load', 'convert', 'split', 'BradleyTerry', 'BradleyTerryScaled',
            'BradleyTerryScaledR', 'BradleyTerryScaledRIJ', 'RaoKupper',
            'RaoKupperScaled', 'RaoKupperScaledR', 'RaoKupperScaledRIJ',
            'Davidson', 'DavidsonScaled', 'DavidsonScaledR',
            'DavidsonScaledRIJ', 'model_selection', 'goodness_of_fit',
-           'generalization']
+           'generalization', 'compare_ranks']

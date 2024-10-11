@@ -9,5 +9,7 @@
 from .model_selection import model_selection
 from .goodness_of_fit import goodness_of_fit
 from .generalization import generalization
+from .compare_ranks import compare_ranks
 
-__all__ = ['model_selection', 'goodness_of_fit', 'generalization']
+__all__ = ['model_selection', 'goodness_of_fit', 'generalization',
+           'compare_ranks']

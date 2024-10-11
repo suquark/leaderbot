@@ -317,6 +317,46 @@ error (MAE), KL divergence (KLD), Jensen-Shannon divergence
     | DavidsonScaledR       |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
     +-----------------------+----------------------------+--------+--------+
 
+Comparing Ranking of Models
+...........................
+
+Ranking of various models can be compared using
+``leaderbot.evaluate.comopare_rank`` function:
+
+.. code-block:: python
+    :emphasize-lines: 25
+
+    >>> import leaderbot as lb
+    >>> from leaderbot.models import BradleyTerryFactor as BTF
+    >>> from leaderbot.models import RaoKupperFactor as RKF
+    >>> from leaderbot.models import DavidsonFactor as DVF
+
+    >>> # Load data
+    >>> data = lb.data.load()
+
+    >>> # Create a list of models to compare
+    >>> models = [
+    ...     BTF(data, n_cov_factors=0),
+    ...     BTF(data, n_cov_factors=3),
+    ...     RKF(data, n_cov_factors=0, n_tie_factors=0),
+    ...     RKF(data, n_cov_factors=0, n_tie_factors=1),
+    ...     RKF(data, n_cov_factors=0, n_tie_factors=3),
+    ...     DVF(data, n_cov_factors=0, n_tie_factors=0),
+    ...     DVF(data, n_cov_factors=0, n_tie_factors=1),
+    ...     DVF(data, n_cov_factors=0, n_tie_factors=3)
+    ... ]
+
+    >>> # Train the models
+    >>> for model in models: model.train()
+
+    >>> # Compare ranking of the models
+    >>> lb.evaluate.compare_ranks(models, rank_range=[40, 70])
+
+The above code produces plot below.
+
+.. image:: docs/source/_static/images/plots/bump_chart.png
+    :align: center
+    :class: custom-dark
 
 
 Test

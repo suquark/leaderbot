@@ -44,6 +44,7 @@ Evaluate metrics for model selection, goodness of fit, and generalization perfor
     leaderbot.evaluate.model_selection
     leaderbot.evaluate.goodness_of_fit
     leaderbot.evaluate.generalization
+    leaderbot.evaluate.compare_ranks
 
 Data
 ----

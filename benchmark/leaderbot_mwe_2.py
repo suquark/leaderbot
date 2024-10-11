@@ -1,9 +1,9 @@
 import leaderbot as lb
 
-# Load default dataset shipped with the package
+# Load dataset
 data = lb.data.load()
 
-# Create a list of models, corresdponding to models 2, 11, 12, 23, and 24 in ;# \Cref{tab:model-selection} #;
+# Create a list of models, corresponding to models 2, 11, 12, 23, and 24 in ;# \Cref{tab:model-selection} #;
 models = [
     lb.models.BradleyTerryFactor(data, n_cov_factors=0),
     lb.models.RaoKupperFactor(data, n_cov_factors=0, n_tie_factors=0),
@@ -14,6 +14,9 @@ models = [
 
 # Pre-train the models
 for model in models: model.train()
+
+# Compare ranking of various models. This generates a bump chart similar to ;# \Cref{fig:bump_chart} #;
+lb.evaluate.compare_ranks(models, rank_range=[0, 60])
 
 # Evaluate model-selection metrics, similar to ;# \Cref{tab:model-selection} #;
 mod_metrics = lb.evaluate.model_selection(models, report=True)
