@@ -16,7 +16,7 @@ models = [
 for model in models: model.train()
 
 # Compare ranking of various models. This generates a bump chart similar to ;# \Cref{fig:bump_chart} #;
-lb.evaluate.compare_ranks(models, rank_range=[0, 60])
+lb.evaluate.compare_ranks(models, rank_range=[1, 60])
 
 # Evaluate model-selection metrics, similar to ;# \Cref{tab:model-selection} #;
 mod_metrics = lb.evaluate.model_selection(models, report=True)
