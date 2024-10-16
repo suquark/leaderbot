@@ -13,3 +13,4 @@ sphinx-prompt
 sphinx-copybutton
 sphinx-gallery
 sphinxext-opengraph
+sphinx-argparse
