@@ -120,6 +120,9 @@ class RaoKupperScaledRIJ(BaseModel):
     visualize
         Visualize correlation and score of the agents.
 
+    scores
+        Get scores
+
     plot_scores
         Plots scores versus rank.
 

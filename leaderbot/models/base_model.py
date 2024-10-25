@@ -13,7 +13,7 @@
 import numpy as np
 import scipy.optimize
 from ..data import DataType
-from ._plot_utils import plot_match_matrices
+from ._plot_utils import plot_match_matrices, snap_limits_to_ticks
 from typing import List, Union
 import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
@@ -95,6 +95,9 @@ class BaseModel(object):
 
     visualize
         Visualize correlation and score of the agents.
+
+    scores
+        Get scores
 
     plot_scores
         Plots scores versus rank
@@ -743,6 +746,54 @@ class BaseModel(object):
         rnk = np.argsort(score)[::-1]
 
         return rnk
+
+    # ======
+    # scores
+    # ======
+
+    def scores(self):
+        """
+        Get scores.
+
+        Raises
+        ------
+
+        RuntimeError
+            If the model is not trained before calling this method.
+
+        See Also
+        --------
+
+        plot_scores
+        rank
+
+        Examples
+        --------
+
+        .. code-block:: python
+            :emphasize-lines: 12
+
+            >>> from leaderbot.data import load
+            >>> from leaderbot.models import DavidsonScaled
+
+            >>> # Create a model
+            >>> data = load()
+            >>> model = DavidsonScaled(data)
+
+            >>> # Train the model
+            >>> model.train()
+
+            >>> # Plot scores by rank
+            >>> scores = model.scores()
+        """
+
+        if self.param is None:
+            raise RuntimeError('train model first.')
+
+        # Scores are the x_i, x_j parameters across all models
+        scores = self.param[:self.n_agents]
+
+        return scores
 
     # ===========
     # plot scores
@@ -1414,6 +1465,8 @@ class BaseModel(object):
 
     def visualize(
             self,
+            ax=None,
+            cmap=None,
             max_rank: int = None,
             method: str = 'kpca',
             dim: str = '3d',
@@ -1425,6 +1478,13 @@ class BaseModel(object):
 
         Parameters
         ----------
+
+        ax : mpl_toolkits.mplot3d.axes3d.Axes3D, default=None
+            Axis object for plotting. If `None`, a 3D axis is created.
+
+        cmap : matplotlib.colors.LinearSegmentedColormap, default=None
+            Colormap for the plot. If `None`, matplotlib's `gist_rainbow_r` is
+            used.
 
         max_rank : int, default=None
             The maximum number of agents to be displayed. If `None`, all
@@ -1558,7 +1618,10 @@ class BaseModel(object):
         # Visualize
         with texplot.theme(rc={'font.family': 'sans-serif'}, use_latex=latex):
 
-            fontsize = 9
+            fontsize = 10
+
+            if cmap is None:
+                cmap = 'turbo_r'
 
             if dim == '2d':
 
@@ -1569,9 +1632,11 @@ class BaseModel(object):
                 x_ = -points_ranked[:, 0]
                 y_ = points_ranked[:, 1]
 
-                fig, ax = plt.subplots(figsize=(8, 8))
-                ax.scatter(x_, y_, s=sizes, c=colors, cmap='turbo_r',
-                           alpha=0.55)
+                if ax is None:
+                    fig, ax = plt.subplots(figsize=(8, 8))
+
+                ax.scatter(x_, y_, s=sizes, c=colors, cmap=cmap, alpha=0.8,
+                           edgecolor=(0.0, 0.0, 0.0, 0.0), linewidth=0.5)
 
                 for i, name in enumerate(agents_ranked[:]):
                     ax.text(x_[i], y_[i], name, fontsize=fontsize, ha='center',
@@ -1586,10 +1651,6 @@ class BaseModel(object):
 
             elif dim == '3d':
 
-                c_map = 'turbo_r'
-                # c_map = 'nipy_spectral_r'
-                # c_map = 'gnuplot2_r'
-
                 sizes = [5000 * (score_ranked[i] - score_ranked[max_rank-1]) +
                          100 * score_ranked[max_rank-1]
                          for i in range(max_rank)]
@@ -1598,12 +1659,15 @@ class BaseModel(object):
                 y_ = -points_ranked[:, 1]
                 z_ = -points_ranked[:, 2]
 
-                fig = plt.figure(figsize=(8, 7))
-                ax = fig.add_subplot(projection='3d')
-                ax.set_proj_type('persp', focal_length=0.2)
+                if ax is None:
+                    fig = plt.figure(figsize=(8, 6))
+                    ax = fig.add_subplot(projection='3d')
 
-                ax.scatter(x_, y_, z_, s=sizes, c=colors, cmap=c_map,
-                           alpha=0.6)
+                ax.set_proj_type('persp', focal_length=0.17)
+
+                ax.scatter(x_, y_, z_, s=sizes, c=colors, cmap=cmap,
+                           alpha=0.8, edgecolor=(0.0, 0.0, 0.0, 0.0),
+                           linewidth=0.5)
 
                 for i, name in enumerate(agents_ranked[:]):
                     ax.text(x_[i], y_[i], z_[i], name, fontsize=fontsize,
@@ -1634,9 +1698,9 @@ class BaseModel(object):
                 ax.zaxis.pane.set_edgecolor('black')
 
                 # Set edge line width
-                ax.xaxis.pane.set_linewidth(1)
-                ax.yaxis.pane.set_linewidth(1)
-                ax.zaxis.pane.set_linewidth(1)
+                ax.xaxis.pane.set_linewidth(1.5)
+                ax.yaxis.pane.set_linewidth(1.5)
+                ax.zaxis.pane.set_linewidth(1.5)
 
                 x_min = np.min(x_)
                 x_max = np.max(x_)
@@ -1645,25 +1709,15 @@ class BaseModel(object):
                 z_min = np.min(z_)
                 z_max = np.max(z_)
 
-                eps = 0.05
-                dx = x_max - x_min
-                dy = y_max - y_min
-                dz = z_max - z_min
-
-                ax.axes.set_xlim3d(left=x_min - dx * eps,
-                                   right=x_max + dx * eps)
-                ax.axes.set_ylim3d(bottom=y_min - dy * eps,
-                                   top=y_max + dy * eps)
-                ax.axes.set_zlim3d(bottom=z_min - dz * eps,
-                                   top=z_max + dz * eps)
+                snap_limits_to_ticks(ax, x_min, x_max, y_min, y_max, z_min,
+                                     z_max, eps=0.05, tol=0.02)
 
                 ax.set_box_aspect(aspect=None, zoom=1)
-                plt.subplots_adjust(left=-0.05, right=0.9, top=1.1,
-                                    bottom=0.05)
+                plt.subplots_adjust(left=0.0, right=0.9, top=1.0, bottom=0.05)
 
-            plt.tight_layout()
+            # plt.tight_layout()
 
             texplot.show_or_save_plot(plt, default_filename='visualization',
                                       transparent_background=False,
-                                      dpi=200, show_and_save=save,
-                                      verbose=True)
+                                      dpi=200, bbox_inches=None,
+                                      show_and_save=save, verbose=True)
