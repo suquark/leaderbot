@@ -105,6 +105,9 @@ class DavidsonScaledR(BaseModel):
     predict
         Predict the output of a match between agents.
 
+    fisher
+        Observed Fisher information matrix.
+
     rank
         Return rank of the agents based on their score.
 
@@ -351,6 +354,7 @@ class DavidsonScaledR(BaseModel):
         --------
 
         train : train model parameters.
+        fisher : Observed Fisher information matrix.
 
         Examples
         --------

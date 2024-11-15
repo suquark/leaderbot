@@ -87,6 +87,9 @@ class BaseModel(object):
     predict
         Predict the output of a match between agents.
 
+    fisher
+        Observed Fisher information matrix.
+
     rank
         Return rank of the agents based on their score.
 
@@ -691,6 +694,163 @@ class BaseModel(object):
 
         return pred
 
+    # ======
+    # fisher
+    # ======
+
+    def fisher(
+            self,
+            w: Union[List[float], np.ndarray[np.floating]] = None,
+            epsilon: float = 1e-8,
+            order: int = 2):
+        """
+        Observed Fisher information matrix.
+
+        Observed Fisher information matrix is the negative of the Hessian of
+        the log likelihood function. Namely, if :math:`\\boldsymbol{\\theta}`
+        is the array of all parameters of the size :math:`m`, then the observed
+        Fisher information is the matrix :math:`\\mathcal{J}` of size
+        :math:`m \\times m`
+
+        .. math::
+
+            \\mathcal{J}(\\boldsymbol{\\theta}) =
+            - \\nabla \\nabla^{\\intercal} \\ell(\\boldsymbol{\\theta}),
+
+        where :math:`\\ell(\\boldsymbol{\\theta})` is the log-likelihood
+        function (see :func:`loss`).
+
+        Parameters
+        ----------
+
+        w : array_like, default=None
+            Parameters :math:`\\boldsymbol{\\theta}`. If `None`, the
+            pre-trained parameters are used, provided is already trained.
+
+        epsilon : float, default=1e-8
+            The step size in finite differencing method in estimating
+            derivative.
+
+        order : {2, 4}, default=2
+            Order of Finite differencing:
+
+            * `2`: Second order central difference.
+            * `4`: Fourth order central difference.
+
+        Returns
+        -------
+
+        J : numpy.ndarray
+            The observed Fisher information matrix of size :math:`m \\times m`
+            where :math:`m` is the number of parameters.
+
+        Raises
+        ------
+
+        RuntimeWarning
+            If loss is ``nan``.
+
+        RuntimeError
+            If the model is not trained and the input ``w`` is set to `None`.
+
+        See Also
+        --------
+
+        loss : Log-likelihood (loss) function.
+
+        Examples
+        --------
+
+        .. code-block:: python
+            :emphasize-lines: 13, 17
+
+            >>> from leaderbot.data import load
+            >>> from leaderbot.models import RaoKupperScaled
+
+            >>> # Create a model
+            >>> data = load()
+            >>> model = RaoKupperScaled(data)
+
+            >>> # Generate an array of parameters
+            >>> import numpy as np
+            >>> w = np.random.randn(model.n_param)
+
+            >>> # Fisher information for the given input parameters
+            >>> J = model.fisher(w)
+
+            >>> # Fisher information for the trained parameters
+            >>> model.train()
+            >>> J = model.fisher()
+        """
+
+        if w is None:
+            if self.param is None:
+                raise RuntimeError('Either provide "param" or train model '
+                                   'first.')
+            else:
+                w = self.param
+
+        if isinstance(w, list):
+            w = np.array(w)
+
+        hessian = np.zeros((self.n_param, self.n_param))
+
+        for i in range(self.n_param):
+
+            if order == 2:
+
+                w_forward = np.array(w, dtype=float)
+                w_backward = np.array(w, dtype=float)
+
+                # Perturb the parameters
+                w_forward[i] += epsilon
+                w_backward[i] -= epsilon
+
+                # Calculate the Jacobian at the perturbed parameters
+                _, jac_forward = self.loss(
+                    w_forward, return_jac=True, constraint=False)
+                _, jac_backward = self.loss(
+                    w_backward, return_jac=True, constraint=False)
+
+                # Second order central difference
+                hessian[:, i] = (jac_forward - jac_backward) / (2.0 * epsilon)
+
+            elif order == 4:
+
+                w_forward1 = np.array(w, dtype=float)
+                w_forward2 = np.array(w, dtype=float)
+                w_backward1 = np.array(w, dtype=float)
+                w_backward2 = np.array(w, dtype=float)
+
+                # Perturb the parameters
+                w_forward1[i] += epsilon
+                w_forward2[i] += 2 * epsilon
+                w_backward1[i] -= epsilon
+                w_backward2[i] -= 2 * epsilon
+
+                # Calculate the Jacobian at the perturbed parameters
+                _, jac_forward1 = self.loss(
+                    w_forward1, return_jac=True, constraint=False)
+                _, jac_forward2 = self.loss(
+                    w_forward2, return_jac=True, constraint=False)
+                _, jac_backward1 = self.loss(
+                    w_backward1, return_jac=True, constraint=False)
+                _, jac_backward2 = self.loss(
+                    w_backward2, return_jac=True, constraint=False)
+
+                # Fourth-order central difference
+                hessian[:, i] = (-jac_forward2 + 8.0 * jac_forward1 - 
+                                 8.0 * jac_backward1 + jac_backward2) / \
+                                        (12.0 * epsilon)
+
+            else:
+                raise ValueError('"order" should be "2" or "4".')
+
+        # Fisher is negative of hessian
+        J = -hessian
+
+        return J
+
     # ====
     # rank
     # ====
@@ -803,6 +963,7 @@ class BaseModel(object):
             self,
             max_rank: bool = None,
             horizontal: bool = True,
+            plot_range: tuple = None,
             save: bool = False,
             latex: bool = False):
         """
@@ -818,6 +979,9 @@ class BaseModel(object):
         horizontal : bool, default=True
             If `True`, horizontal bars will be plotted, otherwise, vertical
             bars will be plotted.
+
+        plot_range : tuple or list, default=None
+            A tuple or list of minimum and maximum range of the plot limits.
 
         save : bool, default=False
             If `True`, the plot will be saved. This argument is effective only
@@ -909,6 +1073,9 @@ class BaseModel(object):
                 ax.tick_params(axis='y', which='both', length=0)
                 ax.grid(True, axis='x', linestyle='--', alpha=0.6)
 
+                if plot_range is not None:
+                    ax.set_xlim(plot_range)
+
             else:
                 # Vertical bars
                 ax.bar(agents_ranked, scores_ranked, color='firebrick')
@@ -918,6 +1085,9 @@ class BaseModel(object):
                 ax.grid(True, axis='y', linestyle='--', alpha=0.6)
                 ax.tick_params(axis='x', rotation=90, labelsize=9,
                                labelright=False)
+
+                if plot_range is not None:
+                    ax.set_ylim(plot_range)
 
             # ax.spines['top'].set_visible(False)
             # ax.spines['right'].set_visible(False)

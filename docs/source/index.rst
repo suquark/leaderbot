@@ -265,7 +265,7 @@ Comparing Ranking of Models
 ...........................
 
 Ranking of various models can be compared using
-:func:`leaderbot.evaluate.comopare_rank` function:
+:func:`leaderbot.evaluate.compare_ranks` function:
 
 .. code-block:: python
     :emphasize-lines: 25
