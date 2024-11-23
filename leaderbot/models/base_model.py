@@ -17,9 +17,13 @@ from ._plot_utils import plot_match_matrices, snap_limits_to_ticks
 from typing import List, Union
 import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.cm import ScalarMappable
+from matplotlib.colors import Normalize
 import texplot
 from sklearn.manifold import MDS
 from sklearn.decomposition import KernelPCA
+from adjustText import adjust_text
 
 __all__ = ['BaseModel']
 
@@ -839,9 +843,9 @@ class BaseModel(object):
                     w_backward2, return_jac=True, constraint=False)
 
                 # Fourth-order central difference
-                hessian[:, i] = (-jac_forward2 + 8.0 * jac_forward1 - 
+                hessian[:, i] = (-jac_forward2 + 8.0 * jac_forward1 -
                                  8.0 * jac_backward1 + jac_backward2) / \
-                                        (12.0 * epsilon)
+                                (12.0 * epsilon)
 
             else:
                 raise ValueError('"order" should be "2" or "4".')
@@ -1640,6 +1644,7 @@ class BaseModel(object):
             max_rank: int = None,
             method: str = 'kpca',
             dim: str = '3d',
+            sign: tuple = None,
             save: bool = False,
             latex: bool = False):
         """
@@ -1666,8 +1671,16 @@ class BaseModel(object):
             * ``'kpca'``: Kernel-PCA
             * ``'mds'``: Multi-Dimensional Scaling
 
-        dim : {``'2d'``, ``'3d'``}
-            Dimension of visualization
+        dim : tuple or {``'2d'``, ``'3d'``}
+            Dimension of visualization. If a tuple is given, the specific axes
+            indices in the tuple is plotted. For example, ``(2, 0)`` plots
+            principal axes :math:`(x_2, x_0)`.
+
+        sign : tuple, default=None
+            A tuple consisting `-1` and `1`, representing the sign each axes.
+            For example, ``sign=(1, -1)`` together with ``dim=(0, 2)`` plots
+            the principal axes :math:`(x_0, -x_2)`. If `None`, all signs are
+            assumed to be positive.
 
         save : bool, default=False
             If `True`, the plot will be saved. This argument is effective only
@@ -1728,8 +1741,20 @@ class BaseModel(object):
         if method not in ['kpca', 'mds']:
             raise ValueError('Invalid method.')
 
-        if dim not in ['2d', '3d']:
+        if (dim not in ['2d', '3d']) and (not isinstance(dim, tuple)):
             raise ValueError('Invalid dimension.')
+
+        if sign is not None:
+            if not isinstance(sign, tuple):
+                raise ValueError('"sign" should be a tuple.')
+
+            if isinstance(dim, tuple) and (len(dim) != len(sign)):
+                raise ValueError('Length of "dim" and "sign" tuples should '
+                                 'be the same.')
+            elif (dim == '2d') and (len(sign) != 2):
+                raise ValueError('Length of "sign" should be 2.')
+            elif (dim == '3d') and (len(sign) != 3):
+                raise ValueError('Length of "sign" should be 3.')
 
         # Compute distance matrix
         D = self._distance_matrix()
@@ -1743,7 +1768,7 @@ class BaseModel(object):
             points = mds.fit_transform(D)
 
             # 3D visualization settings
-            if dim == '3d':
+            if (dim == '3d') or (isinstance(dim, tuple) and len(dim) == 3):
                 elev, azim, roll = 8, 115, 0
 
         elif method == 'kpca':
@@ -1755,7 +1780,7 @@ class BaseModel(object):
             points = kpca.fit_transform(kernel_matrix)
 
             # 3D visualization settings
-            if dim == '3d':
+            if (dim == '3d') or (isinstance(dim, tuple) and len(dim) == 3):
                 elev, azim, roll = 8, 145, 0
 
         # Scores are the x_i, x_j parameters across all models
@@ -1793,24 +1818,42 @@ class BaseModel(object):
             if cmap is None:
                 cmap = 'turbo_r'
 
-            if dim == '2d':
+            if (dim == '2d') or (isinstance(dim, tuple) and len(dim) == 2):
 
                 sizes = [5000 * (score_ranked[i] - score_ranked[max_rank-1]) +
                          100 * score_ranked[max_rank-1]
                          for i in range(max_rank)]
 
-                x_ = -points_ranked[:, 0]
-                y_ = points_ranked[:, 1]
+                if isinstance(dim, tuple):
+                    x_ = points_ranked[:, dim[0]]
+                    y_ = points_ranked[:, dim[1]]
+                else:
+                    x_ = points_ranked[:, 0]
+                    y_ = points_ranked[:, 1]
+
+                if sign is not None:
+                    x_ = x_ * np.sign(sign[0])
+                    y_ = y_ * np.sign(sign[1])
 
                 if ax is None:
                     fig, ax = plt.subplots(figsize=(8, 8))
+                else:
+                    fig = ax.get_figure()
 
-                ax.scatter(x_, y_, s=sizes, c=colors, cmap=cmap, alpha=0.8,
-                           edgecolor=(0.0, 0.0, 0.0, 0.0), linewidth=0.5)
+                sc = ax.scatter(x_, y_, s=sizes, c=colors, cmap=cmap,
+                                alpha=0.8, edgecolor=(0.0, 0.0, 0.0, 0.0),
+                                linewidth=0.5)
 
-                for i, name in enumerate(agents_ranked[:]):
-                    ax.text(x_[i], y_[i], name, fontsize=fontsize, ha='center',
-                            va='center')
+                texts = [ax.text(x_[i], y_[i], agents_ranked[i],
+                                 fontsize=fontsize, ha='center', va='center')
+                         for i in range(len(agents_ranked))]
+
+                # Adjust text to avoid overlaps
+                adjust_text(texts, objects=sc, time_lim=10,
+                            ensure_inside_axes=True,
+                            arrowprops=dict(arrowstyle='->',
+                                            color=(0.2, 0.2, 0.2),
+                                            lw=0.7))
 
                 # ax.set_aspect('equal', adjustable='box')
                 # ax.set_xlim([-0.021, 0])
@@ -1819,15 +1862,37 @@ class BaseModel(object):
                 ax.set_ylabel(r'$\xi_2$')
                 # ax.set_title(f'{method_name} in {dim_name}')
 
-            elif dim == '3d':
+                ax.set_title('Multidimensional Scaling')
+
+                norm = Normalize(vmin=score_ranked.min(),
+                                 vmax=score_ranked.max())
+                sm = ScalarMappable(cmap=cmap.reversed(), norm=norm)
+                sm.set_array(score_ranked)
+
+                divider = make_axes_locatable(ax)
+                cax = divider.append_axes("right", size="2.2%", pad=0.1)
+                cbar = fig.colorbar(sm, cax=cax)
+                cbar.set_label('Score')
+
+            elif (dim == '3d') or (isinstance(dim, tuple) and len(dim) == 3):
 
                 sizes = [5000 * (score_ranked[i] - score_ranked[max_rank-1]) +
                          100 * score_ranked[max_rank-1]
                          for i in range(max_rank)]
 
-                x_ = points_ranked[:, 0]
-                y_ = -points_ranked[:, 1]
-                z_ = -points_ranked[:, 2]
+                if isinstance(dim, tuple):
+                    x_ = points_ranked[:, dim[0]]
+                    y_ = points_ranked[:, dim[1]]
+                    z_ = points_ranked[:, dim[2]]
+                else:
+                    x_ = points_ranked[:, 0]
+                    y_ = points_ranked[:, 1]
+                    z_ = points_ranked[:, 2]
+
+                if sign is not None:
+                    x_ = x_ * np.sign(sign[0])
+                    y_ = y_ * np.sign(sign[1])
+                    z_ = z_ * np.sign(sign[2])
 
                 if ax is None:
                     fig = plt.figure(figsize=(8, 6))
@@ -1887,7 +1952,12 @@ class BaseModel(object):
 
             # plt.tight_layout()
 
-            texplot.show_or_save_plot(plt, default_filename='visualization',
+            if method == 'mds':
+                filename = 'mds'
+            elif method == 'kpca':
+                filename = 'kpca'
+
+            texplot.show_or_save_plot(plt, default_filename=filename,
                                       transparent_background=False,
                                       dpi=200, bbox_inches=None,
                                       show_and_save=save, verbose=True)
