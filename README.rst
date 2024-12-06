@@ -324,7 +324,6 @@ Ranking of various models can be compared using
 ``leaderbot.evaluate.comopare_rank`` function:
 
 .. code-block:: python
-    :emphasize-lines: 25
 
     >>> import leaderbot as lb
     >>> from leaderbot.models import BradleyTerryFactor as BTF
