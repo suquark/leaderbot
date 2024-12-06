@@ -208,7 +208,7 @@ html_theme = 'pydata_sphinx_theme'
 
 # Options for theme
 html_theme_options = {
-    "github_url": "https://github.com",
+    "github_url": "https://github.com/suquark/arenaranking",
     "navbar_end": [
         "theme-switcher",
         "search-field.html",
@@ -287,6 +287,21 @@ html_static_path = ['_static']
 
 html_js_files = ["js/custom-pydata.css"]
 html_favicon = '_static/images/icons/favicon.ico'
+
+# Open Graph cards for sharing the documentation on social media
+ogp_site_url = 'https://leaderbot.org'
+ogp_image = 'https://leaderbot.org/_static/images/icons/' + \
+            'logo-leaderbot-light.svg'
+ogp_site_name = 'IMATE'
+ogp_description_length = 300
+ogp_type = "website"
+ogp_enable_meta_description = True
+ogp_custom_meta_tags = [
+    '<meta property="og:title" content="leaderbot">',
+    '<meta property="og:description" content="leaderbot is a python ' +
+    'package that provides a leader board for chatbots based on Chatbot ' +
+    'Arena (https://lmarena.ai/) project.">',
+]
 
 
 # =====
