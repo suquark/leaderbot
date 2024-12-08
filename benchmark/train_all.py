@@ -149,6 +149,11 @@ def train_all():
         wall_time.append(wall_t1 - wall_t0)
         proc_time.append(proc_t1 - proc_t0)
 
+        # Hessian takes a significant amount of memory
+        if (hasattr(model, "_result")) and (model._result is not None) and \
+                ("hess_inv" in model._result):
+            del model._result["hess_inv"]
+
         print('done.', flush=True)
 
     results = {
