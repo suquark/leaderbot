@@ -1,9 +1,9 @@
 numpy
 scipy
 pandas
-plotly
 texplot
 matplotlib
+adjustText
 numba
 scikit-learn
 tqdm
