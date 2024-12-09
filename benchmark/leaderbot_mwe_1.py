@@ -4,8 +4,8 @@ import leaderbot as lb
 # Load default dataset shipped with the package
 data = lb.data.load()
 
-# Create Davidson model with covariance factor ;#\mbox{$k=0$}#; (diagonal covariance)
-# and tie factor ;#$k=0$#;. This corresponds to Model 23 in ;# \Cref{tab:model-selection} #;
+# Create Davidson model with covariance factor ;#\mbox{$k_{\mathrm{cov}}=0$}#; (diagonal covariance)
+# and tie factor ;#$k_{\mathrm{tie}}=0$#;. This corresponds to Model 23 in ;# \Cref{tab:model-selection} #;
 model = lb.models.DavidsonFactor(data, n_cov_factors=0, n_tie_factors=0)
 
 # Train the model
@@ -29,7 +29,7 @@ model.plot_scores(max_rank=50)
 # Rank competitors based on their scores
 rank = model.rank()
 
-# Visualize correlation similar to ;# \Cref{fig:visualization} #; using Kernel PCA method
+# Visualize correlation similar to ;# \Cref{fig:kpca} #; using Kernel PCA method
 # projected on 3-dimensional space for the top 40 ranks.
 model.visualize(max_rank=40, method='kpca', dim='3d')
 
