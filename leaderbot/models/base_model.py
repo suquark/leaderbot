@@ -13,17 +13,13 @@
 import numpy as np
 import scipy.optimize
 from ..data import DataType
-from ._plot_utils import plot_match_matrices, snap_limits_to_ticks
+from ._plot_match_matrix import plot_match_matrix
+from ._plot_map_distance import plot_map_distance
+from ._plot_cluster import plot_cluster
 from typing import List, Union
 import matplotlib.ticker as mticker
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.cm import ScalarMappable
-from matplotlib.colors import Normalize
 import texplot
-from sklearn.manifold import MDS
-from sklearn.decomposition import KernelPCA
-from adjustText import adjust_text
 
 __all__ = ['BaseModel']
 
@@ -100,8 +96,11 @@ class BaseModel(object):
     leaderboard
         Print leaderboard table and plot prediction for agents.
 
-    visualize
-        Visualize correlation and score of the agents.
+    map_distance
+        Visualize distance between agents using manifold learning projection.
+
+    cluster
+        Cluster competitors to performance tiers.
 
     scores
         Get scores
@@ -1427,217 +1426,16 @@ class BaseModel(object):
             :class: custom-dark
         """
 
-        scores = self.param[:self.n_agents]
-        rank_ = np.argsort(scores)[::-1]
-        rank_ = rank_[:max_rank]
+        plot_match_matrix(
+                self, max_rank=max_rank, density=density, source=source,
+                win_range=win_range, tie_range=tie_range,
+                horizontal=horizontal, save=save, latex=latex)
 
-        x = self.x
-        y = self.y
+    # ============
+    # map distance
+    # ============
 
-        y_sum = y.sum(axis=1, keepdims=True)
-        y_sum = np.tile(y_sum, (1, y.shape[1]))
-        p_obs = y / y_sum
-
-        # Find which rows of X has (i, j) indices both from rank_
-        mask = np.isin(x[:, 0], rank_) & np.isin(x[:, 1], rank_)
-        row_indices = np.where(mask)[0]
-
-        # The map j = rank_[i] indicates the rank of i of j. Conversely, the
-        # inverse map i = inverse_rank_[j] indicates the one element with ran
-        # j is the i-th data
-        inverse_rank = {value: idx for idx, value in enumerate(rank_)}
-
-        # Check arguments
-        if source not in ['observed', 'predicted', 'both']:
-            raise ValueError('Invalid "source" argument.')
-
-        # Generate match matrices for observed data
-        if source in ['observed', 'both']:
-
-            # Initialize matrices
-            if density:
-                # probability of observations
-                p_obs_win = np.ma.masked_all((max_rank, max_rank), dtype=float)
-                p_obs_tie = np.ma.masked_all((max_rank, max_rank), dtype=float)
-            else:
-                # Count (frequency) of observations
-                n_obs_win = np.ma.masked_all((max_rank, max_rank), dtype=int)
-                n_obs_tie = np.ma.masked_all((max_rank, max_rank), dtype=int)
-
-            # Iterate over all rows of input data x containing rank_ indices
-            for row in row_indices:
-
-                # Get the actual indices
-                i, j = x[row, :]
-
-                # Get the rank of these indices
-                rank_i = inverse_rank.get(i, None)
-                rank_j = inverse_rank.get(j, None)
-
-                if density:
-                    # Probability of observations
-                    p_obs_win[rank_i, rank_j] = p_obs[row, 0]
-                    p_obs_win[rank_j, rank_i] = p_obs[row, 1]  # use loss
-                    p_obs_tie[rank_i, rank_j] = p_obs[row, 2]
-                    p_obs_tie[rank_j, rank_i] = p_obs[row, 2]  # symmetry
-                else:
-                    # Count (frequency) of observations
-                    n_obs_win[rank_i, rank_j] = y[row, 0]
-                    n_obs_win[rank_j, rank_i] = y[row, 1]  # use loss
-                    n_obs_tie[rank_i, rank_j] = y[row, 2]
-                    n_obs_tie[rank_j, rank_i] = y[row, 2]  # symmetry
-
-        # Generate match matrices for predicted data
-        if source in ['predicted', 'both']:
-
-            if density:
-                # Construct the list of all pairs between elements in the rank_
-                # array, even though they might not have had real match. We
-                # will make prediction for these pairs.
-                x_all = []
-
-                for i in range(max_rank-1):
-                    for j in range(i+1, max_rank):
-                        x_all.append([rank_[i], rank_[j]])
-
-                x_all = np.array(x_all)
-
-                # Make prediction for all matches
-                p_pred = self.infer(x_all)
-
-                # Initialize matrices
-                p_pred_win = np.ma.masked_all((max_rank, max_rank),
-                                              dtype=float)
-                p_pred_tie = np.ma.masked_all((max_rank, max_rank),
-                                              dtype=float)
-
-                for row in range(x_all.shape[0]):
-                    i, j = x_all[row, :]
-                    rank_i = inverse_rank.get(i, None)
-                    rank_j = inverse_rank.get(j, None)
-
-                    # Probabilities of predictions
-                    p_pred_win[rank_i, rank_j] = p_pred[row, 0]
-                    p_pred_win[rank_j, rank_i] = p_pred[row, 1]
-                    p_pred_tie[rank_i, rank_j] = p_pred[row, 2]
-                    p_pred_tie[rank_j, rank_i] = p_pred[row, 2]
-
-            else:
-                # Make prediction only on those pairs that had actual match.
-                p_pred = self.infer(x)
-                n_pred = p_pred * y_sum
-
-                # Initialize matrices
-                n_pred_win = np.ma.masked_all((max_rank, max_rank),
-                                              dtype=float)
-                n_pred_tie = np.ma.masked_all((max_rank, max_rank),
-                                              dtype=float)
-
-                for row in row_indices:
-                    i, j = x[row, :]
-                    rank_i = inverse_rank.get(i, None)
-                    rank_j = inverse_rank.get(j, None)
-
-                    # Count (frequency) of predictions
-                    n_pred_win[rank_i, rank_j] = n_pred[row, 0]
-                    n_pred_win[rank_j, rank_i] = n_pred[row, 1]
-                    n_pred_tie[rank_i, rank_j] = n_pred[row, 2]
-                    n_pred_tie[rank_j, rank_i] = n_pred[row, 2]
-
-        with texplot.theme(rc={'font.family': 'sans-serif'}, use_latex=latex):
-
-            # Determine figure size and number of rows and column in the figure
-            size = 4.5
-            if source == 'both':
-                figsize = (2*size, 2*size)
-                nrows = 2
-                ncols = 2
-            else:
-                if horizontal:
-                    figsize = (2*size, size)
-                    nrows = 1
-                    ncols = 2
-                else:
-                    figsize = (size, 2*size)
-                    nrows = 2
-                    ncols = 1
-
-            fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
-
-            if source != 'both':
-                ax = np.atleast_2d(ax)
-                if not horizontal:
-                    ax = ax.T
-
-            win_idx = np.array([0, 0])
-            if horizontal:
-                tie_idx = np.array([0, 1])
-                nxt_idx = np.array([1, 0])
-            else:
-                tie_idx = np.array([1, 0])
-                nxt_idx = np.array([0, 1])
-
-            if source in ['observed', 'both']:
-                ax_win = ax[tuple(win_idx)]
-                ax_tie = ax[tuple(tie_idx)]
-
-                if density:
-                    plot_match_matrices(fig, ax_win, ax_tie, p_obs_win,
-                                        p_obs_tie, density=density,
-                                        win_range=win_range,
-                                        tie_range=tie_range,
-                                        horizontal=horizontal,
-                                        extra_title=' (Observed Data)',
-                                        cbar_label='Probability')
-                else:
-                    plot_match_matrices(fig, ax_win, ax_tie, n_obs_win,
-                                        n_obs_tie, density=density,
-                                        win_range=win_range,
-                                        tie_range=tie_range,
-                                        horizontal=horizontal,
-                                        extra_title=' (Observed Data)',
-                                        cbar_label='Frequency')
-
-                # Move to the next row or column for the next plots (if 'both')
-                win_idx = win_idx + nxt_idx
-                tie_idx = tie_idx + nxt_idx
-
-            if source in ['predicted', 'both']:
-                ax_win = ax[tuple(win_idx)]
-                ax_tie = ax[tuple(tie_idx)]
-
-                if density:
-                    plot_match_matrices(fig, ax_win, ax_tie, p_pred_win,
-                                        p_pred_tie, density=density,
-                                        win_range=win_range,
-                                        tie_range=tie_range,
-                                        horizontal=horizontal,
-                                        extra_title=' (Model Prediction)',
-                                        cbar_label='Probability')
-                else:
-                    plot_match_matrices(fig, ax_win, ax_tie, n_pred_win,
-                                        n_pred_tie, density=density,
-                                        win_range=win_range,
-                                        tie_range=tie_range,
-                                        horizontal=horizontal,
-                                        extra_title=' (Model Prediction)',
-                                        cbar_label='Frequency')
-
-            plt.tight_layout()
-
-            if (not horizontal) or (source == 'both'):
-                plt.subplots_adjust(hspace=-0.1)
-
-            texplot.show_or_save_plot(plt, default_filename='match_matrix',
-                                      transparent_background=False,
-                                      dpi=200, show_and_save=save,
-                                      verbose=True)
-
-    # =========
-    # visualize
-    # =========
-
-    def visualize(
+    def map_distance(
             self,
             ax=None,
             cmap=None,
@@ -1648,8 +1446,7 @@ class BaseModel(object):
             save: bool = False,
             latex: bool = False):
         """
-        Visualize correlation between agents using manifold learning
-        projection.
+        Visualize distance between agents using manifold learning projection.
 
         Parameters
         ----------
@@ -1700,6 +1497,7 @@ class BaseModel(object):
         See Also
         --------
 
+        cluster
         rank
 
         Examples
@@ -1719,7 +1517,7 @@ class BaseModel(object):
             >>> model.train()
 
             >>> # Plot kernel PCA
-            >>> model.visualize(max_rank=50)
+            >>> model.map_distance(max_rank=50)
 
         The above code produces plot below.
 
@@ -1728,236 +1526,114 @@ class BaseModel(object):
             :class: custom-dark
         """
 
-        if self.param is None:
-            raise RuntimeError('train model first.')
+        plot_map_distance(
+                self, ax=ax, cmap=cmap, max_rank=max_rank, method=method,
+                dim=dim, sign=sign, save=save, latex=latex)
 
-        # Check input arguments
-        if max_rank is None:
-            max_rank = self.n_agents
-        elif max_rank > self.n_agents:
-            raise ValueError('"max_rank" can be at most equal to the number ' +
-                             ' of agents.')
+    # =======
+    # cluster
+    # =======
 
-        if method not in ['kpca', 'mds']:
-            raise ValueError('Invalid method.')
+    def cluster(
+            self,
+            ax=None,
+            max_rank: int = None,
+            layout: str = 'circular',
+            tier_label: bool = False,
+            method: str = 'complete',
+            color_threshold: float = 0.15,
+            link_distance_pow: float = 0.4,
+            save: bool = False,
+            latex: bool = False):
+        """
+        Cluster competitors to performance tiers.
 
-        if (dim not in ['2d', '3d']) and (not isinstance(dim, tuple)):
-            raise ValueError('Invalid dimension.')
+        Parameters
+        ----------
 
-        if sign is not None:
-            if not isinstance(sign, tuple):
-                raise ValueError('"sign" should be a tuple.')
+        ax : mpl_toolkits.mplot3d.axes3d.Axes3D, default=None
+            Axis object for plotting. If `None`, a 3D axis is created.
 
-            if isinstance(dim, tuple) and (len(dim) != len(sign)):
-                raise ValueError('Length of "dim" and "sign" tuples should '
-                                 'be the same.')
-            elif (dim == '2d') and (len(sign) != 2):
-                raise ValueError('Length of "sign" should be 2.')
-            elif (dim == '3d') and (len(sign) != 3):
-                raise ValueError('Length of "sign" should be 3.')
+        max_rank : int, default=None
+            The maximum number of agents to be displayed. If `None`, all
+            agents in the input dataset will be ranked and shown.
 
-        # Compute distance matrix
-        D = self._distance_matrix()
+        layout : {'circular', 'linear'}, default='circular'
+            The layout of cluster. Circular generates a hierarchical cluster on
+            polar coordinates where all entires are arranged around a circle,
+            whereas linear displays a luster where all entities
+            are shown along vertical line.
 
-        # Compute visualization points
-        if method == 'mds':
+        tier_label : bool, default=False,
+            If `True`, the branch lines up to the first three hierarchies are
+            labeled.
 
-            # MDS method
-            mds = MDS(n_components=3, dissimilarity='precomputed',
-                      random_state=42)
-            points = mds.fit_transform(D)
+        method : str, default='complete'
+            Clustering algorithm. See scipy.cluster.hierarchy.linkage methods.
 
-            # 3D visualization settings
-            if (dim == '3d') or (isinstance(dim, tuple) and len(dim) == 3):
-                elev, azim, roll = 8, 115, 0
+        color_threshold : float, default=0.15
+            A threshold between 0 and 1 where linkage distance above the
+            threshold is rendered in black and below the threshold is rendered
+            in colors.
 
-        elif method == 'kpca':
+        link_distance_pow : float, default=0.4
+            The linkage distance is raised to the power of this number. Since
+            the linakage distance is normalized to be between 0 and 1,
+            raising these distance to a power less than 1 expands small
+            distances, helping to better visualize the end leaves of the
+            deprogram. This option is only applicable when ``layout`` is set
+            to ``circular``.
 
-            # Kernel PCA
-            gamma = 1e-4  # You might need to adjust gamma based on your data
-            kernel_matrix = np.exp(-gamma * D ** 2)
-            kpca = KernelPCA(n_components=3, kernel='precomputed')
-            points = kpca.fit_transform(kernel_matrix)
+        save : bool, default=False
+            If `True`, the plot will be saved. This argument is effective only
+            if ``plot`` is `True`.
 
-            # 3D visualization settings
-            if (dim == '3d') or (isinstance(dim, tuple) and len(dim) == 3):
-                elev, azim, roll = 8, 145, 0
+        latex : bool, default=False
+            If `True`, the plot is rendered with LaTeX engine, assuming the
+            ``latex`` executable is available on the ``PATH``. Enabling this
+            option will slow the plot generation.
 
-        # Scores are the x_i, x_j parameters across all models
-        score = self.param[:self.n_agents]
-        rank_ = np.argsort(score)[::-1]
-        rank_ = rank_[:max_rank]
+        Raises
+        ------
 
-        # Reorder variables based on rank
-        points_ranked = points[rank_]
-        agents_ranked = np.array(self.agents)[rank_]
-        score_ranked = score[rank_]
-        colors = np.linspace(0.0, 1.0, max_rank)
+        RuntimeError
+            If the model is not trained before calling this method.
 
-        # Cut long names
-        max_length = 20
-        for i in range(agents_ranked.size):
-            if len(agents_ranked[i]) > max_length:
-                agents_ranked[i] = agents_ranked[i][:max_length-3] + '...'
+        See Also
+        --------
 
-        # Plot titles
-        # if method == 'mds':
-        #     method_name = 'Multi-Dimensional Projection'
-        # elif method == 'kpca':
-        #     method_name = 'Kernel PCA'
-        # if dim == '2d':
-        #     dim_name = '2D'
-        # elif dim == '3d':
-        #     dim_name = '3D'
+        map_distance
+        rank
 
-        # Visualize
-        with texplot.theme(rc={'font.family': 'sans-serif'}, use_latex=latex):
+        Examples
+        --------
 
-            fontsize = 10
+        .. code-block:: python
+            :emphasize-lines: 12
 
-            if cmap is None:
-                cmap = 'turbo_r'
+            >>> from leaderbot.data import load
+            >>> from leaderbot.models import RaoKupperFactor
 
-            if (dim == '2d') or (isinstance(dim, tuple) and len(dim) == 2):
+            >>> # Create a model
+            >>> data = load()
+            >>> model = RaoKupperFactor(data, n_cov_factor=3, n_tie_factor=20)
 
-                sizes = [5000 * (score_ranked[i] - score_ranked[max_rank-1]) +
-                         100 * score_ranked[max_rank-1]
-                         for i in range(max_rank)]
+            >>> # Train the model
+            >>> model.train()
 
-                if isinstance(dim, tuple):
-                    x_ = points_ranked[:, dim[0]]
-                    y_ = points_ranked[:, dim[1]]
-                else:
-                    x_ = points_ranked[:, 0]
-                    y_ = points_ranked[:, 1]
+            >>> # Plot kernel PCA
+            >>> model.cluster(max_rank=100, layout='circular',
+            ...               tier_label=True, latex=True)
 
-                if sign is not None:
-                    x_ = x_ * np.sign(sign[0])
-                    y_ = y_ * np.sign(sign[1])
+        The above code produces plot below.
 
-                if ax is None:
-                    fig, ax = plt.subplots(figsize=(8, 8))
-                else:
-                    fig = ax.get_figure()
+        .. image:: ../_static/images/plots/kpca.png
+            :align: center
+            :class: custom-dark
+        """
 
-                sc = ax.scatter(x_, y_, s=sizes, c=colors, cmap=cmap,
-                                alpha=0.8, edgecolor=(0.0, 0.0, 0.0, 0.0),
-                                linewidth=0.5)
-
-                texts = [ax.text(x_[i], y_[i], agents_ranked[i],
-                                 fontsize=fontsize, ha='center', va='center')
-                         for i in range(len(agents_ranked))]
-
-                # Adjust text to avoid overlaps
-                adjust_text(texts, objects=sc, time_lim=10,
-                            ensure_inside_axes=True,
-                            arrowprops=dict(arrowstyle='->',
-                                            color=(0.2, 0.2, 0.2),
-                                            lw=0.7))
-
-                # ax.set_aspect('equal', adjustable='box')
-                # ax.set_xlim([-0.021, 0])
-                # ax.set_ylim([-0.005, 0.0125])
-                ax.set_xlabel(r'$\xi_1$')
-                ax.set_ylabel(r'$\xi_2$')
-                # ax.set_title(f'{method_name} in {dim_name}')
-
-                ax.set_title('Multidimensional Scaling')
-
-                norm = Normalize(vmin=score_ranked.min(),
-                                 vmax=score_ranked.max())
-                sm = ScalarMappable(cmap=cmap.reversed(), norm=norm)
-                sm.set_array(score_ranked)
-
-                divider = make_axes_locatable(ax)
-                cax = divider.append_axes("right", size="2.2%", pad=0.1)
-                cbar = fig.colorbar(sm, cax=cax)
-                cbar.set_label('Score')
-
-            elif (dim == '3d') or (isinstance(dim, tuple) and len(dim) == 3):
-
-                sizes = [5000 * (score_ranked[i] - score_ranked[max_rank-1]) +
-                         100 * score_ranked[max_rank-1]
-                         for i in range(max_rank)]
-
-                if isinstance(dim, tuple):
-                    x_ = points_ranked[:, dim[0]]
-                    y_ = points_ranked[:, dim[1]]
-                    z_ = points_ranked[:, dim[2]]
-                else:
-                    x_ = points_ranked[:, 0]
-                    y_ = points_ranked[:, 1]
-                    z_ = points_ranked[:, 2]
-
-                if sign is not None:
-                    x_ = x_ * np.sign(sign[0])
-                    y_ = y_ * np.sign(sign[1])
-                    z_ = z_ * np.sign(sign[2])
-
-                if ax is None:
-                    fig = plt.figure(figsize=(8, 6))
-                    ax = fig.add_subplot(projection='3d')
-
-                ax.set_proj_type('persp', focal_length=0.17)
-
-                ax.scatter(x_, y_, z_, s=sizes, c=colors, cmap=cmap,
-                           alpha=0.8, edgecolor=(0.0, 0.0, 0.0, 0.0),
-                           linewidth=0.5)
-
-                for i, name in enumerate(agents_ranked[:]):
-                    ax.text(x_[i], y_[i], z_[i], name, fontsize=fontsize,
-                            ha='center', va='center')
-
-                ax.view_init(elev=elev, azim=azim, roll=roll)
-
-                # Remove tick labels
-                # ax.set_xticks([])
-                # ax.set_yticks([])
-                # ax.set_zticks([])
-
-                # ax.grid(False)
-
-                ax.set_xlabel(r'$\xi_1$')
-                ax.set_ylabel(r'$\xi_2$')
-                ax.set_zlabel(r'$\xi_3$')
-                # ax.set_title(f'{method_name} in {dim_name}')
-
-                # Remove axis panes (background of the plot)
-                # ax.xaxis.pane.fill = False
-                # ax.yaxis.pane.fill = False
-                # ax.zaxis.pane.fill = False
-
-                # Set edge color
-                ax.xaxis.pane.set_edgecolor('black')
-                ax.yaxis.pane.set_edgecolor('black')
-                ax.zaxis.pane.set_edgecolor('black')
-
-                # Set edge line width
-                ax.xaxis.pane.set_linewidth(1.5)
-                ax.yaxis.pane.set_linewidth(1.5)
-                ax.zaxis.pane.set_linewidth(1.5)
-
-                x_min = np.min(x_)
-                x_max = np.max(x_)
-                y_min = np.min(y_)
-                y_max = np.max(y_)
-                z_min = np.min(z_)
-                z_max = np.max(z_)
-
-                snap_limits_to_ticks(ax, x_min, x_max, y_min, y_max, z_min,
-                                     z_max, eps=0.05, tol=0.02)
-
-                ax.set_box_aspect(aspect=None, zoom=1)
-                plt.subplots_adjust(left=0.0, right=0.9, top=1.0, bottom=0.05)
-
-            # plt.tight_layout()
-
-            if method == 'mds':
-                filename = 'mds'
-            elif method == 'kpca':
-                filename = 'kpca'
-
-            texplot.show_or_save_plot(plt, default_filename=filename,
-                                      transparent_background=False,
-                                      dpi=200, bbox_inches=None,
-                                      show_and_save=save, verbose=True)
+        plot_cluster(self, ax=ax, max_rank=max_rank, layout=layout,
+                     tier_label=tier_label, method=method,
+                     color_threshold=color_threshold,
+                     link_distance_pow=link_distance_pow, save=save,
+                     latex=latex)

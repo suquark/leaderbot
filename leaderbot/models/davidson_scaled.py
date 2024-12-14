@@ -13,7 +13,7 @@
 import numba
 import numpy as np
 from .base_model import BaseModel
-from .util import double_sigmoid, cross_entropy
+from ._math_util import double_sigmoid, cross_entropy
 from ..data import DataType
 from typing import List, Union
 
@@ -114,8 +114,11 @@ class DavidsonScaled(BaseModel):
     leaderboard
         Print leaderboard table and plot prediction for agents.
 
-    visualize
-        Visualize correlation and score of the agents.
+    map_distance
+        Visualize distance between agents using manifold learning projection.
+
+    cluster
+        Cluster competitors to performance tiers.
 
     scores
         Get scores

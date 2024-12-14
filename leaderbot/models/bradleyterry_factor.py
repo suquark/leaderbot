@@ -13,7 +13,7 @@
 import numba
 import numpy as np
 from .factor_model import FactorModel
-from .util import sigmoid, cross_entropy
+from ._math_util import sigmoid, cross_entropy
 from ..data import DataType
 from typing import List, Union
 
@@ -119,8 +119,11 @@ class BradleyTerryFactor(FactorModel):
     leaderboard
         Print leaderboard table and plot prediction for agents.
 
-    visualize
-        Visualize correlation and score of the agents.
+    map_distance
+        Visualize distance between agents using manifold learning projection.
+
+    cluster
+        Cluster competitors to performance tiers.
 
     scores
         Get scores

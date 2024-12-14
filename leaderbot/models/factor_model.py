@@ -88,8 +88,11 @@ class FactorModel(BaseModel):
     leaderboard
         Print leaderboard table and plot prediction for agents.
 
-    visualize
-        Visualize correlation and score of the agents.
+    map_distance
+        Visualize distance between agents using manifold learning projection.
+
+    cluster
+        Cluster competitors to performance tiers.
 
     scores
         Get scores
