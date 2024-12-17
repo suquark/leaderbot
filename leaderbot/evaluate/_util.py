@@ -11,7 +11,7 @@
 # =======
 
 import numpy as np
-from ..models.util import kl_divergence
+from ..models._math_util import kl_divergence
 
 __all__ = ['float_to_str', 'evaluate_cel', 'evaluate_kld', 'evaluate_jsd',
            'evaluate_error']

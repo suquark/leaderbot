@@ -52,7 +52,9 @@ def train_all():
     """
     """
 
-    data = lb.data.load()
+    tie = 'tie'
+    # tie = 'both'
+    data = lb.data.load(tie=tie)
 
     # use_whole_data = True
     use_whole_data = False
@@ -170,9 +172,14 @@ def train_all():
     }
 
     if use_whole_data:
-        filename = 'models_train_full.pkl'
+        filename = 'models_train_full'
     else:
-        filename = 'models_train_split.pkl'
+        filename = 'models_train_split'
+
+    if tie == 'both':
+        filename += '_both_ties'
+
+    filename += '.pkl'
 
     with open(filename, 'wb') as f:
         pickle.dump(results, f, protocol=pickle.HIGHEST_PROTOCOL)

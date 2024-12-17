@@ -49,9 +49,10 @@ def convert(
         A list of tuple of two indices ``(i, j)`` representing a match
         between a pair of agents with the indices ``i`` and ``j``.
     * ``'Y'``:
-        A list of tuples of three integers ``(n_win, n_loss, n_ties)``
-        representing the frequencies of win, loss, and ties between agents
-        ``i`` and ``j`` given by the corresponding tuple in ``X``.
+        A list of tuples of four integers
+        ``(n_win, n_loss, n_ties, n_both_bad)`` representing the frequencies of
+        win, loss, ties, and ties as both bad, between agents ``i`` and ``j``
+        given by the corresponding tuple in ``X``.
     * ``'models'``: a list of the name of agents in the match.
 
     See Also
@@ -136,7 +137,7 @@ def convert(
     dataset = {
         "models": model_list,
         "X": [x[0] for x in data],
-        "Y": [x[1][:3] for x in data]
+        "Y": [x[1][:4] for x in data]
     }
 
     with open(output_file, "w") as f:

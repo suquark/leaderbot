@@ -141,6 +141,14 @@ class BaseModel(object):
         self._count = np.sum(self.y)
         self._result = None
 
+        # Check arrays' shape
+        if self.x.shape[0] != self.y.shape[0]:
+            raise ValueError('Lengths of "X" and "Y" do not match.')
+        elif self.x.shape[1] != 2:
+            raise ValueError('Number of columns of "X" should be 2.')
+        elif self.y.shape[1] != 3:
+            raise ValueError('Number of columns of "Y" should be 3.')
+
     # =================
     # cumulative counts
     # =================

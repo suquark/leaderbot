@@ -119,6 +119,7 @@ def _whitelist_filter(
 
 def load(
         filename: str = None,
+        tie: str = 'tie',
         whitelist: Union[List[str], str] = None,
         clean: bool = True,
         check_duplicacy: bool = False):
@@ -133,6 +134,17 @@ def load(
         the local machine or a URL of a file on a remote server accessible via
         the HTTP or HTTPS protocol. If `None`, a default file that is shipped
         with the package will be used.
+
+    tie : {``'none'``, ``'tie'``, ``'both'``}, default=``'tie'``
+        A string that determines how the third column of the output array ``Y``
+        is filled:
+
+        * ``'none'``: ``Y[:, :2]`` is filled with zeros, meaning no tie is
+          counted.
+        * ``'tie'``: ``Y[:, :2]`` is filled with only the counts of ties,
+          excluding the case of `tie as both bad`.
+        * ``'both'``: ``Y[:, :2]`` is filled with the sum of both counts of tie
+          and `tie as both bad`.
 
     whitelist : list or str, default=None
         A list of agent names to be selected from the full set of agent names
@@ -226,19 +238,51 @@ def load(
     else:
         raise ValueError(f'{filename} is neither a URL nor a local file.')
 
+    # Make sure X and Y are numpy arrays, not list
+    X = np.array(data['X'])
+    Y = np.array(data['Y'])
+
+    # Check arrays' shape
+    if X.shape[0] != Y.shape[0]:
+        raise ValueError('Lengths of "X" and "Y" do not match.')
+    elif X.shape[1] != 2:
+        raise ValueError('Number of columns of "X" should be 2.')
+    elif (Y.shape[1] != 3) and (Y.shape[1] != 4):
+        raise ValueError('Number of columns of "Y" should be 3 or 4.')
+
+    # How to handle ties
+    if tie == 'none':
+        Y[:, 2] = 0
+
+    elif tie == 'tie':
+        # Do nothing
+        pass
+
+    elif tie == 'both':
+        if Y.shape[1] != 4:
+            raise ValueError('When "tie" is "both", "Y" should have four '
+                             'columns')
+        Y[:, 2] = Y[:, 2] + Y[:, 3]
+
+    else:
+        raise ValueError('"tie" can be either "none", "tie", or "both".')
+
+    # The output Y should always have three columns
+    if Y.shape[1] == 4:
+        Y = Y[:, :3]
+
+    # Clean rows of Y that are all zeros
     if clean:
-        x = np.array(data['X'])
-        y = np.array(data['Y'])
+        X, Y = _clean_data(X, Y)
 
-        x, y = _clean_data(x, y)
-
-        data['X'] = x
-        data['Y'] = y
-
+    # Check duplicacy
     if check_duplicacy:
-        x = np.array(data['X'])
-        duplicacy_count = _check_data_duplicacy(x)
+        duplicacy_count = _check_data_duplicacy(X)
         if duplicacy_count:
             raise Warning('Found %d duplicacy in data!' % duplicacy_count)
+
+    # Write back to data
+    data['X'] = X
+    data['Y'] = Y
 
     return data
