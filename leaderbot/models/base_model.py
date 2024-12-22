@@ -494,7 +494,7 @@ class BaseModel(object):
                     options={'maxiter': max_iter},
                     tol=tol)
 
-        elif method in ['sho', 'basinhopping']:
+        elif method in ['shgo', 'basinhopping']:
 
             # Global optimization methods with BFGS local optimization
             if method == 'shgo':
