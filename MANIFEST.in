@@ -14,8 +14,15 @@ include pyproject.toml
 
 exclude .gitattributes
 exclude .tokeignore
+exclude .coveragerc
+exclude tox.ini
+exclude TODO.rst
 
 prune docs
+prune archive
+prune benchmark
 prune notebooks
+prune notebooks-exp
 prune tests
 prune .git
+prune .github

@@ -146,10 +146,11 @@ def evaluate_cel(model, data=None, tie=True):
     Notes
     -----
 
-    When CEL is not inf, its value is exactly identical to NLL.
+    When CEL is not inf, the sum of its values is exactly identical to NLL.
+    The sum of the CEL values is given by ``cel_all``.
 
     The Bradley-Terry models (where no tie is included), the CEL value is non.
-    For all other models, CEL and NLL are identical.
+    For all other models, sum of CEL and NLL are identical.
     """
 
     if data is not None:
