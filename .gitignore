@@ -188,3 +188,6 @@ out
 
 # Data
 # *.pkl  # commented, as we have some data in /benchmark
+
+# Specific files in the repository
+notebook/experimental/clean_battle_20240814_public.json
