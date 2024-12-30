@@ -118,7 +118,10 @@ class RaoKupperScaledRIJ(BaseModel):
         Return rank of the agents based on their score.
 
     leaderboard
-        Print leaderboard table and plot prediction for agents.
+        Print leaderboard table.
+
+    marginal_outcomes
+        Plot marginal probabilities and frequencies of win, loss, and tie.
 
     map_distance
         Visualize distance between agents using manifold learning projection.

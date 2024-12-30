@@ -3,6 +3,7 @@ scipy
 pandas
 texplot
 matplotlib
+colorcet
 adjustText
 numba
 scikit-learn

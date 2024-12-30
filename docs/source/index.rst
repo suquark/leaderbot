@@ -80,19 +80,12 @@ To print leaderboard table of the chatbot agents, use
 .. code-block:: python
 
     >>> # Leaderboard table
-    >>> model.leaderboard(plot=True)
+    >>> model.leaderboard(max_rank=30)
 
 The above code prints the table below:
 
 .. literalinclude:: _static/data/leaderboard.txt
     :language: none
-
-The above code also produces the following plot of the frequencies and
-probabilities of win, loss, and tie of the matches.
-
-.. image:: _static/images/plots/rank.png
-    :align: center
-    :class: custom-dark
 
 Score Plot
 ----------
@@ -102,7 +95,7 @@ The scores versus rank can be plotted by
 
 .. code-block:: python
 
-    >>> model.plot_scores(max_rank=30)
+    >>> model.plot_scores(max_rank=50)
 
 .. image:: _static/images/plots/scores.png
     :align: center
@@ -112,13 +105,13 @@ Visualize Correlation
 ---------------------
 
 The correlation of the chatbot performances can be visualized with
-:func:`leaderbot.models.Davidson.visualize` using various methods. Here is an
-example with the Kernel PCA method:
+:func:`leaderbot.models.Davidson.map_distance` using various methods. Here is
+an example with the Kernel PCA method:
 
 .. code-block:: python
 
     >>> # Plot kernel PCA
-    >>> model.visualize(max_rank=50)
+    >>> model.map_distance(max_rank=50, method='kpca', dim='3d')
 
 The above code produces plot below demonstrating the Kernel PCA projection on
 three principal axes:
@@ -126,6 +119,35 @@ three principal axes:
 .. image:: _static/images/plots/kpca.png
     :align: center
     :class: custom-dark
+
+Similarly, the correlation distance between competitors can be visualized using
+multi-dimensional scaling(MDS)
+
+.. code-block:: python
+
+    >>> # Plot MDS
+    >>> model.map_distance(max_rank=50, method='mds', dim='2d')
+
+.. image:: _static/images/plots/mds.png
+    :align: center
+    :class: custom-dark
+
+Hierarchical Clustering
+-----------------------
+
+The function :func:`leaderbot.models.Davidson.cluster` performs hierarchical
+clustering of the chatbots based on the score and correlation distances:
+
+.. code-block:: python
+
+    >>> # Plot hierarchical cluster
+    >>> model.cluster(max_rank=100, layout='circular',
+    ...               tier_label=True, latex=True)
+
+.. image:: _static/images/plots/cluster.png
+    :align: center
+    :class: custom-dark
+
 
 Match Matrices
 --------------
@@ -151,6 +173,20 @@ plotted as follows:
     >>> model.match_matrix(max_rank=20, density=False)
 
 .. image:: _static/images/plots/match_matrix_density_false.png
+    :align: center
+    :class: custom-dark
+
+Marginal Oucomes
+----------------
+
+The marginal probabilities (or frequencies) of win, loss, and tie outcomes can be plotted with :func:`leaderbot.models.Davidson.marginal_outcomes` function:
+
+.. code-block:: python
+
+    >>> # Plot marginal probabilities
+    >>> model.marginal_outcome(max_rank=30)
+
+.. image:: _static/images/plots/rank.png
     :align: center
     :class: custom-dark
 

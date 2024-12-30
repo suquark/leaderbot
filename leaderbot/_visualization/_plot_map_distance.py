@@ -15,13 +15,105 @@ from ._plot_util import snap_limits_to_ticks
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.cm import ScalarMappable
-from matplotlib.colors import Normalize
+from matplotlib.colors import Normalize, to_rgb
 import texplot
 from sklearn.manifold import MDS
 from sklearn.decomposition import KernelPCA
 from adjustText import adjust_text
+import colorcet as cc
 
 __all__ = ['plot_map_distance']
+
+
+# =====================
+# get contrasting color
+# =====================
+
+def _get_contrasting_color(bg_color, dark_color=(0.2, 0.2, 0.2),
+                           light_color=(0.8, 0.8, 0.8)):
+    """
+    Determine a contrasting color for annotation arrows based on the background
+    color.
+
+    Parameters
+    ----------
+
+    bg_color : tuple
+        Background color as an (R, G, B) tuple.
+
+    dark_color : tuple
+        Color to use when the background is light.
+
+    light_color : tuple
+        Color to use when the background is dark.
+
+    Returns
+    -------
+
+    color : tuple
+        The selected color for the arrow.
+    """
+
+    if bg_color == 'none':
+        bg_color = (1.0, 1.0, 1.0)
+    elif isinstance(bg_color, str):
+        bg_color = to_rgb(bg_color)
+
+    # Calculate relative luminance
+    luminance = 0.2126 * bg_color[0] + 0.7152 * bg_color[1] + \
+        0.0722 * bg_color[2]
+
+    # Choose dark or light color based on luminance
+    return dark_color if luminance > 0.5 else light_color
+
+
+# ====================
+# generate pane colors
+# ====================
+
+def _generate_pane_colors(bg_color, alpha=0.5, luminance_threshold=0.5):
+    """
+    Generate pane colors with slight variations to mimic Matplotlib's default
+    style.
+
+    Parameters
+    ----------
+
+    bg_color : str or tuple
+        Background color as a string (e.g., 'black') or an (R, G, B) tuple.
+
+    alpha : float
+        Alpha value for the panes (transparency).
+
+     luminance_threshold : float
+        Threshold to determine if the color is light or dark.
+
+    Returns
+    -------
+    colors : list of tuples
+        Pane colors for x-y, y-z, and x-z planes.
+    """
+
+    # Convert bg_color to RGB tuple if it's a string
+    if bg_color == 'none':
+        bg_color = (1.0, 1.0, 1.0)
+    elif isinstance(bg_color, str):
+        bg_color = to_rgb(bg_color)
+
+    luminance = 0.2126*bg_color[0] + 0.7152*bg_color[1] + 0.0722*bg_color[2]
+    luminance_threshold = 0.5
+
+    if luminance > luminance_threshold:
+        offsets = [-0.05, -0.1, -0.075]   # Make lighter colors slightly darker
+    else:
+        offsets = [0.05, 0.1, 0.075]      # Make darker colors slightly lighter
+
+    pane_colors = [
+        tuple(min(max(c + offset, 0), 1) for c in bg_color) + (0.5,)
+        for offset in offsets
+    ]
+
+    return pane_colors
 
 
 # =================
@@ -36,6 +128,8 @@ def plot_map_distance(
         method: str = 'kpca',
         dim: str = '3d',
         sign: tuple = None,
+        bg_color: tuple = 'none',
+        fg_color: tuple = 'black',
         save: bool = False,
         latex: bool = False):
     """
@@ -130,7 +224,7 @@ def plot_map_distance(
         fontsize = 10
 
         if cmap is None:
-            cmap = 'turbo_r'
+            cmap = cc.cm.CET_R4_r
 
         if (dim == '2d') or (isinstance(dim, tuple) and len(dim) == 2):
 
@@ -154,19 +248,18 @@ def plot_map_distance(
             else:
                 fig = ax.get_figure()
 
-            sc = ax.scatter(x_, y_, s=sizes, c=colors, cmap=cmap,
-                            alpha=0.8, edgecolor=(0.0, 0.0, 0.0, 0.0),
-                            linewidth=0.5)
+            sc = ax.scatter(x_, y_, s=sizes, c=colors, cmap=cmap, alpha=0.8,
+                            edgecolor=fg_color, linewidth=0.5)
 
-            texts = [ax.text(x_[i], y_[i], agents_ranked[i],
+            texts = [ax.text(x_[i], y_[i], agents_ranked[i], color=fg_color,
                              fontsize=fontsize, ha='center', va='center')
                      for i in range(len(agents_ranked))]
 
             # Adjust text to avoid overlaps
+            arrow_color = _get_contrasting_color(bg_color)
             adjust_text(texts, objects=sc, time_lim=10,
                         ensure_inside_axes=True,
-                        arrowprops=dict(arrowstyle='->',
-                                        color=(0.2, 0.2, 0.2),
+                        arrowprops=dict(arrowstyle='->', color=arrow_color,
                                         lw=0.7))
 
             # ax.set_aspect('equal', adjustable='box')
@@ -186,7 +279,34 @@ def plot_map_distance(
             divider = make_axes_locatable(ax)
             cax = divider.append_axes("right", size="2.2%", pad=0.1)
             cbar = fig.colorbar(sm, cax=cax)
-            cbar.set_label('Score')
+            cbar.set_label('Score', color=fg_color)
+
+            # Foreground color
+            if fg_color != 'black':
+
+                # Change axis spine colors
+                ax.spines['bottom'].set_color(fg_color)
+                ax.spines['top'].set_color(fg_color)
+                ax.spines['left'].set_color(fg_color)
+                ax.spines['right'].set_color(fg_color)
+
+                # Change tick color
+                ax.tick_params(axis='x', colors=fg_color)
+                ax.tick_params(axis='y', colors=fg_color)
+
+                # Change label color
+                ax.xaxis.label.set_color(fg_color)
+                ax.yaxis.label.set_color(fg_color)
+
+                # Change title color
+                ax.title.set_color(fg_color)
+
+            # Foreground and background colors
+            cbar.ax.yaxis.set_tick_params(color=fg_color)
+            cbar.outline.set_edgecolor(fg_color)
+            for tick_label in cbar.ax.get_yticklabels():
+                tick_label.set_color(fg_color)
+            cbar.ax.set_facecolor(bg_color)
 
         elif (dim == '3d') or (isinstance(dim, tuple) and len(dim) == 3):
 
@@ -211,6 +331,8 @@ def plot_map_distance(
             if ax is None:
                 fig = plt.figure(figsize=(8, 6))
                 ax = fig.add_subplot(projection='3d')
+            else:
+                fig = ax.get_figure()
 
             ax.set_proj_type('persp', focal_length=0.17)
 
@@ -220,7 +342,7 @@ def plot_map_distance(
 
             for i, name in enumerate(agents_ranked[:]):
                 ax.text(x_[i], y_[i], z_[i], name, fontsize=fontsize,
-                        ha='center', va='center')
+                        color=fg_color, ha='center', va='center')
 
             ax.view_init(elev=elev, azim=azim, roll=roll)
 
@@ -241,15 +363,28 @@ def plot_map_distance(
             # ax.yaxis.pane.fill = False
             # ax.zaxis.pane.fill = False
 
-            # Set edge color
-            ax.xaxis.pane.set_edgecolor('black')
-            ax.yaxis.pane.set_edgecolor('black')
-            ax.zaxis.pane.set_edgecolor('black')
+            if bg_color != 'none':
+
+                # Define the base pane color close to the background color
+                pane_colors = _generate_pane_colors(bg_color, alpha=0.5)
+                ax.xaxis.set_pane_color(pane_colors[0])
+                ax.yaxis.set_pane_color(pane_colors[1])
+                ax.zaxis.set_pane_color(pane_colors[2])
+
+                # Ensure Matplotlib handles the lighting variations
+                ax.xaxis.pane.fill = True
+                ax.yaxis.pane.fill = True
+                ax.zaxis.pane.fill = True
 
             # Set edge line width
             ax.xaxis.pane.set_linewidth(1.5)
             ax.yaxis.pane.set_linewidth(1.5)
             ax.zaxis.pane.set_linewidth(1.5)
+
+            # Set edge color
+            ax.xaxis.pane.set_edgecolor(fg_color)
+            ax.yaxis.pane.set_edgecolor(fg_color)
+            ax.zaxis.pane.set_edgecolor(fg_color)
 
             x_min = np.min(x_)
             x_max = np.max(x_)
@@ -264,6 +399,35 @@ def plot_map_distance(
             ax.set_box_aspect(aspect=None, zoom=1)
             plt.subplots_adjust(left=0.0, right=0.9, top=1.0, bottom=0.05)
 
+            # Set foreground color
+            if fg_color != 'black':
+
+                # Change tick colors
+                ax.tick_params(axis='x', colors=fg_color)
+                ax.tick_params(axis='y', colors=fg_color)
+                ax.tick_params(axis='z', colors=fg_color)
+
+                # Change label colors
+                ax.xaxis.label.set_color(fg_color)
+                ax.yaxis.label.set_color(fg_color)
+                ax.zaxis.label.set_color(fg_color)
+
+                # Axes lines
+                ax.xaxis.line.set_color(fg_color)
+                ax.yaxis.line.set_color(fg_color)
+                ax.zaxis.line.set_color(fg_color)
+
+                # Change title color
+                ax.title.set_color(fg_color)
+
+        # Background color
+        if bg_color == 'none':
+            transparent_bg = True
+        else:
+            fig.set_facecolor(bg_color)
+            ax.set_facecolor(bg_color)
+            transparent_bg = False
+
         # plt.tight_layout()
 
         if method == 'mds':
@@ -272,6 +436,6 @@ def plot_map_distance(
             filename = 'kpca'
 
         texplot.show_or_save_plot(plt, default_filename=filename,
-                                  transparent_background=False,
+                                  transparent_background=transparent_bg,
                                   dpi=200, bbox_inches=None,
                                   show_and_save=save, verbose=True)

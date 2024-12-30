@@ -25,6 +25,18 @@ __all__ = ['DataType', 'is_url_or_local']
 class DataType(TypedDict):
     """
     Standard data type for input data.
+
+    Attributes
+    ----------
+
+    X : :class:`list` of :class:`list` of :class:`int`
+        Input data array for feature values.
+
+    Y : :class:`list` of :class:`list` of :class:`int`
+        Input data array for target values.
+
+    models : :class:`list` of :class:`str`
+        List of model names.
     """
 
     X: Union[List[List[int]], np.ndarray[np.integer]]

@@ -82,8 +82,8 @@ def _get_distance_matrix(model, scores, rnk):
 # plot linear cluster
 # ===================
 
-def _plot_linear_cluster(ax, linkage, labels, color_threshold, colors, rc,
-                         save, latex):
+def _plot_linear_cluster(ax, linkage, labels, color_threshold, colors,
+                         bg_color, fg_color, rc, save, latex):
     """
     Plot cluster in Cartesian coordinates.
     """
@@ -94,14 +94,16 @@ def _plot_linear_cluster(ax, linkage, labels, color_threshold, colors, rc,
 
         plt.rcParams.update(rc)
         if ax is None:
-            _, ax = plt.subplots(figsize=(3, 15))
+            fig, ax = plt.subplots(figsize=(3, 15))
+        else:
+            fig = ax.get_figure()
 
         sch.set_link_color_palette(colors)
         dendro = sch.dendrogram(linkage, no_plot=False, labels=labels,
                                 orientation='left', no_labels=False,
                                 color_threshold=color_threshold,
                                 show_contracted=True,
-                                above_threshold_color='black', ax=ax,
+                                above_threshold_color=fg_color, ax=ax,
                                 leaf_rotation=0)
 
         label_colors = dendro['leaves_color_list']
@@ -129,9 +131,37 @@ def _plot_linear_cluster(ax, linkage, labels, color_threshold, colors, rc,
         # ax.xaxis.labelpad = 8
         ax.yaxis.labelpad = 8
 
+        # Foreground color
+        if fg_color != 'black':
+
+            # Change axis spine colors
+            ax.spines['bottom'].set_color(fg_color)
+            ax.spines['top'].set_color(fg_color)
+            ax.spines['left'].set_color(fg_color)
+            ax.spines['right'].set_color(fg_color)
+
+            # Change tick color
+            ax.tick_params(axis='x', colors=fg_color)
+            ax.tick_params(axis='y', colors=fg_color)
+
+            # Change label color
+            ax.xaxis.label.set_color(fg_color)
+            ax.yaxis.label.set_color(fg_color)
+
+            # Change title color
+            ax.title.set_color(fg_color)
+
+        # Background color
+        if bg_color == 'none':
+            transparent_bg = True
+        else:
+            fig.set_facecolor(bg_color)
+            ax.set_facecolor(bg_color)
+            transparent_bg = False
+
         filename = 'cluster'
         texplot.show_or_save_plot(plt, default_filename=filename,
-                                  transparent_background=True,
+                                  transparent_background=transparent_bg,
                                   dpi=200, bbox_inches='tight', pad_inches=0,
                                   show_and_save=save, verbose=True)
 
@@ -141,8 +171,8 @@ def _plot_linear_cluster(ax, linkage, labels, color_threshold, colors, rc,
 # =====================
 
 def _plot_circular_cluster(ax, dist_matrix, linkage, labels, color_threshold,
-                           colors, tier_label, rc, link_distance_pow, save,
-                           latex):
+                           colors, bg_color, fg_color, tier_label, rc,
+                           link_distance_pow, save, latex):
     """
     Plots cluster in polar coordinates.
     """
@@ -154,19 +184,21 @@ def _plot_circular_cluster(ax, dist_matrix, linkage, labels, color_threshold,
                             orientation='top', no_labels=False,
                             color_threshold=color_threshold,
                             show_contracted=True,
-                            above_threshold_color='black', leaf_rotation=0)
+                            above_threshold_color=fg_color, leaf_rotation=0)
 
     indices = dendro['leaves']
 
     with texplot.theme(use_latex=latex, font_scale=1):
         plt.rcParams.update(rc)
         if ax is None:
-            _, ax = plt.subplots(figsize=(7, 7),
-                                 subplot_kw={'projection': 'polar'})
+            fig, ax = plt.subplots(figsize=(7, 7),
+                                   subplot_kw={'projection': 'polar'})
         else:
             if ax.name != 'polar':
                 raise ValueError('"ax" is not a polar Axes. Please pass an ' +
                                  'Axes created with projection="polar".')
+
+            fig = ax.get_figure()
 
         # Calculate angles and distances for each branch
         num_leaves = len(dendro['ivl'])
@@ -223,13 +255,13 @@ def _plot_circular_cluster(ax, dist_matrix, linkage, labels, color_threshold,
         if tier_label:
             ax.text(5 * 2*np.pi/360, 0.36, r'\textbf{Tier I', rotation=2)
             _curved_text(ax, -144, 0.22, list('Tier ') + ['II'],
-                         color='black', spacing=9)
+                         color=fg_color, spacing=9)
             _curved_text(ax, 108, 0.37,
                          list('Tier ') + ['II'] + [r'\textsubscript{A}'],
-                         color='black', spacing=5, flip=True)
+                         color=fg_color, spacing=5, flip=True)
             _curved_text(ax, -56, 0.58,
                          list('Tier ') + ['II'] + [r'\textsubscript{B}'],
-                         color='black', spacing=3.5, flip=False)
+                         color=fg_color, spacing=3.5, flip=False)
             _curved_text(ax, 55, 0.62,
                          list('Tier ') + ['II'] + [r'\textsubscript{A}'] +
                          [r'\textsubscript{1}'],
@@ -252,9 +284,34 @@ def _plot_circular_cluster(ax, dist_matrix, linkage, labels, color_threshold,
         ax.grid(False)
         ax.spines['polar'].set_visible(False)
 
+        # Foreground color
+        if fg_color != 'black':
+
+            # Change axis spine colors
+            if 'polar' in ax.spines:
+                ax.spines['polar'].set_color(fg_color)
+
+            # Change tick color
+            ax.tick_params(colors=fg_color)
+
+            # Change label color
+            ax.xaxis.label.set_color(fg_color)
+            ax.yaxis.label.set_color(fg_color)
+
+            # Change title color
+            ax.title.set_color(fg_color)
+
+        # Background color
+        if bg_color == 'none':
+            transparent_bg = True
+        else:
+            fig.set_facecolor(bg_color)
+            ax.set_facecolor(bg_color)
+            transparent_bg = False
+
         filename = 'cluster'
         texplot.show_or_save_plot(plt, default_filename=filename,
-                                  transparent_background=True,
+                                  transparent_background=transparent_bg,
                                   dpi=200, bbox_inches='tight', pad_inches=0,
                                   show_and_save=save, verbose=True)
 
@@ -271,6 +328,8 @@ def plot_cluster(
         tier_label: bool = False,
         method: str = 'complete',
         color_threshold: float = 0.15,
+        bg_color: tuple = 'none',
+        fg_color: tuple = 'black',
         link_distance_pow: float = 0.4,
         save: bool = False,
         latex: bool = False):
@@ -317,9 +376,10 @@ def plot_cluster(
     linkage = optimal_leaf_ordering(linkage, dist_matrix_condensed)
 
     if layout == 'circular':
-        colors = ['black', 'darkgreen', 'limegreen', 'darkorange', 'red']
+        colors = [fg_color, 'darkgreen', 'limegreen', 'darkorange', 'red']
     else:
-        colors = ['black', 'darkolivegreen', 'olive', 'chocolate', 'firebrick']
+        colors = [fg_color, 'darkolivegreen', 'olive', 'chocolate',
+                  'firebrick']
 
     # Set up figure and polar axis
     rc = {
@@ -335,8 +395,8 @@ def plot_cluster(
 
     if layout == 'circular':
         _plot_circular_cluster(ax, dist_matrix, linkage, labels,
-                               color_threshold, colors, tier_label, rc,
-                               link_distance_pow, save, latex)
+                               color_threshold, colors, bg_color, fg_color,
+                               tier_label, rc, link_distance_pow, save, latex)
     else:
-        _plot_linear_cluster(ax, linkage, labels, color_threshold, colors, rc,
-                             save, latex)
+        _plot_linear_cluster(ax, linkage, labels, color_threshold, colors,
+                             bg_color, fg_color, rc, save, latex)

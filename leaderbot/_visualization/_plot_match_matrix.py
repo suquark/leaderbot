@@ -34,7 +34,9 @@ def _plot_single_match_matrix(
         density: bool = True,
         horizontal: bool = True,
         extra_title: str = '',
-        cbar_label: str = ''):
+        cbar_label: str = '',
+        bg_color: tuple = 'none',
+        fg_color: tuple = 'black'):
     """
     Helper function for `plot_match_matrix`. This function plots a single
     plot.
@@ -96,11 +98,18 @@ def _plot_single_match_matrix(
         extend = 'neither'
 
     cbar1 = fig.colorbar(im1, cax=cax1, extend=extend)
-    cbar1.set_label(cbar_label)
+    cbar1.set_label(cbar_label, color=fg_color)
 
     if density:
         cbar1.ax.yaxis.set_major_formatter(
             mticker.PercentFormatter(decimals=0))
+
+    # Foreground and background colors
+    cbar1.ax.yaxis.set_tick_params(color=fg_color)
+    cbar1.outline.set_edgecolor(fg_color)
+    for tick_label in cbar1.ax.get_yticklabels():
+        tick_label.set_color(fg_color)
+    cbar1.ax.set_facecolor(bg_color)
 
     # Heatmap for ties
     if density:
@@ -136,11 +145,18 @@ def _plot_single_match_matrix(
         extend = 'neither'
 
     cbar2 = fig.colorbar(im2, cax=cax2, extend=extend)
-    cbar2.set_label(cbar_label)
+    cbar2.set_label(cbar_label, color=fg_color)
 
     if density:
         cbar2.ax.yaxis.set_major_formatter(
             mticker.PercentFormatter(decimals=0))
+
+    # Foreground and background colors
+    cbar2.ax.yaxis.set_tick_params(color=fg_color)
+    cbar2.outline.set_edgecolor(fg_color)
+    for tick_label in cbar2.ax.get_yticklabels():
+        tick_label.set_color(fg_color)
+    cbar2.ax.set_facecolor(bg_color)
 
 
 # =================
@@ -155,6 +171,8 @@ def plot_match_matrix(
         win_range: tuple = None,
         tie_range: tuple = None,
         horizontal: bool = False,
+        bg_color: tuple = 'none',
+        fg_color: tuple = 'black',
         save: bool = False,
         latex: bool = False):
     """
@@ -318,14 +336,16 @@ def plot_match_matrix(
                         density=density, win_range=win_range,
                         tie_range=tie_range, horizontal=horizontal,
                         extra_title=' (Observed Data)',
-                        cbar_label='Probability')
+                        cbar_label='Probability', bg_color=bg_color,
+                        fg_color=fg_color)
             else:
                 _plot_single_match_matrix(
                         fig, ax_win, ax_tie, n_obs_win, n_obs_tie,
                         density=density, win_range=win_range,
                         tie_range=tie_range, horizontal=horizontal,
                         extra_title=' (Observed Data)',
-                        cbar_label='Frequency')
+                        cbar_label='Frequency', bg_color=bg_color,
+                        fg_color=fg_color)
 
             # Move to the next row or column for the next plots (if 'both')
             win_idx = win_idx + nxt_idx
@@ -341,21 +361,54 @@ def plot_match_matrix(
                         density=density, win_range=win_range,
                         tie_range=tie_range, horizontal=horizontal,
                         extra_title=' (Model Prediction)',
-                        cbar_label='Probability')
+                        cbar_label='Probability', bg_color=bg_color,
+                        fg_color=fg_color)
             else:
                 _plot_single_match_matrix(
                         fig, ax_win, ax_tie, n_pred_win, n_pred_tie,
                         density=density, win_range=win_range,
                         tie_range=tie_range, horizontal=horizontal,
                         extra_title=' (Model Prediction)',
-                        cbar_label='Frequency')
+                        cbar_label='Frequency', bg_color=bg_color,
+                        fg_color=fg_color)
 
         plt.tight_layout()
+
+        # Foreground color
+        if fg_color != 'black':
+
+            for ax_ in ax.ravel():
+
+                # Change axis spine colors
+                ax_.spines['bottom'].set_color(fg_color)
+                ax_.spines['top'].set_color(fg_color)
+                ax_.spines['left'].set_color(fg_color)
+                ax_.spines['right'].set_color(fg_color)
+
+                # Change tick color
+                ax_.tick_params(axis='x', colors=fg_color)
+                ax_.tick_params(axis='y', colors=fg_color)
+
+                # Change label color
+                ax_.xaxis.label.set_color(fg_color)
+                ax_.yaxis.label.set_color(fg_color)
+
+                # Change title color
+                ax_.title.set_color(fg_color)
+
+        # Background color
+        if bg_color == 'none':
+            transparent_bg = True
+        else:
+            fig.set_facecolor(bg_color)
+            for ax_ in ax.ravel():
+                ax_.set_facecolor(bg_color)
+            transparent_bg = False
 
         if (not horizontal) or (source == 'both'):
             plt.subplots_adjust(hspace=-0.1)
 
         texplot.show_or_save_plot(plt, default_filename='match_matrix',
-                                  transparent_background=False,
+                                  transparent_background=transparent_bg,
                                   dpi=200, show_and_save=save,
                                   verbose=True)
