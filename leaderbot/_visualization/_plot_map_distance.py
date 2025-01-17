@@ -249,7 +249,7 @@ def plot_map_distance(
                 fig = ax.get_figure()
 
             sc = ax.scatter(x_, y_, s=sizes, c=colors, cmap=cmap, alpha=0.8,
-                            edgecolor=fg_color, linewidth=0.5)
+                            edgecolor='black', linewidth=0.5)
 
             texts = [ax.text(x_[i], y_[i], agents_ranked[i], color=fg_color,
                              fontsize=fontsize, ha='center', va='center')
@@ -257,6 +257,8 @@ def plot_map_distance(
 
             # Adjust text to avoid overlaps
             arrow_color = _get_contrasting_color(bg_color)
+            if fg_color != 'black':
+                arrow_color = '0.55'
             adjust_text(texts, objects=sc, time_lim=10,
                         ensure_inside_axes=True,
                         arrowprops=dict(arrowstyle='->', color=arrow_color,

@@ -15,43 +15,23 @@ import scipy.cluster.hierarchy as sch
 from scipy.cluster.hierarchy import optimal_leaf_ordering
 from scipy.spatial.distance import squareform
 import matplotlib.pyplot as plt
+from colorsys import hls_to_rgb
+import matplotlib.colors as mcolors
 import texplot
 
 __all__ = ['plot_cluster']
 
 
-# ===========
-# curved text
-# ===========
-
-def _curved_text(ax, center_angle, radius, text, color, spacing=5, flip=False):
+def hls_to_hex(h_, l_, s_):
     """
-    Print text along a circular path
+    Convert HLS (Hue, Lightness, Saturation) to Hex color.
     """
 
-    if not isinstance(text, str):
-        text_ = list(text)
-    else:
-        text_ = text
+    # Convert HLS to RGB (0–1 range)
+    rgb = hls_to_rgb(h_, l_, s_)
 
-    tot_angle = float(spacing) * float(len(text_))
-
-    if flip:
-        start_angle = center_angle + tot_angle / 2.0
-    else:
-        start_angle = center_angle - tot_angle / 2.0
-
-    for i, char in enumerate(text_):
-        if flip:
-            angle = start_angle - float(i) * spacing
-            rot = angle - 90
-        else:
-            angle = start_angle + float(i) * spacing
-            rot = angle + 90
-
-        ax.text(np.radians(angle), radius, rf'\textbf{{{char}}}', ha='center',
-                va='center',  rotation=rot, rotation_mode='anchor',
-                color=color)
+    # Convert RGB to Hex
+    return mcolors.to_hex(rgb)
 
 
 # ===================
@@ -166,156 +146,6 @@ def _plot_linear_cluster(ax, linkage, labels, color_threshold, colors,
                                   show_and_save=save, verbose=True)
 
 
-# =====================
-# plot circular cluster
-# =====================
-
-def _plot_circular_cluster(ax, dist_matrix, linkage, labels, color_threshold,
-                           colors, bg_color, fg_color, tier_label, rc,
-                           link_distance_pow, save, latex):
-    """
-    Plots cluster in polar coordinates.
-    """
-
-    linkage[:, 2] = linkage[:, 2] / (np.max(linkage[:, 2]))
-
-    sch.set_link_color_palette(colors)
-    dendro = sch.dendrogram(linkage, no_plot=True, labels=labels,
-                            orientation='top', no_labels=False,
-                            color_threshold=color_threshold,
-                            show_contracted=True,
-                            above_threshold_color=fg_color, leaf_rotation=0)
-
-    indices = dendro['leaves']
-
-    with texplot.theme(use_latex=latex, font_scale=1):
-        plt.rcParams.update(rc)
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(7, 7),
-                                   subplot_kw={'projection': 'polar'})
-        else:
-            if ax.name != 'polar':
-                raise ValueError('"ax" is not a polar Axes. Please pass an ' +
-                                 'Axes created with projection="polar".')
-
-            fig = ax.get_figure()
-
-        # Calculate angles and distances for each branch
-        num_leaves = len(dendro['ivl'])
-        angles = np.linspace(0, 2 * np.pi, num_leaves, endpoint=False)
-
-        min_x, max_x = np.inf, -np.inf
-        min_y, max_y = np.inf, -np.inf
-
-        for i, (xs, ys) in enumerate(zip(dendro['icoord'], dendro['dcoord'])):
-            xs = np.array(xs) / 10.0
-            ys = np.array(ys)
-            if min(xs) < min_x:
-                min_x = min(xs)
-            if max(xs) > max_x:
-                max_x = max(xs)
-            if min(ys) < min_y:
-                min_y = min(ys)
-            if max(ys) > max_y:
-                max_y = max(ys)
-
-        n_data = dist_matrix.shape[0]
-
-        for i, (xs, ys) in enumerate(zip(dendro['icoord'], dendro['dcoord'])):
-            xs = np.array(xs) / 10.0
-            ys = (np.array(ys))**link_distance_pow
-
-            t = (n_data / (n_data + 1)) * 2.0 * np.pi * (xs - min_x) / \
-                (max_x - min_x)
-            r = (max_y - ys) / (max_y - min_y)
-
-            # Draw the radial line segments
-            t_rng = np.linspace(t[1], t[2], 40)
-            r_rng = np.ones_like(t_rng) * r[1]
-            ax.plot([t[0], t[1]], [r[0], r[1]], color=dendro['color_list'][i])
-            ax.plot([t[2], t[3]], [r[2], r[3]], color=dendro['color_list'][i])
-            ax.plot(t_rng, r_rng, color=dendro['color_list'][i])
-
-        # Place labels around the circumference
-        for index, angle, label, color in zip(indices, angles, dendro['ivl'],
-                                              dendro['leaves_color_list']):
-            if index + 1 == 100:
-                ax.text(angle, 1.035, f'{index+1}', ha='left', va='center',
-                        rotation=np.degrees(angle), color=color,
-                        rotation_mode='anchor', fontsize=10)
-            else:
-                ax.text(angle, 1.035, f'{index+1}', ha='left', va='center',
-                        rotation=np.degrees(angle), color=color,
-                        rotation_mode='anchor')
-            ax.text(angle, 1.14, label, ha='left', va='center',
-                    rotation=np.degrees(angle), color=color,
-                    rotation_mode='anchor')
-
-        # Add text for tier of branches
-        if tier_label:
-            ax.text(5 * 2*np.pi/360, 0.36, r'\textbf{Tier I', rotation=2)
-            _curved_text(ax, -144, 0.22, list('Tier ') + ['II'],
-                         color=fg_color, spacing=9)
-            _curved_text(ax, 108, 0.37,
-                         list('Tier ') + ['II'] + [r'\textsubscript{A}'],
-                         color=fg_color, spacing=5, flip=True)
-            _curved_text(ax, -56, 0.58,
-                         list('Tier ') + ['II'] + [r'\textsubscript{B}'],
-                         color=fg_color, spacing=3.5, flip=False)
-            _curved_text(ax, 55, 0.62,
-                         list('Tier ') + ['II'] + [r'\textsubscript{A}'] +
-                         [r'\textsubscript{1}'],
-                         color=colors[1], spacing=3.2, flip=True)
-            _curved_text(ax, 158, 0.66,
-                         list('Tier ') + ['II'] + [r'\textsubscript{A}'] +
-                         [r'\textsubscript{2}'],
-                         color=colors[2], spacing=3.2, flip=True)
-            _curved_text(ax, -96, 0.71,
-                         list('Tier ') + ['II'] + [r'\textsubscript{B}'] +
-                         [r'\textsubscript{1}'],
-                         color=colors[3], spacing=3.2, flip=False)
-            _curved_text(ax, -21, 0.7,
-                         list('Tier ') + ['II'] + [r' \textsubscript{B}'] +
-                         [r'\textsubscript{2}'],
-                         color=colors[4], spacing=3.2, flip=False)
-
-        ax.set_xticks([])
-        ax.set_yticks([])
-        ax.grid(False)
-        ax.spines['polar'].set_visible(False)
-
-        # Foreground color
-        if fg_color != 'black':
-
-            # Change axis spine colors
-            if 'polar' in ax.spines:
-                ax.spines['polar'].set_color(fg_color)
-
-            # Change tick color
-            ax.tick_params(colors=fg_color)
-
-            # Change label color
-            ax.xaxis.label.set_color(fg_color)
-            ax.yaxis.label.set_color(fg_color)
-
-            # Change title color
-            ax.title.set_color(fg_color)
-
-        # Background color
-        if bg_color == 'none':
-            transparent_bg = True
-        else:
-            fig.set_facecolor(bg_color)
-            ax.set_facecolor(bg_color)
-            transparent_bg = False
-
-        filename = 'cluster'
-        texplot.show_or_save_plot(plt, default_filename=filename,
-                                  transparent_background=transparent_bg,
-                                  dpi=200, bbox_inches='tight', pad_inches=0,
-                                  show_and_save=save, verbose=True)
-
-
 # ============
 # plot cluster
 # ============
@@ -324,13 +154,11 @@ def plot_cluster(
         model,
         ax=None,
         max_rank: int = None,
-        layout: str = 'circular',
         tier_label: bool = False,
         method: str = 'complete',
         color_threshold: float = 0.15,
         bg_color: tuple = 'none',
         fg_color: tuple = 'black',
-        link_distance_pow: float = 0.4,
         save: bool = False,
         latex: bool = False):
     """
@@ -355,10 +183,7 @@ def plot_cluster(
     dist_matrix = D[:m, :][:, :m]
 
     # Competitor names
-    if layout == 'circular':
-        name_max_length = 23
-    else:
-        name_max_length = 100
+    name_max_length = 100
 
     labels = []
     for i in range(m):
@@ -375,11 +200,8 @@ def plot_cluster(
                           optimal_ordering=True)
     linkage = optimal_leaf_ordering(linkage, dist_matrix_condensed)
 
-    if layout == 'circular':
-        colors = [fg_color, 'darkgreen', 'limegreen', 'darkorange', 'red']
-    else:
-        colors = [fg_color, 'darkolivegreen', 'olive', 'chocolate',
-                  'firebrick']
+    colors = [fg_color, 'darkolivegreen', 'olive', 'chocolate',
+              'firebrick']
 
     # Set up figure and polar axis
     rc = {
@@ -393,10 +215,5 @@ def plot_cluster(
             r'\usepackage{pifont}',
     }
 
-    if layout == 'circular':
-        _plot_circular_cluster(ax, dist_matrix, linkage, labels,
-                               color_threshold, colors, bg_color, fg_color,
-                               tier_label, rc, link_distance_pow, save, latex)
-    else:
-        _plot_linear_cluster(ax, linkage, labels, color_threshold, colors,
-                             bg_color, fg_color, rc, save, latex)
+    _plot_linear_cluster(ax, linkage, labels, color_threshold, colors,
+                         bg_color, fg_color, rc, save, latex)

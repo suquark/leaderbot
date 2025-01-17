@@ -147,6 +147,7 @@ clustering of the chatbots based on the score and correlation distances:
 .. image:: _static/images/plots/cluster.png
     :align: center
     :class: custom-dark
+    :width: 50%
 
 
 Match Matrices
@@ -374,13 +375,8 @@ our :ref:`Contributing Guidelines <contribute>` before submitting their code.
 If you do not feel comfortable modifying the code, we also welcome feature
 requests and bug reports.
 
-.. _index_publications:
-
-.. Publications
-.. ============
-..
-.. For information on how to cite |project|, publications, and software
-.. packages that used |project|, see:
+.. How to Cite
+.. include:: cite.rst
 
 License
 =======

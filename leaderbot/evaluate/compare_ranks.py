@@ -157,6 +157,7 @@ def compare_ranks(
         ax=None,
         bg_color: tuple = 'none',
         fg_color: tuple = 'black',
+        mf_color: tuple = 'white',
         save: bool = False,
         latex: bool = False):
     """
@@ -189,6 +190,9 @@ def compare_ranks(
 
     fg_color : str or tuple, default='black'
         Color of the axes and text.
+
+    mf_color : str or tuple, default=None
+        Marker face color. If `None, the ``bg_color`` is used
 
     save : bool, default=False
         If `True`, the plot will be saved. This argument is effective only if
@@ -326,10 +330,13 @@ def compare_ranks(
 
             # Plot lines and markers both together (commended out in favor of
             # the following lines instead using trimming)
-            if bg_color == 'none':
-                markerfacecolor = 'white'
+            if mf_color is None:
+                if bg_color == 'none':
+                    markerfacecolor = 'white'
+                else:
+                    markerfacecolor = bg_color
             else:
-                markerfacecolor = bg_color
+                markerfacecolor = mf_color
             ax_.plot(x, y, marker='o', markerfacecolor=markerfacecolor,
                      markeredgecolor=color, markeredgewidth=markeredgewidth,
                      markersize=markersize, label=f'Entity {entity}',

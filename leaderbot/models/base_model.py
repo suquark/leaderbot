@@ -1493,13 +1493,11 @@ class BaseModel(object):
             self,
             ax=None,
             max_rank: int = None,
-            layout: str = 'circular',
             tier_label: bool = False,
             method: str = 'complete',
             color_threshold: float = 0.15,
             bg_color: tuple = 'none',
             fg_color: tuple = 'black',
-            link_distance_pow: float = 0.4,
             save: bool = False,
             latex: bool = False):
         """
@@ -1514,12 +1512,6 @@ class BaseModel(object):
         max_rank : int, default=None
             The maximum number of agents to be displayed. If `None`, all
             agents in the input dataset will be ranked and shown.
-
-        layout : {'circular', 'linear'}, default='circular'
-            The layout of cluster. Circular generates a hierarchical cluster on
-            polar coordinates where all entires are arranged around a circle,
-            whereas linear displays a luster where all entities
-            are shown along vertical line.
 
         tier_label : bool, default=False,
             If `True`, the branch lines up to the first three hierarchies are
@@ -1539,14 +1531,6 @@ class BaseModel(object):
 
         fg_color : str or tuple, default='black'
             Color of the axes and text.
-
-        link_distance_pow : float, default=0.4
-            The linkage distance is raised to the power of this number. Since
-            the linakage distance is normalized to be between 0 and 1,
-            raising these distance to a power less than 1 expands small
-            distances, helping to better visualize the end leaves of the
-            deprogram. This option is only applicable when ``layout`` is set
-            to ``circular``.
 
         save : bool, default=False
             If `True`, the plot will be saved. This argument is effective only
@@ -1586,18 +1570,17 @@ class BaseModel(object):
             >>> model.train()
 
             >>> # Plot kernel PCA
-            >>> model.cluster(max_rank=100, layout='circular',
-            ...               tier_label=True, latex=True)
+            >>> model.cluster(max_rank=100, tier_label=True, latex=True)
 
         The above code produces plot below.
 
         .. image:: ../_static/images/plots/cluster.png
             :align: center
             :class: custom-dark
+            :width: 50%
         """
 
-        plot_cluster(self, ax=ax, max_rank=max_rank, layout=layout,
-                     tier_label=tier_label, method=method,
-                     color_threshold=color_threshold, bg_color=bg_color,
-                     fg_color=fg_color, link_distance_pow=link_distance_pow,
-                     save=save, latex=latex)
+        plot_cluster(self, ax=ax, max_rank=max_rank, tier_label=tier_label,
+                     method=method, color_threshold=color_threshold,
+                     bg_color=bg_color, fg_color=fg_color, save=save,
+                     latex=latex)
