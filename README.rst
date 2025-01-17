@@ -22,23 +22,16 @@ Alternatively, clone the source code and install with
     cd source_dir
     pip install .
 
-Build Documentation
-===================
+Documentation
+=============
 
-.. code-block::
-
-    cd docs
-    make clean html
-
-The documentation can be viewed at ``/docs/build/html/index.html``, which
-includes the `API` reference of classes and functions with their usage.
+Documentation is available at :ref:`leaderbot.org <https://leaderbot.org/>`__.
 
 Quick Usage
 ===========
 
-The package provides several statistical models (see API reference for
-details). In the example below, we use ``leaderbot.models.Davidson`` class to
-build a model. However, working with other models is similar.
+The package provides several statistical models (see :ref:`API References <https://leaderbot.org/api.html>`__ for details). In the example below, we use ``leaderbot.models.Davidson`` class to
+create a statistical model based on Davidson's method. However, there are several more methods available in the API, and working with them is similar. Here we will demonstrate some of the functionalities of the models, but the full list is available in the documentation.
 
 Create and Train a Model
 ------------------------
@@ -64,7 +57,7 @@ To print leaderboard table of the chatbot agents, use
 .. code-block:: python
 
     >>> # Leaderboard table
-    >>> model.leaderboard(plot=True)
+    >>> model.leaderboard(max_rank=15)
 
 The above code prints the table below:
 
@@ -89,30 +82,10 @@ The above code prints the table below:
     |  13. mistral-large-2407   | +0.147 |   9309 | 41%  35%  25% | 43%  37%  21% |
     |  14. llama-3.1-70b-ins... | +0.143 |  10946 | 41%  36%  22% | 42%  37%  21% |
     |  15. claude-3-opus-202... | +0.141 | 134831 | 49%  29%  21% | 50%  30%  20% |
-    |  16. gpt-4-1106-preview   | +0.141 |  81545 | 53%  25%  22% | 54%  26%  20% |
-    |  17. yi-large-preview     | +0.134 |  42947 | 46%  32%  22% | 47%  33%  21% |
-    |  18. gpt-4-0125-preview   | +0.134 |  74890 | 49%  28%  23% | 50%  29%  20% |
-    |  19. gemini-1.5-flash-... | +0.125 |  45312 | 43%  35%  22% | 43%  36%  21% |
-    |  20. reka-core-20240722   | +0.125 |   5518 | 39%  39%  22% | 40%  39%  21% |
-    |  21. deepseek-v2-api-0628 | +0.115 |  13075 | 37%  39%  24% | 39%  40%  21% |
-    |  22. gemma-2-27b-it       | +0.114 |  22252 | 38%  38%  24% | 40%  39%  21% |
-    |  23. deepseek-coder-v2... | +0.114 |   3162 | 35%  42%  24% | 36%  43%  21% |
-    |  24. yi-large             | +0.109 |  13563 | 40%  37%  24% | 41%  38%  21% |
-    |  25. bard-jan-24-gemin... | +0.106 |  10499 | 53%  31%  15% | 51%  29%  20% |
-    |  26. nemotron-4-340b-i... | +0.106 |  16979 | 40%  37%  23% | 41%  38%  21% |
-    |  27. llama-3-70b-instruct | +0.104 | 133374 | 42%  36%  22% | 43%  37%  21% |
-    |  28. glm-4-0520           | +0.102 |   8271 | 39%  38%  23% | 40%  39%  21% |
-    |  29. reka-flash-20240722  | +0.100 |   5397 | 34%  44%  22% | 34%  45%  21% |
-    |  30. reka-core-20240501   | +0.097 |  51460 | 38%  39%  23% | 39%  40%  21% |
     +---------------------------+--------+--------+---------------+---------------+
 
-The above code also produces the following plot of the frequencies and
-probabilities of win, loss, and tie of the matches.
-
-.. image:: docs/source/_static/images/plots/rank.png
-
-Score Plot
-----------
+Scores
+------
 
 The scores versus rank can be plotted by ``leaderbot.Davidson.plot_scores``
 function:
@@ -129,45 +102,18 @@ Visualize Correlation
 ---------------------
 
 The correlation of the chatbot performances can be visualized with
-``leaderbot.models.Davidson.visualize`` using various methods. Here is an
+``leaderbot.models.Davidson.map_dissimilairy`` using various methods. Here is an
 example with the Kernel PCA method:
 
 .. code-block:: python
 
     >>> # Plot kernel PCA
-    >>> model.visualize(max_rank=50)
+    >>> model.map_dissimilarity(max_rank=50)
 
 The above code produces plot below demonstrating the Kernel PCA projection on
 three principal axes:
 
 .. image:: docs/source/_static/images/plots/kpca.png
-    :align: center
-    :class: custom-dark
-
-Match Matrices
---------------
-
-The match matrices of the counts or densities of wins and ties can be
-visualized with ``leaderbot.models.Davidson.match_matrix`` function:
-
-.. code-block:: python
-
-    >>> # Match matrix for probability density of win and tie
-    >>> model.match_matrix(max_rank=20, density=True)
-
-.. image:: docs/source/_static/images/plots/match_matrix_density_true.png
-    :align: center
-    :class: custom-dark
-
-The same plot for the counts (as opposed to density) of the win and ties are
-plotted as follows:
-
-.. code-block:: python
-
-    >>> # Match matrix for frequency of win and tie
-    >>> model.match_matrix(max_rank=20, density=False)
-
-.. image:: docs/source/_static/images/plots/match_matrix_density_false.png
     :align: center
     :class: custom-dark
 
@@ -383,13 +329,23 @@ our [Contributing Guidelines](CONTRIBUTING.rst) before submitting their code.
 If you do not feel comfortable modifying the code, we also welcome feature
 requests and bug reports.
 
-.. _index_publications:
+How to Cite
+===========
 
-.. Publications
-.. ============
-..
-.. For information on how to cite |project|, publications, and software
-.. packages that used |project|, see:
+.. [1] Ameli, S., Zhuang, S., Stoica, I., & Mahoney, M. W. (2024). :ref:`A Statistical Framework for Ranking LLM-Based Chatbots <https://arxiv.org/abs/2412.18407>`__. *arXiv Preprint arXiv:2412.18407*.
+
+    .. code::
+
+        @article{ameli-2024,
+            title={A Statistical Framework for Ranking LLM-Based Chatbots}, 
+            author={Siavash Ameli and Siyuan Zhuang and Ion Stoica and Michael W. Mahoney},
+            year={2024},
+	        journal={arXiv preprint arXiv:2412.18407},
+            eprint={2412.18407},
+            archivePrefix={arXiv},
+            primaryClass={stat.ML},
+            url={https://arxiv.org/abs/2412.18407}, 
+        }
 
 License
 =======
@@ -397,11 +353,3 @@ License
 This project uses a BSD 3-clause license in hopes that it will be accessible to
 most projects. If you require a different license, please raise an issue and we
 will consider a dual license.
-
-.. |pypi| image:: https://img.shields.io/pypi/v/leaderbot
-.. |traceflows-light| image:: _static/images/icons/logo-leaderbot-light.svg
-   :height: 23
-   :class: only-light
-.. |traceflows-dark| image:: _static/images/icons/logo-leaderbot-dark.svg
-   :height: 23
-   :class: only-dark
