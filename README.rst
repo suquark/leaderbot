@@ -25,12 +25,12 @@ Alternatively, clone the source code and install with
 Documentation
 =============
 
-Documentation is available at :ref:`leaderbot.org <https://leaderbot.org/>`__.
+Documentation is available at `leaderbot.org <https://leaderbot.org/>`__.
 
 Quick Usage
 ===========
 
-The package provides several statistical models (see :ref:`API References <https://leaderbot.org/api.html>`__ for details). In the example below, we use ``leaderbot.models.Davidson`` class to
+The package provides several statistical models (see `API References <https://leaderbot.org/api.html>`__ for details). In the example below, we use ``leaderbot.models.Davidson`` class to
 create a statistical model based on Davidson's method. However, there are several more methods available in the API, and working with them is similar. Here we will demonstrate some of the functionalities of the models, but the full list is available in the documentation.
 
 Create and Train a Model
@@ -332,20 +332,20 @@ requests and bug reports.
 How to Cite
 ===========
 
-.. [1] Ameli, S., Zhuang, S., Stoica, I., & Mahoney, M. W. (2024). :ref:`A Statistical Framework for Ranking LLM-Based Chatbots <https://arxiv.org/abs/2412.18407>`__. *arXiv Preprint arXiv:2412.18407*.
+* Ameli, S., Zhuang, S., Stoica, I., & Mahoney, M. W. (2024). `A Statistical Framework for Ranking LLM-Based Chatbots <https://arxiv.org/abs/2412.18407>`__. *arXiv Preprint arXiv:2412.18407*.
 
-    .. code::
+  .. code::
 
-        @article{ameli-2024,
-            title={A Statistical Framework for Ranking LLM-Based Chatbots}, 
-            author={Siavash Ameli and Siyuan Zhuang and Ion Stoica and Michael W. Mahoney},
-            year={2024},
-	        journal={arXiv preprint arXiv:2412.18407},
-            eprint={2412.18407},
-            archivePrefix={arXiv},
-            primaryClass={stat.ML},
-            url={https://arxiv.org/abs/2412.18407}, 
-        }
+      @article{ameli-2024,
+          title={A Statistical Framework for Ranking LLM-Based Chatbots}, 
+          author={Siavash Ameli and Siyuan Zhuang and Ion Stoica and Michael W. Mahoney},
+          year={2024},
+          journal={arXiv preprint arXiv:2412.18407},
+          eprint={2412.18407},
+          archivePrefix={arXiv},
+          primaryClass={stat.ML},
+          url={https://arxiv.org/abs/2412.18407}, 
+      }
 
 License
 =======
