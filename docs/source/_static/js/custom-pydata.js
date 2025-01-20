@@ -21,7 +21,7 @@
 //
 // 3. Then uncomment the following function here, and add the url of the PDF file.
 
-const clientId = "becbabeb5d0d4204b5b99689751e71ef";
+const clientId = "77a1b26570924910a4a6e24350b76f43";
 
 const viewerOptions = {
     // embedMode: "IN_LINE",

@@ -1,7 +1,7 @@
 How to Cite
 ===========
 
-.. [1] Ameli, S., Zhuang, S., Stoica, I., & Mahoney, M. W. (2024). A Statistical Framework for Ranking LLM-Based Chatbots. *arXiv Preprint arXiv:2412.18407*. |ameli-rnk| |btn-bib-1| |btn-view-pdf-1|
+.. [1] Ameli, S., Zhuang, S., Stoica, I., & Mahoney, M. W. (2024). `A Statistical Framework for Ranking LLM-Based Chatbots <https://arxiv.org/abs/2412.18407>`_. *arXiv Preprint arXiv:2412.18407*. |ameli-rnk| |btn-bib-1| |btn-view-pdf-1|
 
    .. raw:: html
 

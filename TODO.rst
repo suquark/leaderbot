@@ -30,54 +30,15 @@ have three classes:
 Documentation
 -------------
 
-* Font size in ``kpca.png`` plot is too small.
-
 * In ``README.rst``, why the link to ``CONTRIBUTING.rst`` is not properly shown
   in GitHub?
 
-Visualization
--------------
-
-* Why in Jupyter notebook, 3D plot is not centered? Use ``%matplotlib tk``
-  to temporarily fix the plot canvas.
-
-* Add win-table from archive codes.
-
-``ScaledRIJ`` Optimization
---------------------------
-
-All ``*ScaledRIJ`` classes can not be optimized with ``BFGS``, rather, they
-only work with ``L-BFGS-B``. Needs work. It might need constraint with the
-trace of full ``S``, rather than its diagonal constraint.
-
-Package Naming
---------------
-
-* leaderbot
-* arena (taken)
-* botarena
-* chatbotarena
-* chatbot_arena
 
 Notes
 =====
 
-Terminologies
--------------
-
-* Changed the name ``model`` to ``agent`` as this might conflate the LLM models
-  with the statistical model (likelihood model itself). The word ``agent`` also
-  represents chatbots.
-
-* ``algorithm`` was changed to ``model``.
-
-* ``weight`` to ``param``.
-
-* Better to use ``match`` instead of ``battle`` or ``game`` in the
-  documentation.
-
-Models
-------
+* All ``*ScaledRIJ`` classes can not be optimized with ``BFGS``, rather, they
+  only work with ``L-BFGS-B``. 
 
 * In ``RaoKupper``, the parameter ``eta`` should be constrained to be positive
   to make sure ``p_tie`` remains positive. This can be done using its
