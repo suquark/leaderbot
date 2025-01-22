@@ -369,10 +369,10 @@ requests and bug reports.
 License
 =======
 
-This project uses a BSD 3-clause license in hopes that it will be accessible to
-most projects. If you require a different license, please raise an issue and we
-will consider a dual license.
+|license|
 
+.. |license| image:: https://img.shields.io/github/license/suquark/leaderbot
+   :target: https://opensource.org/licenses/BSD-3-Clause
 .. |pypi| image:: https://img.shields.io/pypi/v/leaderbot
 .. |traceflows-light| image:: _static/images/icons/logo-leaderbot-light.svg
    :height: 23

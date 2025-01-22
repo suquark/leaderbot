@@ -1,4 +1,4 @@
-.. image:: docs/source/_static/images/icons/logo-leaderbot-light.png
+.. image:: https://raw.githubusercontent.com/suquark/leaderbot/refs/heads/main/docs/source/_static/images/icons/logo-leaderbot-light.png
     :align: left
     :width: 240
     :class: custom-dark
@@ -94,7 +94,7 @@ function:
 
     >>> model.plot_scores(max_rank=30)
 
-.. image:: docs/source/_static/images/plots/scores.png
+.. image:: https://raw.githubusercontent.com/suquark/leaderbot/refs/heads/main/docs/source/_static/images/plots/scores.png
     :align: center
     :class: custom-dark
 
@@ -113,7 +113,7 @@ example with the Kernel PCA method:
 The above code produces plot below demonstrating the Kernel PCA projection on
 three principal axes:
 
-.. image:: docs/source/_static/images/plots/kpca.png
+.. image:: https://raw.githubusercontent.com/suquark/leaderbot/refs/heads/main/docs/source/_static/images/plots/kpca.png
     :align: center
     :class: custom-dark
 
@@ -299,10 +299,9 @@ Ranking of various models can be compared using
 
 The above code produces plot below.
 
-.. image:: docs/source/_static/images/plots/bump_chart.png
+.. image:: https://raw.githubusercontent.com/suquark/leaderbot/refs/heads/main/docs/source/_static/images/plots/bump_chart.png
     :align: center
     :class: custom-dark
-
 
 Test
 ====
@@ -350,6 +349,7 @@ How to Cite
 License
 =======
 
-This project uses a BSD 3-clause license in hopes that it will be accessible to
-most projects. If you require a different license, please raise an issue and we
-will consider a dual license.
+|license|
+
+.. |license| image:: https://img.shields.io/github/license/suquark/leaderbot
+   :target: https://opensource.org/licenses/BSD-3-Clause
