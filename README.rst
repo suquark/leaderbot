@@ -331,19 +331,17 @@ requests and bug reports.
 How to Cite
 ===========
 
-* Ameli, S., Zhuang, S., Stoica, I., & Mahoney, M. W. (2024). `A Statistical Framework for Ranking LLM-Based Chatbots <https://arxiv.org/abs/2412.18407>`__. *arXiv Preprint arXiv:2412.18407*.
+* Ameli, S., Zhuang, S., Stoica, I., & Mahoney, M. W. (2025). `A Statistical Framework for Ranking LLM-Based Chatbots <https://arxiv.org/pdf/2412.18407>`__. *The Thirteenth International Conference on Learning Representations*.
 
   .. code::
 
-      @article{ameli-2024,
-          title={A Statistical Framework for Ranking LLM-Based Chatbots}, 
+      @inproceedings{
+          ameli2025a,
+          title={A Statistical Framework for Ranking {LLM}-based Chatbots},
           author={Siavash Ameli and Siyuan Zhuang and Ion Stoica and Michael W. Mahoney},
-          year={2024},
-          journal={arXiv preprint arXiv:2412.18407},
-          eprint={2412.18407},
-          archivePrefix={arXiv},
-          primaryClass={stat.ML},
-          url={https://arxiv.org/abs/2412.18407}, 
+          booktitle={The Thirteenth International Conference on Learning Representations},
+          year={2025},
+          url={https://openreview.net/forum?id=rAoEub6Nw2}
       }
 
 License
