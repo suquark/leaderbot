@@ -253,6 +253,7 @@ def compare_ranks(
     .. image:: ../_static/images/plots/bump_chart.png
         :align: center
         :class: custom-dark
+        :width: 50%
     """
 
     if not isinstance(models, list):
