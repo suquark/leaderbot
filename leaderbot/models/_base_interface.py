@@ -632,11 +632,6 @@ class BaseInterface(object):
             >>> # Plot scores by rank
             >>> model.plot_scores(max_rank=50)
 
-        The above code provides the text output and plot below.
-
-        .. literalinclude:: ../_static/data/leaderboard.txt
-            :language: none
-
         .. image:: ../_static/images/plots/scores.png
             :align: center
             :class: custom-dark
@@ -989,6 +984,9 @@ class BaseInterface(object):
         Examples
         --------
 
+        The following example uses Kernel-PCA method projected on 3-dimensional
+        space:
+
         .. code-block:: python
             :emphasize-lines: 12
 
@@ -1008,6 +1006,17 @@ class BaseInterface(object):
         The above code produces plot below.
 
         .. image:: ../_static/images/plots/kpca.png
+            :align: center
+            :class: custom-dark
+
+        The example below uses MDS method projected in 2-dimensional space:
+
+        .. code-block:: python
+
+            >>> # Plot MDS
+            >>> model.map_distance(max_rank=50, method='mds', dim='2d')
+
+        .. image:: ../_static/images/plots/mds.png
             :align: center
             :class: custom-dark
         """
