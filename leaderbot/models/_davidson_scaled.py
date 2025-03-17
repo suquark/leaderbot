@@ -12,7 +12,7 @@
 
 import numba
 import numpy as np
-from .base_model import BaseModel
+from ._base_model import BaseModel
 from ._math_util import double_sigmoid, cross_entropy
 from ..data import DataType
 from typing import List, Union

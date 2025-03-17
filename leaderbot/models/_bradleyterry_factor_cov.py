@@ -12,7 +12,7 @@
 
 import numba
 import numpy as np
-from .factor_model import FactorModel
+from ._factor_model import FactorModel
 from ._math_util import sigmoid, cross_entropy
 from ..data import DataType
 from typing import List, Union

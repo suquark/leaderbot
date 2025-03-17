@@ -14,7 +14,7 @@ import numpy as np
 from ..data import DataType
 from typing import List, Union
 
-from .base_model import BaseModel
+from ._base_model import BaseModel
 
 __all__ = ['FactorModel']
 
