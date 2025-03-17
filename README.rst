@@ -331,7 +331,7 @@ requests and bug reports.
 How to Cite
 ===========
 
-* Ameli, S., Zhuang, S., Stoica, I., & Mahoney, M. W. (2025). `A Statistical Framework for Ranking LLM-Based Chatbots <https://arxiv.org/pdf/2412.18407>`__. *The Thirteenth International Conference on Learning Representations*.
+* Siavash Ameli, Siyuan Zhuang, Ion Stoica, and Michael W. Mahoney. `A Statistical Framework for Ranking LLM-Based Chatbots <https://openreview.net/pdf?id=rAoEub6Nw2>`__. *The Thirteenth International Conference on Learning Representations*, 2025.
 
   .. code::
 
