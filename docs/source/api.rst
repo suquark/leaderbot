@@ -3,10 +3,10 @@
 API Reference
 *************
 
-Statistical Models
-------------------
+Ranking Models
+--------------
 
-Classes to define statistical models to train on data.
+Classes to define statistical ranking models to train on data.
 
 .. autosummary::
     :toctree: generated

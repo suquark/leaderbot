@@ -25,8 +25,7 @@ def convert(
         input_file: str,
         output_file: str):
     """
-    Convert raw data from Chatbot Arena into a processed JSON format to be
-    compatible as input to :func:`leaderbot.data.load`.
+    Convert Chatbot Arena's raw data.
 
     Parameters
     ----------
@@ -39,11 +38,18 @@ def convert(
     output_file : str
         The output ``.json`` file to write the converted data.
 
+    See Also
+    --------
+
+    leaderbot.data.load
+
     Notes
     -----
 
-    This function converts the raw JSON file to another JSON file containing
-    the following key and values:
+    This function converts the raw JSON file from Chatbot Arena to another JSON
+    file compatible as an input to :func:`leaderbot.data.load` function.
+
+    In particular, the output JSON file contains the following keys and values:
 
     * ``'X'``:
         A list of tuple of two indices ``(i, j)`` representing a match
@@ -55,10 +61,6 @@ def convert(
         given by the corresponding tuple in ``X``.
     * ``'models'``: a list of the name of agents in the match.
 
-    See Also
-    --------
-
-    leaderbot.data.load
 
     Examples
     --------

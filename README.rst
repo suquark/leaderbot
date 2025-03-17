@@ -30,8 +30,13 @@ Documentation is available at `leaderbot.org <https://leaderbot.org/>`__.
 Quick Usage
 ===========
 
-The package provides several statistical models (see `API References <https://leaderbot.org/api.html>`__ for details). In the example below, we use ``leaderbot.models.Davidson`` class to
-create a statistical model based on Davidson's method. However, there are several more methods available in the API, and working with them is similar. Here we will demonstrate some of the functionalities of the models, but the full list is available in the documentation.
+The package provides several statistical models (see
+`API References <https://leaderbot.org/api.html>`__ for details). In the
+example below, we use ``leaderbot.models.Davidson`` class to
+create a statistical model based on Davidson's method. However, there are
+several more methods available in the API, and working with them is similar.
+Here we will demonstrate some of the functionalities of the models, but the
+full list is available in the documentation.
 
 Create and Train a Model
 ------------------------
@@ -57,7 +62,7 @@ To print leaderboard table of the chatbot agents, use
 .. code-block:: python
 
     >>> # Leaderboard table
-    >>> model.leaderboard(max_rank=15)
+    >>> model.leaderboard(max_rank=20)
 
 The above code prints the table below:
 
@@ -67,21 +72,26 @@ The above code prints the table below:
     |                           |        |    num |   observed    |   predicted   |
     | rnk  agent                |  score |  match | win loss  tie | win loss  tie |
     +---------------------------+--------+--------+---------------+---------------+
-    |   1. chatgpt-4o-latest    | +0.221 |  11798 | 53%  23%  24% | 55%  25%  20% |
-    |   2. gemini-1.5-pro-ex... | +0.200 |  16700 | 51%  26%  23% | 52%  27%  20% |
-    |   3. gpt-4o-2024-05-13    | +0.181 |  66560 | 51%  26%  23% | 52%  28%  20% |
-    |   4. gpt-4o-mini-2024-... | +0.171 |  15929 | 46%  29%  25% | 48%  31%  21% |
-    |   5. claude-3-5-sonnet... | +0.170 |  40587 | 47%  31%  22% | 48%  32%  21% |
-    |   6. gemini-advanced-0514 | +0.167 |  44319 | 49%  29%  22% | 50%  30%  21% |
-    |   7. llama-3.1-405b-in... | +0.161 |  15680 | 44%  32%  24% | 45%  34%  21% |
-    |   8. gpt-4o-2024-08-06    | +0.159 |   7796 | 43%  32%  25% | 45%  34%  21% |
-    |   9. gemini-1.5-pro-ap... | +0.159 |  57941 | 47%  31%  22% | 48%  32%  21% |
-    |  10. gemini-1.5-pro-ap... | +0.156 |  48381 | 52%  28%  20% | 52%  28%  20% |
-    |  11. athene-70b-0725      | +0.149 |   9125 | 43%  35%  22% | 43%  36%  21% |
-    |  12. gpt-4-turbo-2024-... | +0.148 |  73106 | 47%  29%  24% | 49%  31%  21% |
-    |  13. mistral-large-2407   | +0.147 |   9309 | 41%  35%  25% | 43%  37%  21% |
-    |  14. llama-3.1-70b-ins... | +0.143 |  10946 | 41%  36%  22% | 42%  37%  21% |
-    |  15. claude-3-opus-202... | +0.141 | 134831 | 49%  29%  21% | 50%  30%  20% |
+    |   1. chatgpt-4o-latest    | +0.172 |  11798 | 53%  23%  24% | 53%  23%  24% |
+    |   2. gemini-1.5-pro-ex... | +0.149 |  16700 | 51%  26%  23% | 51%  26%  23% |
+    |   3. gpt-4o-2024-05-13    | +0.130 |  66560 | 51%  26%  23% | 51%  26%  23% |
+    |   4. gpt-4o-mini-2024-... | +0.121 |  15929 | 46%  29%  25% | 47%  29%  24% |
+    |   5. claude-3-5-sonnet... | +0.119 |  40587 | 47%  31%  22% | 47%  31%  22% |
+    |   6. gemini-advanced-0514 | +0.116 |  44319 | 49%  29%  22% | 49%  29%  22% |
+    |   7. llama-3.1-405b-in... | +0.111 |  15680 | 44%  32%  24% | 44%  32%  23% |
+    |   8. gpt-4o-2024-08-06    | +0.110 |   7796 | 43%  32%  25% | 43%  32%  25% |
+    |   9. gemini-1.5-pro-ap... | +0.109 |  57941 | 47%  31%  22% | 47%  31%  22% |
+    |  10. gemini-1.5-pro-ap... | +0.106 |  48381 | 52%  28%  20% | 52%  28%  20% |
+    |  11. athene-70b-0725      | +0.100 |   9125 | 43%  35%  22% | 43%  35%  22% |
+    |  12. mistral-large-2407   | +0.099 |   9309 | 41%  35%  25% | 41%  34%  25% |
+    |  13. gpt-4-turbo-2024-... | +0.099 |  73106 | 47%  29%  24% | 47%  29%  24% |
+    |  14. llama-3.1-70b-ins... | +0.096 |  10946 | 41%  36%  22% | 41%  37%  22% |
+    |  15. claude-3-opus-202... | +0.094 | 134831 | 49%  29%  21% | 49%  29%  21% |
+    |  16. gpt-4-1106-preview   | +0.093 |  81545 | 53%  25%  22% | 53%  25%  22% |
+    |  17. yi-large-preview     | +0.088 |  42947 | 46%  32%  22% | 45%  31%  23% |
+    |  18. gpt-4-0125-preview   | +0.087 |  74890 | 49%  28%  23% | 49%  28%  22% |
+    |  19. reka-core-20240722   | +0.080 |   5518 | 39%  39%  22% | 39%  39%  22% |
+    |  20. gemini-1.5-flash-... | +0.080 |  45312 | 43%  35%  22% | 43%  35%  22% |
     +---------------------------+--------+--------+---------------+---------------+
 
 Scores
@@ -102,8 +112,8 @@ Visualize Correlation
 ---------------------
 
 The correlation of the chatbot performances can be visualized with
-``leaderbot.models.Davidson.map_dissimilairy`` using various methods. Here is an
-example with the Kernel PCA method:
+``leaderbot.models.Davidson.map_dissimilairy`` using various methods. Here is
+an example with the Kernel PCA method:
 
 .. code-block:: python
 
@@ -144,9 +154,106 @@ list of models and train them.
 .. code-block:: python
 
     >>> import leaderbot as lb
-    >>> from lb.models import BradleyTerry as BT
-    >>> from lb.models import RaoKuppe as RK
-    >>> from lb.models import Davidson as DV
+    >>> from leaderbot.models import BradleyTerry as BT
+    >>> from leaderbot.models import RaoKupper as RK
+    >>> from leaderbot.models import Davidson as DV
+
+    >>> # Obtain data
+    >>> data = lb.data.load()
+
+    >>> # Create a list of models to compare
+    >>> models = [
+    ...    BT(data, k_cov=None),
+    ...    BT(data, k_cov=0),
+    ...    BT(data, k_cov=1),
+    ...    RK(data, k_cov=None, k_tie=0),
+    ...    RK(data, k_cov=0, k_tie=0),
+    ...    RK(data, k_cov=1, k_tie=1),
+    ...    DV(data, k_cov=None, k_tie=0),
+    ...    DV(data, k_cov=0, k_tie=0),
+    ...    DV(data, k_cov=0, k_tie=1)
+    ... ]
+
+    >>> # Train models
+    >>> for model in models:
+    ...    model.train()
+
+Model Selection
+...............
+
+Model selection can be performed with ``leaderbot.evaluate.model_selection``:
+
+.. code-block:: python
+
+    >>> # Evaluate models
+    >>> metrics = lb.evaluate.model_selection(models, report=True)
+
+The above model evaluation performs the analysis via various metric including
+the negative log-likelihood (NLL), cross entropy loss (CEL), Akaike information
+criterion (AIC), and Bayesian information criterion (BIC), and prints a report
+these metrics the following table:
+
+::
+
+    +----+--------------+---------+--------+--------------------------------+---------+---------+
+    |    |              |         |        |               CEL              |         |         |
+    | id | model        | # param |    NLL |    all     win    loss     tie |     AIC |     BIC |
+    +----+--------------+---------+--------+--------------------------------+---------+---------+
+    |  1 | BradleyTerry |     129 | 0.6554 | 0.6553  0.3177  0.3376     inf |   256.7 |  1049.7 |
+    |  2 | BradleyTerry |     258 | 0.6552 | 0.6551  0.3180  0.3371     inf |   514.7 |  2100.8 |
+    |  3 | BradleyTerry |     387 | 0.6551 | 0.6550  0.3178  0.3372     inf |   772.7 |  3151.8 |
+    |  4 | RaoKupper    |     130 | 1.0095 | 1.0095  0.3405  0.3462  0.3227 |   258.0 |  1057.2 |
+    |  5 | RaoKupper    |     259 | 1.0092 | 1.0092  0.3408  0.3457  0.3228 |   516.0 |  2108.2 |
+    |  6 | RaoKupper    |     516 | 1.0102 | 1.0102  0.3403  0.3453  0.3245 |  1030.0 |  4202.1 |
+    |  7 | Davidson     |     130 | 1.0100 | 1.0100  0.3409  0.3461  0.3231 |   258.0 |  1057.2 |
+    |  8 | Davidson     |     259 | 1.0098 | 1.0098  0.3411  0.3455  0.3231 |   516.0 |  2108.2 |
+    |  9 | Davidson     |     387 | 1.0075 | 1.0075  0.3416  0.3461  0.3197 |   772.0 |  3151.1 |
+    +----+--------------+---------+--------+--------------------------------+---------+---------+
+
+Goodness of Fit
+...............
+
+The goodness of fit test can be performed with
+``leaderbot.evaluate.goodness_of_fit``:
+
+.. code-block:: python
+
+    >>> # Evaluate models
+    >>> metrics = lb.evaluate.goodness_of_fit(models, report=True)
+
+The above model evaluation performs the analysis of the goodness of fit using
+mean absolute error (MAE), KL divergence (KLD), Jensen-Shannon divergence
+(JSD), and prints the following summary table:
+
+::
+
+    +----+--------------+----------------------------+------+------+
+    |    |              |             MAE            |      |      |
+    | id | model        |   win   loss    tie    all | KLD% | JSD% |
+    +----+--------------+----------------------------+------+------+
+    |  1 | BradleyTerry |  18.5   18.5  -----   18.5 | 1.49 | 0.44 |
+    |  2 | BradleyTerry |  15.3   15.3  -----   15.3 | 1.42 | 0.42 |
+    |  3 | BradleyTerry |  12.9   12.9  -----   12.9 | 1.40 | 0.42 |
+    |  4 | RaoKupper    |  27.5   31.1   45.4   34.7 | 3.32 | 0.92 |
+    |  5 | RaoKupper    |  26.2   29.6   45.7   33.8 | 3.23 | 0.90 |
+    |  6 | RaoKupper    |  25.1   27.8   42.8   31.9 | 3.28 | 0.87 |
+    |  7 | Davidson     |  28.6   32.2   49.0   36.6 | 3.41 | 0.94 |
+    |  8 | Davidson     |  27.5   30.8   49.3   35.9 | 3.32 | 0.92 |
+    |  9 | Davidson     |  24.1   25.0   35.7   28.2 | 2.93 | 0.81 |
+    +----+--------------+----------------------------+------+------+
+
+Generalization
+..............
+
+To evaluate generalization, we first train the models on 90% of the data
+(training set) and test against the remaining 10% (test set).
+
+.. code-block:: python
+
+    >>> import leaderbot as lb
+    >>> from leaderbot.models import BradleyTerry as BT
+    >>> from leaderbot.models import RaoKupper as RK
+    >>> from leaderbot.models import Davidson as DV
 
     >>> # Obtain data
     >>> data = lb.data.load()
@@ -171,74 +278,8 @@ list of models and train them.
     >>> for model in models:
     ...    model.train()
 
-Model Selection
-...............
-
-Model selection can be performed with ``leaderbot.evaluate.model_selection``:
-
-.. code-block:: python
-
-    >>> # Evaluate models
-    >>> metrics = lb.evaluate.model_selection(models, report=True)
-
-The above model evaluation performs the analysis via various metric including
-the negative log-likelihood (NLL), cross entropy loss (CEL), Akaike information
-criterion (AIC), and Bayesian information criterion (BIC), and prints a report
-these metrics the following table:
-
-::
-
-    +-----------------------+---------+--------+--------+--------+---------+
-    | model                 | # param | NLL    | CEL    | AIC    | BIC     |
-    +-----------------------+---------+--------+--------+--------+---------+
-    | BradleyTerry          |     129 | 0.6544 |    inf | 256.69 | 1020.94 |
-    | BradleyTerry          |     258 | 0.6542 |    inf | 514.69 | 2043.20 |
-    | BradleyTerry          |     259 | 0.6542 |    inf | 516.69 | 2051.12 |
-    | RaoKupper             |     130 | 1.0080 | 1.0080 | 257.98 | 1028.16 |
-    | RaoKupper             |     259 | 1.0077 | 1.0077 | 515.98 | 2050.41 |
-    | RaoKupper             |     260 | 1.0077 | 1.0077 | 517.98 | 2058.34 |
-    | Davidson              |     130 | 1.0085 | 1.0085 | 257.98 | 1028.16 |
-    | Davidson              |     259 | 1.0083 | 1.0083 | 515.98 | 2050.41 |
-    | Davidson              |     260 | 1.0083 | 1.0083 | 517.98 | 2058.34 |
-    +-----------------------+---------+--------+--------+--------+---------+
-
-Goodness of Fit
-...............
-
-The goodness of fit test can be performed with
-``leaderbot.evaluate.goodness_of_fit``:
-
-.. code-block:: python
-
-    >>> # Evaluate models
-    >>> metrics = lb.evaluate.goodness_of_fit(models, report=True)
-
-The above model evaluation performs the analysis of the goodness of fit using
-mean absolute error (MAE), KL divergence (KLD), Jensen-Shannon divergence
-(JSD), and prints the following summary table:
-
-::
-
-    +-----------------------+----------------------------+--------+--------+
-    |                       |    Mean Absolute Error     |        |        |
-    | model                 |   win   loss    tie    all | KLD    | JSD %  |
-    +-----------------------+----------------------------+--------+--------+
-    | BradleyTerry          | 10.98  10.98  -----  10.98 | 0.0199 | 0.5687 |
-    | BradleyTerry          | 10.44  10.44  -----  10.44 | 0.0189 | 0.5409 |
-    | BradleyTerry          | 10.42  10.42  -----  10.42 | 0.0188 | 0.5396 |
-    | RaoKupper             |  8.77   9.10  11.66   9.84 | 0.0331 | 0.9176 |
-    | RaoKupper             |  8.47   8.55  11.67   9.56 | 0.0322 | 0.8919 |
-    | RaoKupper             |  8.40   8.56  11.66   9.54 | 0.0322 | 0.8949 |
-    | Davidson              |  8.91   9.36  12.40  10.22 | 0.0341 | 0.9445 |
-    | Davidson              |  8.75   8.74  12.47   9.99 | 0.0332 | 0.9217 |
-    | Davidson              |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
-    +-----------------------+----------------------------+--------+--------+
-
-Generalization
-..............
-
-The generalization test can be performed with
-``leaderbot.evaluate.generalization``:
+We can then evaluate generalization on the test data using
+``leaderbot.evaluate.generalization`` function:
 
 .. code-block:: python
 
@@ -251,20 +292,20 @@ error (MAE), KL divergence (KLD), Jensen-Shannon divergence
 
 ::
 
-    +-----------------------+----------------------------+--------+--------+
-    |                       |    Mean Absolute Error     |        |        |
-    | model                 |   win   loss    tie    all | KLD    | JSD %  |
-    +-----------------------+----------------------------+--------+--------+
-    | BradleyTerry          | 10.98  10.98  -----  10.98 | 0.0199 | 0.5687 |
-    | BradleyTerry          | 10.44  10.44  -----  10.44 | 0.0189 | 0.5409 |
-    | BradleyTerry          | 10.42  10.42  -----  10.42 | 0.0188 | 0.5396 |
-    | RaoKupper             |  8.77   9.10  11.66   9.84 | 0.0331 | 0.9176 |
-    | RaoKupper             |  8.47   8.55  11.67   9.56 | 0.0322 | 0.8919 |
-    | RaoKupper             |  8.40   8.56  11.66   9.54 | 0.0322 | 0.8949 |
-    | Davidson              |  8.91   9.36  12.40  10.22 | 0.0341 | 0.9445 |
-    | Davidson              |  8.75   8.74  12.47   9.99 | 0.0332 | 0.9217 |
-    | Davidson              |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
-    +-----------------------+----------------------------+--------+--------+
+    +----+--------------+----------------------------+------+------+
+    |    |              |             MAE            |      |      |
+    | id | model        |   win   loss    tie    all | KLD% | JSD% |
+    +----+--------------+----------------------------+------+------+
+    |  1 | BradleyTerry |  17.5   17.5  -----   17.5 | 1.52 | 0.48 |
+    |  2 | BradleyTerry |  16.0   16.0  -----   16.0 | 1.47 | 0.46 |
+    |  3 | BradleyTerry |  17.3   17.3  -----   17.3 | 1.61 | 0.49 |
+    |  4 | RaoKupper    |  24.2   20.1   30.8   25.0 | 3.39 | 0.93 |
+    |  5 | RaoKupper    |  22.9   22.4   31.2   25.5 | 3.32 | 0.91 |
+    |  6 | RaoKupper    |  26.7   25.3   37.4   29.8 | 3.89 | 1.01 |
+    |  7 | Davidson     |  24.3   21.3   32.7   26.1 | 3.45 | 0.95 |
+    |  8 | Davidson     |  22.5   22.6   33.0   26.0 | 3.37 | 0.93 |
+    |  9 | Davidson     |  25.2   19.5   31.6   25.4 | 3.14 | 0.85 |
+    +----+--------------+----------------------------+------+------+
 
 Comparing Ranking of Models
 ...........................
@@ -275,9 +316,9 @@ Ranking of various models can be compared using
 .. code-block:: python
 
     >>> import leaderbot as lb
-    >>> from lb.models import BradleyTerry as BT
-    >>> from lb.models import RaoKuppe as RK
-    >>> from lb.models import Davidson as DV
+    >>> from leaderbot.models import BradleyTerry as BT
+    >>> from leaderbot.models import RaoKupper as RK
+    >>> from leaderbot.models import Davidson as DV
 
     >>> # Load data
     >>> data = lb.data.load()
@@ -305,6 +346,7 @@ The above code produces plot below.
 .. image:: https://raw.githubusercontent.com/suquark/leaderbot/refs/heads/main/docs/source/_static/images/plots/bump_chart.png
     :align: center
     :class: custom-dark
+    :width: 50%
 
 Test
 ====

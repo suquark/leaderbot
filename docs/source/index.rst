@@ -8,29 +8,52 @@ chat\ **bot**\ s based on `Chatbot Arena <https://lmarena.ai/>`_ project.
 
 .. .. grid:: 4
 ..
-..     .. grid-item-card:: Install
+..     .. grid-item-card:: Slides
 ..         :link: install
 ..         :link-type: ref
 ..         :text-align: center
 ..         :class-card: custom-card-link
 ..
-..     .. grid-item-card:: User Guide
+..     .. grid-item-card:: Poster
 ..         :link: user_guide
 ..         :link-type: ref
 ..         :text-align: center
 ..         :class-card: custom-card-link
 ..
-..     .. grid-item-card:: API reference
+..     .. grid-item-card:: Video
 ..         :link: api
 ..         :link-type: ref
 ..         :text-align: center
 ..         :class-card: custom-card-link
 ..
-..     .. grid-item-card:: Publications
-..         :link: index_publications
-..         :link-type: ref
+..     .. grid-item-card:: Paper
+..         :link: https://openreview.net/pdf?id=rAoEub6Nw2
 ..         :text-align: center
 ..         :class-card: custom-card-link
+
+.. grid:: 4
+
+    .. grid-item-card:: GitHub
+        :link: https://github.com/suquark/leaderbot
+        :text-align: center
+        :class-card: custom-card-link
+
+    .. grid-item-card:: PyPI
+        :link: https://pypi.org/project/leaderbot
+        :text-align: center
+        :class-card: custom-card-link
+
+    .. grid-item-card:: Quick Usage
+        :link: quick_usage
+        :link-type: ref
+        :text-align: center
+        :class-card: custom-card-link
+
+    .. grid-item-card:: API reference
+        :link: api
+        :link-type: ref
+        :text-align: center
+        :class-card: custom-card-link
 
 Install
 =======
@@ -48,12 +71,14 @@ Alternatively, clone the source code and install with
     cd source_dir
     pip install .
 
+.. _quick_usage:
+
 Quick Usage
 ===========
 
-The package provides several statistical models (see
+The package provides several statistical ranking models (see
 :ref:`API reference <api>` for details). In the example below, we use
-:class:`leaderbot.models.Davidson` class to build a model. However, working
+:class:`leaderbot.models.Davidson` class to create a model. However, working
 with other models is similar.
 
 Create and Train a Model
@@ -167,12 +192,13 @@ visualized with :func:`leaderbot.models.Davidson.match_matrix` function:
 Marginal Outcomes
 -----------------
 
-The marginal probabilities (or frequencies) of win, loss, and tie outcomes can be plotted with :func:`leaderbot.models.Davidson.marginal_outcomes` function:
+The marginal probabilities (or frequencies) of win, loss, and tie outcomes can
+be plotted with :func:`leaderbot.models.Davidson.marginal_outcomes` function:
 
 .. code-block:: python
 
     >>> # Plot marginal probabilities
-    >>> model.marginal_outcomes(max_rank=30)
+    >>> model.marginal_outcomes(max_rank=100)
 
 .. image:: _static/images/plots/rank.png
     :align: center
@@ -205,27 +231,24 @@ list of models and train them.
 .. code-block:: python
 
     >>> import leaderbot as lb
-    >>> from lb.models import BradleyTerry as BT
-    >>> from lb.models import RaoKuppe as RK
-    >>> from lb.models import Davidson as DV
+    >>> from leaderbot.models import BradleyTerry as BT
+    >>> from leaderbot.models import RaoKupper as RK
+    >>> from leaderbot.models import Davidson as DV
 
     >>> # Obtain data
     >>> data = lb.data.load()
 
-    >>> # Split data to training and test data
-    >>> training_data, test_data = lb.data.split(data, test_ratio=0.2)
-
     >>> # Create a list of models to compare
     >>> models = [
-    ...    BT(training_data, k_cov=None),
-    ...    BT(training_data, k_cov=0),
-    ...    BT(training_data, k_cov=1),
-    ...    RK(training_data, k_cov=None, k_tie=0),
-    ...    RK(training_data, k_cov=0, k_tie=0),
-    ...    RK(training_data, k_cov=1, k_tie=1),
-    ...    DV(training_data, k_cov=None, k_tie=0),
-    ...    DV(training_data, k_cov=0, k_tie=0),
-    ...    DV(training_data, k_cov=0, k_tie=1)
+    ...    BT(data, k_cov=None),
+    ...    BT(data, k_cov=0),
+    ...    BT(data, k_cov=1),
+    ...    RK(data, k_cov=None, k_tie=0),
+    ...    RK(data, k_cov=0, k_tie=0),
+    ...    RK(data, k_cov=1, k_tie=1),
+    ...    DV(data, k_cov=None, k_tie=0),
+    ...    DV(data, k_cov=0, k_tie=0),
+    ...    DV(data, k_cov=0, k_tie=1)
     ... ]
 
     >>> # Train models
@@ -272,8 +295,41 @@ mean absolute error (MAE), KL divergence (KLD), Jensen-Shannon divergence
 Generalization
 ..............
 
-The generalization test can be performed with
-:func:`leaderbot.evaluate.generalization`:
+To evaluate generalization, we first train the models on 90% of the data
+(training set) and test against the remaining 10% (test set).
+
+.. code-block:: python
+
+    >>> import leaderbot as lb
+    >>> from leaderbot.models import BradleyTerry as BT
+    >>> from leaderbot.models import RaoKupper as RK
+    >>> from leaderbot.models import Davidson as DV
+
+    >>> # Obtain data
+    >>> data = lb.data.load()
+
+    >>> # Split data to training and test data
+    >>> training_data, test_data = lb.data.split(data, test_ratio=0.2)
+
+    >>> # Create a list of models to compare
+    >>> models = [
+    ...    BT(training_data, k_cov=None),
+    ...    BT(training_data, k_cov=0),
+    ...    BT(training_data, k_cov=1),
+    ...    RK(training_data, k_cov=None, k_tie=0),
+    ...    RK(training_data, k_cov=0, k_tie=0),
+    ...    RK(training_data, k_cov=1, k_tie=1),
+    ...    DV(training_data, k_cov=None, k_tie=0),
+    ...    DV(training_data, k_cov=0, k_tie=0),
+    ...    DV(training_data, k_cov=0, k_tie=1)
+    ... ]
+
+    >>> # Train models
+    >>> for model in models:
+    ...    model.train()
+
+We can then evaluate generalization on the test data using
+:func:`leaderbot.evaluate.generalization` function:
 
 .. code-block:: python
 
@@ -298,9 +354,9 @@ Ranking of various models can be compared using
     :emphasize-lines: 25
 
     >>> import leaderbot as lb
-    >>> from lb.models import BradleyTerry as BT
-    >>> from lb.models import RaoKuppe as RK
-    >>> from lb.models import Davidson as DV
+    >>> from leaderbot.models import BradleyTerry as BT
+    >>> from leaderbot.models import RaoKupper as RK
+    >>> from leaderbot.models import Davidson as DV
 
     >>> # Load data
     >>> data = lb.data.load()
@@ -328,6 +384,7 @@ The above code produces plot below.
 .. image:: _static/images/plots/bump_chart.png
     :align: center
     :class: custom-dark
+    :width: 50%
 
 API Reference
 =============

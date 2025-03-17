@@ -692,7 +692,7 @@ class BaseInterface(object):
             >>> model.train()
 
             >>> # Leaderboard report and plot
-            >>> model.leaderboard(max_rank=30)
+            >>> model.leaderboard(max_rank=20)
 
         The above code provides the text output and plot below.
 
@@ -769,7 +769,7 @@ class BaseInterface(object):
             >>> model.train()
 
             >>> # Leaderboard report and plot
-            >>> model.marginal_outcomes(max_rank=30)
+            >>> model.marginal_outcomes(max_rank=100)
 
         .. image:: ../_static/images/plots/rank.png
             :align: center

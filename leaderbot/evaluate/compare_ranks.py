@@ -161,7 +161,7 @@ def compare_ranks(
         save: bool = False,
         latex: bool = False):
     """
-    Compare ranking of various models with bump chart.
+    Compare ranking of various models.
 
     Parameters
     ----------
@@ -223,9 +223,9 @@ def compare_ranks(
         :emphasize-lines: 25
 
         >>> import leaderbot as lb
-        >>> from lb.models import BradleyTerry as BT
-        >>> from lb.models import RaoKuppe as RK
-        >>> from lb.models import Davidson as DV
+        >>> from leaderbot.models import BradleyTerry as BT
+        >>> from leaderbot.models import RaoKupper as RK
+        >>> from leaderbot.models import Davidson as DV
 
         >>> # Load data
         >>> data = lb.data.load()

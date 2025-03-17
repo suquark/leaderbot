@@ -100,24 +100,24 @@ def goodness_of_fit(
         :emphasize-lines: 23, 24
 
         >>> import leaderbot as lb
-        >>> from lb.models import BradleyTerry as BT
-        >>> from lb.models import RaoKuppe as RK
-        >>> from lb.models import Davidson as DV
+        >>> from leaderbot.models import BradleyTerry as BT
+        >>> from leaderbot.models import RaoKupper as RK
+        >>> from leaderbot.models import Davidson as DV
 
         >>> # Obtain data
         >>> data = lb.data.load()
 
         >>> # Create a list of models to compare
         >>> models = [
-        ...    BT(training_data, k_cov=None),
-        ...    BT(training_data, k_cov=0),
-        ...    BT(training_data, k_cov=1),
-        ...    RK(training_data, k_cov=None, k_tie=0),
-        ...    RK(training_data, k_cov=0, k_tie=0),
-        ...    RK(training_data, k_cov=1, k_tie=1),
-        ...    DV(training_data, k_cov=None, k_tie=0),
-        ...    DV(training_data, k_cov=0, k_tie=0),
-        ...    DV(training_data, k_cov=0, k_tie=1)
+        ...    BT(data, k_cov=None),
+        ...    BT(data, k_cov=0),
+        ...    BT(data, k_cov=1),
+        ...    RK(data, k_cov=None, k_tie=0),
+        ...    RK(data, k_cov=0, k_tie=0),
+        ...    RK(data, k_cov=1, k_tie=1),
+        ...    DV(data, k_cov=None, k_tie=0),
+        ...    DV(data, k_cov=0, k_tie=0),
+        ...    DV(data, k_cov=0, k_tie=1)
         ... ]
 
         >>> # Evaluate models

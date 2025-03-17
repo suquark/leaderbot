@@ -16,6 +16,9 @@ import os
 import sys
 import pickle
 import leaderbot as lb
+from leaderbot.models import BradleyTerry as BT
+from leaderbot.models import RaoKupper as RK
+from leaderbot.models import Davidson as DV
 from copy import deepcopy
 import time
 import platform
@@ -77,43 +80,43 @@ def train_all():
     test_data_no_tie['Y'][:, -1] = 0
 
     models = [
-        lb.models.BradleyTerry(training_data, k_cov=None),
-        lb.models.BradleyTerry(training_data, k_cov=0),
-        lb.models.BradleyTerry(training_data, k_cov=3),
+        BT(training_data, k_cov=None),
+        BT(training_data, k_cov=0),
+        BT(training_data, k_cov=3),
 
-        lb.models.BradleyTerry(training_data_no_tie, k_cov=None),
-        lb.models.BradleyTerry(training_data_no_tie, k_cov=0),
-        lb.models.BradleyTerry(training_data_no_tie, k_cov=3),
+        BT(training_data_no_tie, k_cov=None),
+        BT(training_data_no_tie, k_cov=0),
+        BT(training_data_no_tie, k_cov=3),
 
-        lb.models.RaoKupper(training_data, k_cov=None, k_tie=0),
-        lb.models.RaoKupper(training_data, k_cov=None, k_tie=1),
-        lb.models.RaoKupper(training_data, k_cov=None, k_tie=10),
-        lb.models.RaoKupper(training_data, k_cov=None, k_tie=20),
+        RK(training_data, k_cov=None, k_tie=0),
+        RK(training_data, k_cov=None, k_tie=1),
+        RK(training_data, k_cov=None, k_tie=10),
+        RK(training_data, k_cov=None, k_tie=20),
 
-        lb.models.RaoKupper(training_data, k_cov=0, k_tie=0),
-        lb.models.RaoKupper(training_data, k_cov=0, k_tie=1),
-        lb.models.RaoKupper(training_data, k_cov=0, k_tie=10),
-        lb.models.RaoKupper(training_data, k_cov=0, k_tie=20),
+        RK(training_data, k_cov=0, k_tie=0),
+        RK(training_data, k_cov=0, k_tie=1),
+        RK(training_data, k_cov=0, k_tie=10),
+        RK(training_data, k_cov=0, k_tie=20),
 
-        lb.models.RaoKupper(training_data, k_cov=3, k_tie=0),
-        lb.models.RaoKupper(training_data, k_cov=3, k_tie=1),
-        lb.models.RaoKupper(training_data, k_cov=3, k_tie=10),
-        lb.models.RaoKupper(training_data, k_cov=3, k_tie=20),
+        RK(training_data, k_cov=3, k_tie=0),
+        RK(training_data, k_cov=3, k_tie=1),
+        RK(training_data, k_cov=3, k_tie=10),
+        RK(training_data, k_cov=3, k_tie=20),
 
-        lb.models.Davidson(training_data, k_cov=None, k_tie=0),
-        lb.models.Davidson(training_data, k_cov=None, k_tie=1),
-        lb.models.Davidson(training_data, k_cov=None, k_tie=10),
-        lb.models.Davidson(training_data, k_cov=None, k_tie=20),
+        DV(training_data, k_cov=None, k_tie=0),
+        DV(training_data, k_cov=None, k_tie=1),
+        DV(training_data, k_cov=None, k_tie=10),
+        DV(training_data, k_cov=None, k_tie=20),
 
-        lb.models.Davidson(training_data, k_cov=0, k_tie=0),
-        lb.models.Davidson(training_data, k_cov=0, k_tie=1),
-        lb.models.Davidson(training_data, k_cov=0, k_tie=10),
-        lb.models.Davidson(training_data, k_cov=0, k_tie=20),
+        DV(training_data, k_cov=0, k_tie=0),
+        DV(training_data, k_cov=0, k_tie=1),
+        DV(training_data, k_cov=0, k_tie=10),
+        DV(training_data, k_cov=0, k_tie=20),
 
-        lb.models.Davidson(training_data, k_cov=3, k_tie=0),
-        lb.models.Davidson(training_data, k_cov=3, k_tie=1),
-        lb.models.Davidson(training_data, k_cov=3, k_tie=10),
-        lb.models.Davidson(training_data, k_cov=3, k_tie=20),
+        DV(training_data, k_cov=3, k_tie=0),
+        DV(training_data, k_cov=3, k_tie=1),
+        DV(training_data, k_cov=3, k_tie=10),
+        DV(training_data, k_cov=3, k_tie=20),
     ]
 
     wall_time = []

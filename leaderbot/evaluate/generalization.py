@@ -106,9 +106,9 @@ def generalization(
         :emphasize-lines: 26, 27
 
         >>> import leaderbot as lb
-        >>> from lb.models import BradleyTerry as BT
-        >>> from lb.models import RaoKuppe as RK
-        >>> from lb.models import Davidson as DV
+        >>> from leaderbot.models import BradleyTerry as BT
+        >>> from leaderbot.models import RaoKupper as RK
+        >>> from leaderbot.models import Davidson as DV
 
         >>> # Obtain data
         >>> data = lb.data.load()
@@ -199,18 +199,18 @@ def generalization(
     }
 
     if report:
-        print('+----+-----------------------+----------------------------+--' +
-              '----+------+')
-        print(f'|    |                       |           {metric:>5s}       ' +
-              '     |      |      |')
-        print('| id | model                 |   win   loss    tie    all | K' +
-              'LD% | JSD% |')
-        print('+----+-----------------------+----------------------------+--' +
-              '----+------+')
+        print('+----+--------------+----------------------------+------+----' +
+              '--+')
+        print(f'|    |              |           {metric:>5s}            |   ' +
+              '   |      |')
+        print('| id | model        |   win   loss    tie    all | KLD% | JSD' +
+              '% |')
+        print('+----+--------------+----------------------------+------+----' +
+              '--+')
 
         for i in range(len(name)):
 
-            name_length = 21
+            name_length = 12
             name_str = name[i]
             if len(name_str) > name_length:
                 name_str = name_str[:(name_length - 3)] + '...'
@@ -226,7 +226,7 @@ def generalization(
 
             if density:
                 print(f'| {i+1:>2d} '
-                      f'| {name_str:<21s} '
+                      f'| {name_str:<12s} '
                       f'| {err_win[i]:>5.2f} '
                       f' {err_loss[i]:>5.2f} '
                       f' {tie_str} '
@@ -235,7 +235,7 @@ def generalization(
                       f'| {100.0 * jsd[i]:>4.2f} |')
             else:
                 print(f'| {i+1:>2d} '
-                      f'| {name_str:<21s} '
+                      f'| {name_str:<12s} '
                       f'| {err_win[i]:>5.1f} '
                       f' {err_loss[i]:>5.1f} '
                       f' {tie_str} '
@@ -243,7 +243,7 @@ def generalization(
                       f'| {100.0 * kld[i]:>4.2f} '
                       f'| {100.0 * jsd[i]:>4.2f} |')
 
-        print('+----+-----------------------+----------------------------+--' +
-              '----+------+')
+        print('+----+--------------+----------------------------+------+----' +
+              '--+')
 
     return metrics

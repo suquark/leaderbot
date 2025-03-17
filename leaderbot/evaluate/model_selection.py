@@ -82,24 +82,24 @@ def model_selection(
         :emphasize-lines: 23, 24
 
         >>> import leaderbot as lb
-        >>> from lb.models import BradleyTerry as BT
-        >>> from lb.models import RaoKuppe as RK
-        >>> from lb.models import Davidson as DV
+        >>> from leaderbot.models import BradleyTerry as BT
+        >>> from leaderbot.models import RaoKupper as RK
+        >>> from leaderbot.models import Davidson as DV
 
         >>> # Obtain data
         >>> data = lb.data.load()
 
         >>> # Create a list of models to compare
         >>> models = [
-        ...    BT(training_data, k_cov=None),
-        ...    BT(training_data, k_cov=0),
-        ...    BT(training_data, k_cov=1),
-        ...    RK(training_data, k_cov=None, k_tie=0),
-        ...    RK(training_data, k_cov=0, k_tie=0),
-        ...    RK(training_data, k_cov=1, k_tie=1),
-        ...    DV(training_data, k_cov=None, k_tie=0),
-        ...    DV(training_data, k_cov=0, k_tie=0),
-        ...    DV(training_data, k_cov=0, k_tie=1)
+        ...    BT(data, k_cov=None),
+        ...    BT(data, k_cov=0),
+        ...    BT(data, k_cov=1),
+        ...    RK(data, k_cov=None, k_tie=0),
+        ...    RK(data, k_cov=0, k_tie=0),
+        ...    RK(data, k_cov=1, k_tie=1),
+        ...    DV(data, k_cov=None, k_tie=0),
+        ...    DV(data, k_cov=0, k_tie=0),
+        ...    DV(data, k_cov=0, k_tie=1)
         ... ]
 
         >>> # Evaluate models
@@ -184,18 +184,18 @@ def model_selection(
     }
 
     if report:
-        print('+----+-----------------------+---------+--------+------------' +
-              '--------------------+---------+---------+')
-        print('|    |                       |         |        |            ' +
-              '   CEL              |         |         |')
-        print('| id | model                 | # param |    NLL |    all     ' +
-              'win    loss     tie |     AIC |     BIC |')
-        print('+----+-----------------------+---------+--------+------------' +
-              '--------------------+---------+---------+')
+        print('+----+--------------+---------+--------+---------------------' +
+              '-----------+---------+---------+')
+        print('|    |              |         |        |               CEL   ' +
+              '           |         |         |')
+        print('| id | model        | # param |    NLL |    all     win    lo' +
+              'ss     tie |     AIC |     BIC |')
+        print('+----+--------------+---------+--------+---------------------' +
+              '-----------+---------+---------+')
 
         for i in range(len(name)):
 
-            name_length = 21
+            name_length = 12
             name_str = name[i]
             if len(name_str) > name_length:
                 name_str = name_str[:(name_length - 3)] + '...'
@@ -207,7 +207,7 @@ def model_selection(
             cel_all_str = float_to_str(cel_all[i])
 
             print(f'| {i+1:>2d} '
-                  f'| {name_str:<21s} '
+                  f'| {name_str:<12s} '
                   f'| {n_param[i]:>7} '
                   f'| {nll[i]:>0.4f} '
                   f'| {cel_all_str}'
@@ -217,8 +217,8 @@ def model_selection(
                   f'| {aic[i]:>7.1f} '
                   f'| {bic[i]:>7.1f} |')
 
-        print('+----+-----------------------+---------+--------+------------' +
-              '--------------------+---------+---------+')
+        print('+----+--------------+---------+--------+---------------------' +
+              '-----------+---------+---------+')
 
     return metrics
 
