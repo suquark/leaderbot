@@ -223,23 +223,23 @@ def compare_ranks(
         :emphasize-lines: 25
 
         >>> import leaderbot as lb
-        >>> from leaderbot.models import BradleyTerryFactor as BTF
-        >>> from leaderbot.models import RaoKupperFactor as RKF
-        >>> from leaderbot.models import DavidsonFactor as DVF
+        >>> from lb.models import BradleyTerry as BT
+        >>> from lb.models import RaoKuppe as RK
+        >>> from lb.models import Davidson as DV
 
         >>> # Load data
         >>> data = lb.data.load()
 
         >>> # Create a list of models to compare
         >>> models = [
-        ...     BTF(data, n_cov_factors=0),
-        ...     BTF(data, n_cov_factors=3),
-        ...     RKF(data, n_cov_factors=0, n_tie_factors=0),
-        ...     RKF(data, n_cov_factors=0, n_tie_factors=1),
-        ...     RKF(data, n_cov_factors=0, n_tie_factors=3),
-        ...     DVF(data, n_cov_factors=0, n_tie_factors=0),
-        ...     DVF(data, n_cov_factors=0, n_tie_factors=1),
-        ...     DVF(data, n_cov_factors=0, n_tie_factors=3)
+        ...     BT(data, k_cov=0),
+        ...     BT(data, k_cov=3),
+        ...     RK(data, k_cov=0, k_tie=0),
+        ...     RK(data, k_cov=0, k_tie=1),
+        ...     RK(data, k_cov=0, k_tie=3),
+        ...     DV(data, k_cov=0, k_tie=0),
+        ...     DV(data, k_cov=0, k_tie=1),
+        ...     DV(data, k_cov=0, k_tie=3)
         ... ]
 
         >>> # Train the models

@@ -144,6 +144,9 @@ list of models and train them.
 .. code-block:: python
 
     >>> import leaderbot as lb
+    >>> from lb.models import BradleyTerry as BT
+    >>> from lb.models import RaoKuppe as RK
+    >>> from lb.models import Davidson as DV
 
     >>> # Obtain data
     >>> data = lb.data.load()
@@ -153,15 +156,15 @@ list of models and train them.
 
     >>> # Create a list of models to compare
     >>> models = [
-    ...    lb.models.BradleyTerry(training_data),
-    ...    lb.models.BradleyTerryScaled(training_data),
-    ...    lb.models.BradleyTerryScaledR(training_data),
-    ...    lb.models.RaoKupper(training_data),
-    ...    lb.models.RaoKupperScaled(training_data),
-    ...    lb.models.RaoKupperScaledR(training_data),
-    ...    lb.models.Davidson(training_data),
-    ...    lb.models.DavidsonScaled(training_data),
-    ...    lb.models.DavidsonScaledR(training_data)
+    ...    BT(training_data, k_cov=None),
+    ...    BT(training_data, k_cov=0),
+    ...    BT(training_data, k_cov=1),
+    ...    RK(training_data, k_cov=None, k_tie=0),
+    ...    RK(training_data, k_cov=0, k_tie=0),
+    ...    RK(training_data, k_cov=1, k_tie=1),
+    ...    DV(training_data, k_cov=None, k_tie=0),
+    ...    DV(training_data, k_cov=0, k_tie=0),
+    ...    DV(training_data, k_cov=0, k_tie=1)
     ... ]
 
     >>> # Train models
@@ -189,14 +192,14 @@ these metrics the following table:
     | model                 | # param | NLL    | CEL    | AIC    | BIC     |
     +-----------------------+---------+--------+--------+--------+---------+
     | BradleyTerry          |     129 | 0.6544 |    inf | 256.69 | 1020.94 |
-    | BradleyTerryScaled    |     258 | 0.6542 |    inf | 514.69 | 2043.20 |
-    | BradleyTerryScaledR   |     259 | 0.6542 |    inf | 516.69 | 2051.12 |
+    | BradleyTerry          |     258 | 0.6542 |    inf | 514.69 | 2043.20 |
+    | BradleyTerry          |     259 | 0.6542 |    inf | 516.69 | 2051.12 |
     | RaoKupper             |     130 | 1.0080 | 1.0080 | 257.98 | 1028.16 |
-    | RaoKupperScaled       |     259 | 1.0077 | 1.0077 | 515.98 | 2050.41 |
-    | RaoKupperScaledR      |     260 | 1.0077 | 1.0077 | 517.98 | 2058.34 |
+    | RaoKupper             |     259 | 1.0077 | 1.0077 | 515.98 | 2050.41 |
+    | RaoKupper             |     260 | 1.0077 | 1.0077 | 517.98 | 2058.34 |
     | Davidson              |     130 | 1.0085 | 1.0085 | 257.98 | 1028.16 |
-    | DavidsonScaled        |     259 | 1.0083 | 1.0083 | 515.98 | 2050.41 |
-    | DavidsonScaledR       |     260 | 1.0083 | 1.0083 | 517.98 | 2058.34 |
+    | Davidson              |     259 | 1.0083 | 1.0083 | 515.98 | 2050.41 |
+    | Davidson              |     260 | 1.0083 | 1.0083 | 517.98 | 2058.34 |
     +-----------------------+---------+--------+--------+--------+---------+
 
 Goodness of Fit
@@ -221,14 +224,14 @@ mean absolute error (MAE), KL divergence (KLD), Jensen-Shannon divergence
     | model                 |   win   loss    tie    all | KLD    | JSD %  |
     +-----------------------+----------------------------+--------+--------+
     | BradleyTerry          | 10.98  10.98  -----  10.98 | 0.0199 | 0.5687 |
-    | BradleyTerryScaled    | 10.44  10.44  -----  10.44 | 0.0189 | 0.5409 |
-    | BradleyTerryScaledR   | 10.42  10.42  -----  10.42 | 0.0188 | 0.5396 |
+    | BradleyTerry          | 10.44  10.44  -----  10.44 | 0.0189 | 0.5409 |
+    | BradleyTerry          | 10.42  10.42  -----  10.42 | 0.0188 | 0.5396 |
     | RaoKupper             |  8.77   9.10  11.66   9.84 | 0.0331 | 0.9176 |
-    | RaoKupperScaled       |  8.47   8.55  11.67   9.56 | 0.0322 | 0.8919 |
-    | RaoKupperScaledR      |  8.40   8.56  11.66   9.54 | 0.0322 | 0.8949 |
+    | RaoKupper             |  8.47   8.55  11.67   9.56 | 0.0322 | 0.8919 |
+    | RaoKupper             |  8.40   8.56  11.66   9.54 | 0.0322 | 0.8949 |
     | Davidson              |  8.91   9.36  12.40  10.22 | 0.0341 | 0.9445 |
-    | DavidsonScaled        |  8.75   8.74  12.47   9.99 | 0.0332 | 0.9217 |
-    | DavidsonScaledR       |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
+    | Davidson              |  8.75   8.74  12.47   9.99 | 0.0332 | 0.9217 |
+    | Davidson              |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
     +-----------------------+----------------------------+--------+--------+
 
 Generalization
@@ -253,14 +256,14 @@ error (MAE), KL divergence (KLD), Jensen-Shannon divergence
     | model                 |   win   loss    tie    all | KLD    | JSD %  |
     +-----------------------+----------------------------+--------+--------+
     | BradleyTerry          | 10.98  10.98  -----  10.98 | 0.0199 | 0.5687 |
-    | BradleyTerryScaled    | 10.44  10.44  -----  10.44 | 0.0189 | 0.5409 |
-    | BradleyTerryScaledR   | 10.42  10.42  -----  10.42 | 0.0188 | 0.5396 |
+    | BradleyTerry          | 10.44  10.44  -----  10.44 | 0.0189 | 0.5409 |
+    | BradleyTerry          | 10.42  10.42  -----  10.42 | 0.0188 | 0.5396 |
     | RaoKupper             |  8.77   9.10  11.66   9.84 | 0.0331 | 0.9176 |
-    | RaoKupperScaled       |  8.47   8.55  11.67   9.56 | 0.0322 | 0.8919 |
-    | RaoKupperScaledR      |  8.40   8.56  11.66   9.54 | 0.0322 | 0.8949 |
+    | RaoKupper             |  8.47   8.55  11.67   9.56 | 0.0322 | 0.8919 |
+    | RaoKupper             |  8.40   8.56  11.66   9.54 | 0.0322 | 0.8949 |
     | Davidson              |  8.91   9.36  12.40  10.22 | 0.0341 | 0.9445 |
-    | DavidsonScaled        |  8.75   8.74  12.47   9.99 | 0.0332 | 0.9217 |
-    | DavidsonScaledR       |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
+    | Davidson              |  8.75   8.74  12.47   9.99 | 0.0332 | 0.9217 |
+    | Davidson              |  8.73   8.72  12.48   9.98 | 0.0331 | 0.9201 |
     +-----------------------+----------------------------+--------+--------+
 
 Comparing Ranking of Models
@@ -272,23 +275,23 @@ Ranking of various models can be compared using
 .. code-block:: python
 
     >>> import leaderbot as lb
-    >>> from leaderbot.models import BradleyTerryFactor as BTF
-    >>> from leaderbot.models import RaoKupperFactor as RKF
-    >>> from leaderbot.models import DavidsonFactor as DVF
+    >>> from lb.models import BradleyTerry as BT
+    >>> from lb.models import RaoKuppe as RK
+    >>> from lb.models import Davidson as DV
 
     >>> # Load data
     >>> data = lb.data.load()
 
     >>> # Create a list of models to compare
     >>> models = [
-    ...     BTF(data, n_cov_factors=0),
-    ...     BTF(data, n_cov_factors=3),
-    ...     RKF(data, n_cov_factors=0, n_tie_factors=0),
-    ...     RKF(data, n_cov_factors=0, n_tie_factors=1),
-    ...     RKF(data, n_cov_factors=0, n_tie_factors=3),
-    ...     DVF(data, n_cov_factors=0, n_tie_factors=0),
-    ...     DVF(data, n_cov_factors=0, n_tie_factors=1),
-    ...     DVF(data, n_cov_factors=0, n_tie_factors=3)
+    ...     BT(data, k_cov=0),
+    ...     BT(data, k_cov=3),
+    ...     RK(data, k_cov=0, k_tie=0),
+    ...     RK(data, k_cov=0, k_tie=1),
+    ...     RK(data, k_cov=0, k_tie=3),
+    ...     DV(data, k_cov=0, k_tie=0),
+    ...     DV(data, k_cov=0, k_tie=1),
+    ...     DV(data, k_cov=0, k_tie=3)
     ... ]
 
     >>> # Train the models

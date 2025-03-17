@@ -103,9 +103,12 @@ def generalization(
     --------
 
     .. code-block:: python
-        :emphasize-lines: 23, 24
+        :emphasize-lines: 26, 27
 
         >>> import leaderbot as lb
+        >>> from lb.models import BradleyTerry as BT
+        >>> from lb.models import RaoKuppe as RK
+        >>> from lb.models import Davidson as DV
 
         >>> # Obtain data
         >>> data = lb.data.load()
@@ -115,15 +118,15 @@ def generalization(
 
         >>> # Create a list of models to compare
         >>> models = [
-        ...    lb.models.BradleyTerry(training_data),
-        ...    lb.models.BradleyTerryScaled(training_data),
-        ...    lb.models.BradleyTerryScaledR(training_data),
-        ...    lb.models.RaoKupper(training_data),
-        ...    lb.models.RaoKupperScaled(training_data),
-        ...    lb.models.RaoKupperScaledR(training_data),
-        ...    lb.models.Davidson(training_data),
-        ...    lb.models.DavidsonScaled(training_data),
-        ...    lb.models.DavidsonScaledR(training_data)
+        ...    BT(training_data, k_cov=None),
+        ...    BT(training_data, k_cov=0),
+        ...    BT(training_data, k_cov=1),
+        ...    RK(training_data, k_cov=None, k_tie=0),
+        ...    RK(training_data, k_cov=0, k_tie=0),
+        ...    RK(training_data, k_cov=1, k_tie=1),
+        ...    DV(training_data, k_cov=None, k_tie=0),
+        ...    DV(training_data, k_cov=0, k_tie=0),
+        ...    DV(training_data, k_cov=0, k_tie=1)
         ... ]
 
         >>> # Evaluate generalization on test data

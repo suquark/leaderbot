@@ -120,7 +120,7 @@ class Davidson(BaseInterface):
       argument ``k_tie``.
     * :math:`\\boldsymbol{\\Phi}` is an :math:`m \\times k_{\\mathrm{tie}}`
       orthonormal matrix of basis functions.
-    * :math:`\\matbf{J}` is an :math:`m \\times m` matrix of all ones.
+    * :math:`\\mathbf{J}` is an :math:`m \\times m` matrix of all ones.
 
     Setting ``k_tie = 0`` leads to a model with single tie threshold,
     retrieving the original Davidson model (along with setting
