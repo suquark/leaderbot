@@ -15,10 +15,7 @@
 import sys
 import time
 from leaderbot.data import load
-from leaderbot.models import BradleyTerry, BradleyTerryScaled, \
-    BradleyTerryScaledR, BradleyTerryScaledRIJ, RaoKupper, RaoKupperScaled, \
-    RaoKupperScaledR, RaoKupperScaledRIJ, Davidson, DavidsonScaled, \
-    DavidsonScaledR, DavidsonScaledRIJ
+from leaderbot.models import BradleyTerry, RaoKupper, Davidson
 
 
 # ===========
@@ -34,37 +31,46 @@ def test_models():
 
     Models = [
         BradleyTerry,
-        BradleyTerryScaled,
-        BradleyTerryScaledR,
-        BradleyTerryScaledRIJ,
         RaoKupper,
-        RaoKupperScaled,
-        RaoKupperScaledR,
-        RaoKupperScaledRIJ,
         Davidson,
-        DavidsonScaled,
-        DavidsonScaledR,
-        DavidsonScaledRIJ
     ]
 
+    # k_covs = [None, 0, 1, 'full']
+    k_covs = [None, 0, 1]
+    k_ties = [0, 1]
+
     for Model in Models:
+        for k_cov in k_covs:
 
-        print(f'{Model.__name__:<21s} ...', end='', flush=True)
+            if Model.__name__.startswith('BradleyTerry'):
+                k_ties_ = [None]
+            else:
+                k_ties_ = k_ties
 
-        t0 = time.time()
-        model = Model(data)
+            for k_tie in k_ties_:
 
-        if Model.__class__.__name__.endswith('ScaledRIJ'):
-            method = 'L-BFGS-B'
-        else:
-            method = 'BFGS'
+                print(f'{Model.__name__:<12s} | ' +
+                      f'k_cov: {str(k_cov):>4s} | ' +
+                      f'k_tie: {str(k_tie):>4s} | ...',
+                      end='', flush=True)
 
-        model.train(method=method)
-        model.infer()
-        model.predict()
-        t1 = time.time() - t0
+                if Model.__name__.startswith('BradleyTerry'):
+                    model = Model(data, k_cov=k_cov)
+                else:
+                    model = Model(data, k_cov=k_cov, k_tie=k_tie)
 
-        print(f' passed in {t1:>5.1f} sec.', flush=True)
+                if k_cov == 'full':
+                    method = 'L-BFGS-B'
+                else:
+                    method = 'BFGS'
+
+                t0 = time.time()
+                model.train(method=method)
+                model.infer()
+                model.predict()
+                t1 = time.time() - t0
+
+                print(f' passed in {t1:>5.1f} sec.', flush=True)
 
 
 # ===========

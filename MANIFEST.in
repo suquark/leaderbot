@@ -17,6 +17,7 @@ exclude .tokeignore
 exclude .coveragerc
 exclude tox.ini
 exclude TODO.rst
+exclude CONTRIBUTING.rst
 exclude notebook/experimental/clean_battle_20240814_public.json
 
 prune docs

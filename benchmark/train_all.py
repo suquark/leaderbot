@@ -77,66 +77,54 @@ def train_all():
     test_data_no_tie['Y'][:, -1] = 0
 
     models = [
-        lb.models.BradleyTerry(training_data),
-        lb.models.BradleyTerryScaled(training_data),
-        lb.models.BradleyTerryFactor(training_data, n_cov_factors=3),
+        lb.models.BradleyTerry(training_data, k_cov=None),
+        lb.models.BradleyTerry(training_data, k_cov=0),
+        lb.models.BradleyTerry(training_data, k_cov=3),
 
-        lb.models.BradleyTerry(training_data_no_tie),
-        lb.models.BradleyTerryScaled(training_data_no_tie),
-        lb.models.BradleyTerryFactor(training_data_no_tie, n_cov_factors=3),
+        lb.models.BradleyTerry(training_data_no_tie, k_cov=None),
+        lb.models.BradleyTerry(training_data_no_tie, k_cov=0),
+        lb.models.BradleyTerry(training_data_no_tie, k_cov=3),
 
-        lb.models.RaoKupper(training_data, n_tie_factors=0),
-        lb.models.RaoKupper(training_data, n_tie_factors=1),
-        lb.models.RaoKupper(training_data, n_tie_factors=10),
-        lb.models.RaoKupper(training_data, n_tie_factors=20),
+        lb.models.RaoKupper(training_data, k_cov=None, k_tie=0),
+        lb.models.RaoKupper(training_data, k_cov=None, k_tie=1),
+        lb.models.RaoKupper(training_data, k_cov=None, k_tie=10),
+        lb.models.RaoKupper(training_data, k_cov=None, k_tie=20),
 
-        lb.models.RaoKupperScaled(training_data, n_tie_factors=0),
-        lb.models.RaoKupperScaled(training_data, n_tie_factors=1),
-        lb.models.RaoKupperScaled(training_data, n_tie_factors=10),
-        lb.models.RaoKupperScaled(training_data, n_tie_factors=20),
+        lb.models.RaoKupper(training_data, k_cov=0, k_tie=0),
+        lb.models.RaoKupper(training_data, k_cov=0, k_tie=1),
+        lb.models.RaoKupper(training_data, k_cov=0, k_tie=10),
+        lb.models.RaoKupper(training_data, k_cov=0, k_tie=20),
 
-        lb.models.RaoKupperFactor(training_data, n_cov_factors=3,
-                                  n_tie_factors=0),
-        lb.models.RaoKupperFactor(training_data, n_cov_factors=3,
-                                  n_tie_factors=1),
-        lb.models.RaoKupperFactor(training_data, n_cov_factors=3,
-                                  n_tie_factors=10),
-        lb.models.RaoKupperFactor(training_data, n_cov_factors=3,
-                                  n_tie_factors=20),
+        lb.models.RaoKupper(training_data, k_cov=3, k_tie=0),
+        lb.models.RaoKupper(training_data, k_cov=3, k_tie=1),
+        lb.models.RaoKupper(training_data, k_cov=3, k_tie=10),
+        lb.models.RaoKupper(training_data, k_cov=3, k_tie=20),
 
-        lb.models.Davidson(training_data, n_tie_factors=0),
-        lb.models.Davidson(training_data, n_tie_factors=1),
-        lb.models.Davidson(training_data, n_tie_factors=10),
-        lb.models.Davidson(training_data, n_tie_factors=20),
+        lb.models.Davidson(training_data, k_cov=None, k_tie=0),
+        lb.models.Davidson(training_data, k_cov=None, k_tie=1),
+        lb.models.Davidson(training_data, k_cov=None, k_tie=10),
+        lb.models.Davidson(training_data, k_cov=None, k_tie=20),
 
-        lb.models.DavidsonScaled(training_data, n_tie_factors=0),
-        lb.models.DavidsonScaled(training_data, n_tie_factors=1),
-        lb.models.DavidsonScaled(training_data, n_tie_factors=10),
-        lb.models.DavidsonScaled(training_data, n_tie_factors=20),
+        lb.models.Davidson(training_data, k_cov=0, k_tie=0),
+        lb.models.Davidson(training_data, k_cov=0, k_tie=1),
+        lb.models.Davidson(training_data, k_cov=0, k_tie=10),
+        lb.models.Davidson(training_data, k_cov=0, k_tie=20),
 
-        lb.models.DavidsonFactor(training_data, n_cov_factors=3,
-                                 n_tie_factors=0),
-        lb.models.DavidsonFactor(training_data, n_cov_factors=3,
-                                 n_tie_factors=1),
-        lb.models.DavidsonFactor(training_data, n_cov_factors=3,
-                                 n_tie_factors=10),
-        lb.models.DavidsonFactor(training_data, n_cov_factors=3,
-                                 n_tie_factors=20),
+        lb.models.Davidson(training_data, k_cov=3, k_tie=0),
+        lb.models.Davidson(training_data, k_cov=3, k_tie=1),
+        lb.models.Davidson(training_data, k_cov=3, k_tie=10),
+        lb.models.Davidson(training_data, k_cov=3, k_tie=20),
     ]
 
     wall_time = []
     proc_time = []
 
     # Train all. If model is ScaledRIJ, use l-BFGS-B, otherwise, use BFGS.
+    method = 'BFGS'
     n = len(models)
     for i, model in enumerate(models):
 
         name = model.__class__.__name__
-        if name.endswith('ScaledRIJ'):
-            method = 'L-BFGS-B'
-        else:
-            method = 'BFGS'
-
         print(f'[{i+1:>2d} / {n:>2d}] training {name:<21} ... ', end='',
               flush=True)
 

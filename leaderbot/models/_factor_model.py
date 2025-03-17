@@ -232,13 +232,13 @@ class FactorModel(BaseModel):
         Parameters
         ----------
 
-        x : np.ndarray or leaderbot.data.DataType
-            A 2D array of integers with the shape ``(n_pairs, 2)`` where each
-            row consists of indices ``[i, j]`` representing a match between a
-            pair of agents with the indices ``i`` and ``j``. Alternatively,
-            a dictionary of the type :class:`leaderbot.data.DataType` can
-            be provided. If `None`, the ``X`` variable from the input data is
-            used.
+        x : np.ndarray, list, zip, or leaderbot.data.DataType
+            A 2D array (or equivalent list to zip) of integers with the shape
+            ``(n_pairs, 2)`` where each row consists of indices ``[i, j]``
+            representing a match between a pair of agents with the indice
+            ``i`` and ``j``. Alternatively, a dictionary of the type
+            :class:`leaderbot.data.DataType` can be provided. If `None`, the
+            ``X`` variable from the input data is used.
 
         Returns
         -------
@@ -287,6 +287,10 @@ class FactorModel(BaseModel):
         elif isinstance(x, dict) and \
                 all(key in x for key in DataType.__annotations__):
             x_ = x['X']
+        elif isinstance(x, list):
+            x_ = np.array(x)
+        elif isinstance(x, zip):
+            x_ = np.array(list(x))
         else:
             x_ = x
 

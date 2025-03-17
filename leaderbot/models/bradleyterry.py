@@ -10,12 +10,10 @@
 # imports
 # =======
 
-import numba
-import numpy as np
-from .base_model import BaseModel
-from ._math_util import sigmoid, cross_entropy
+from ._base_interface import BaseInterface
+from ._bradleyterry_no_cov import BradleyTerryNoCov
+from ._bradleyterry_factor_cov import BradleyTerryFactorCov
 from ..data import DataType
-from typing import List, Union
 
 __all__ = ['BradleyTerry']
 
@@ -24,9 +22,9 @@ __all__ = ['BradleyTerry']
 # Bradley Terry
 # =============
 
-class BradleyTerry(BaseModel):
+class BradleyTerry(BaseInterface):
     """
-    Paired comparison based on Bradley-Terry model.
+    Generalized Bradley-Terry model.
 
     Parameters
     ----------
@@ -35,26 +33,74 @@ class BradleyTerry(BaseModel):
         A dictionary of data that is provided by
         :func:`leaderbot.data.load`.
 
-    Notes
-    -----
+    k_cov : int, default=0
+        Determines the structure of covariance in the model based on the
+        following values:
 
-    The Bradley-Terry model of paired comparison is based on [1]_. This
-    model does not include ties in the data.
+        * ``None``: this means no covariance is used in the model, retrieving
+          the original Bradley Terry model.
+        * ``0``: this assumes covariance is a diagonal matrix.
+        * positive integer: this assumes covariance is a diagonal plus
+          low-rank matrix where the rank of low-rank approximation is
+          ``k_cov``.
 
-    References
-    ----------
-
-    .. [1] Bradley, R., Terry, M. (1952). Rank Analysis of Incomplete Block
-           Designs: I. The Method of Paired Comparisons. `Biometrika`, 39
-           (3/4), 324-345. https://doi.org/10.2307/2334029
+        See `Notes` below for further details.
 
     See Also
     --------
 
-    BradleyTerryScaled
-    BradleyTerryScaledR
-    BradleyTerryScaledRIJ
-    BradleyTerryFactor
+    RaoKupper
+    Davidson
+
+    Notes
+    -----
+
+    This class implements a generalization of the Bradley Terry model based on
+    [1]_, incorporating covariance in the model.
+
+    **Covariance Model:**
+
+    This model utilizes a covariance matrix with diagonal plus low-rank
+    structure of the form
+
+    .. math::
+
+        \\mathbf{\\Sigma} = \\mathbf{D} +
+        \\mathbf{\\Lambda} \\mathbf{\\Lambda}^{\\intercal},
+
+    where
+
+    * :math:`\\mathbf{\\Sigma}` is an :math:`m \\times m` symmetric positive
+      semi-definite covariance matrix where :math:`m` is the number of
+      agents (competitors).
+    * :math:`\\mathbf{D}`: is an :math:`m \\times m` diagonal matrix with
+      non-negative diagonals.
+    * :math:`\\mathbf{\\Lambda}`: is a full-rank
+      :math:`m \\times k_{\\mathrm{cov}}` matrix where
+      :math:`k_{\\mathrm{cov}}` is given by the input parameter ``k_cov``.
+
+    If ``k_cov=None``, the covariance matrix is not used in the model,
+    retrieving the original Bradley-Terry model [2]_. If ``k_cov=0``, the
+    covariance model reduces to a diagonal matrix :math:`\\mathbf{D}`.
+
+    **Tie Model:**
+
+    The Bradley Terry model does not include the `tie` outcomes in the data.
+    To consider `tie` outcomes, use :class:`leaderbot.models.RaoKupper` or
+    :class:`leaderbot.models.Davidson` models instead.
+
+    References
+    ----------
+
+    .. [1] Siavash Ameli, Siyuan Zhuang, Ion Stoica, and Michael W. Mahoney.
+           `A Statistical Framework for Ranking LLM-Based Chatbots
+           <https://openreview.net/pdf?id=rAoEub6Nw2>`__. *The Thirteenth
+           International Conference on Learning Representations*, 2025.
+
+    .. [2] Ralph A. Bradley and Milton E. Terry. `Rank Analysis of Incomplete
+           Block Designs: I. The Method of Paired Comparisons.
+           <https://doi.org/10.2307/2334029>`__. `Biometrika`, 39 (3/4),
+           324-345, 1952.
 
     Attributes
     ----------
@@ -71,16 +117,20 @@ class BradleyTerry(BaseModel):
         by the corresponding row of the input array ``x``.
 
     agents : list
-        A list of the length ``n_agents`` representing the name of agents.
+        A list of the length ``n_agents`` representing the name of agents
+        (competitors).
 
     n_agents : int
-        Number of agents.
+        Number of agents (competitors).
 
     param : np.array, default=None
         The model parameters. This array is set once the model is trained.
 
     n_param : int
         Number of parameters
+
+    k_cov : int
+        Number of factors for matrix factorization.
 
     Methods
     -------
@@ -140,7 +190,7 @@ class BradleyTerry(BaseModel):
         >>> model.train()
 
         >>> # Make inference
-        >>> p_win, p_loss, p_tie = model.infer()
+        >>> prob = model.infer()
     """
 
     # ====
@@ -149,427 +199,18 @@ class BradleyTerry(BaseModel):
 
     def __init__(
             self,
-            data: DataType):
+            data: DataType,
+            k_cov: int = 0):
         """
         Constructor.
         """
 
-        super().__init__(data)
+        super().__init__()
 
-        # Total number of parameters
-        self.n_param = self.n_agents
+        self._delegated_model_name = 'BradleyTerry'
 
-        # Approximate bound for parameters (only needed for shgo optimization
-        # method). Note that these bounds are not enforced, rather, only used
-        # for seeding multi-initial points in global optimization methods.
-        self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)]
-
-    # ===========
-    # sample loss
-    # ===========
-
-    @staticmethod
-    @numba.jit(nopython=True)
-    def _sample_loss(
-            w: Union[List[float], np.ndarray[np.floating]],
-            x: np.ndarray[np.integer],
-            y: np.ndarray[np.integer],
-            n_agents: int,
-            return_jac: bool = True,
-            inference_only: bool = False):
-        """
-        Loss per each sample data (instance).
-        """
-
-        # Initialize outputs so numba does not complain
-        loss_ = None
-        grads = None
-        probs = None
-
-        i, j = x.T
-        xi, xj = w[i], w[j]
-        z = xi - xj
-
-        # Probabilities
-        p_win = sigmoid(z)
-        p_loss = 1.0 - p_win
-
-        if inference_only:
-            p_tie = np.zeros_like(p_loss)
-            probs = (p_win, p_loss, p_tie)
-            return loss_, grads, probs
-
-        # loss for each sample ij
-        win_ij, loss_ij, tie_ij = y.T
-        w_ij = win_ij + 0.5 * tie_ij
-        l_ij = loss_ij + 0.5 * tie_ij
-        loss_ = - cross_entropy(w_ij, p_win) - cross_entropy(l_ij, p_loss)
-
-        if return_jac:
-            # grad_z = w_ij * (p_win - 1) + l_ij * p_win
-            grad_z = (w_ij + l_ij) * p_win - w_ij
-
-            grad_xi = grad_z
-            grad_xj = -grad_xi
-
-            grads = (grad_xi, grad_xj)
-
-        return loss_, grads, probs
-
-    # ====
-    # loss
-    # ====
-
-    def loss(
-            self,
-            w: Union[List[float], np.ndarray[np.floating]] = None,
-            return_jac: bool = False,
-            constraint: bool = False):
-        """
-        Total loss for all data instances.
-
-        Parameters
-        ----------
-
-        w : array_like, default=None
-            Parameters. If `None`, the pre-trained parameters are used,
-            provided is already trained.
-
-        return_jac : bool, default=False
-            if `True`, the Jacobian of loss with respect to the parameters is
-            also returned.
-
-        constraint : bool, default=False
-            If `True`, the constrain on the parameters is also added to the
-            loss.
-
-        Returns
-        -------
-
-        loss : float
-            Total loss for all data points.
-
-        if return_jac is `True`:
-
-            jac : np.array
-                An array of the size of the number of parameters, representing
-                the Jacobian of loss.
-
-        Raises
-        ------
-
-        RuntimeWarning
-            If loss is ``nan``.
-
-        RuntimeError
-            If the model is not trained and the input ``w`` is set to `None`.
-
-        See Also
-        --------
-
-        train : train model parameters.
-        fisher : Observed Fisher information matrix.
-
-        Examples
-        --------
-
-        .. code-block:: python
-            :emphasize-lines: 13
-
-            >>> from leaderbot.data import load
-            >>> from leaderbot.models import BradleyTerryScaled
-
-            >>> # Create a model
-            >>> data = load()
-            >>> model = BradleyTerryScaled(data)
-
-            >>> # Generate an array of parameters
-            >>> import numpy as np
-            >>> w = np.random.randn(model.n_param)
-
-            >>> # Compute loss and its gradient with respect to parameters
-            >>> loss, jac = model.loss(w, return_jac=True, constraint=False)
-        """
-
-        if w is None:
-            if self.param is None:
-                raise RuntimeError('train model first.')
-            w = self.param
-
-        loss_, grads, _ = self._sample_loss(w,
-                                            self.x,
-                                            self.y,
-                                            self.n_agents,
-                                            return_jac=return_jac,
-                                            inference_only=False)
-
-        loss_ = loss_.sum() / self._count
-        if np.isnan(loss_):
-            raise RuntimeWarning("loss is nan")
-
-        if return_jac:
-            grad_xi, grad_xj = grads
-            i, j = self.x.T
-            n_samples = self.x.shape[0]
-            ax = np.arange(n_samples)
-            jac = np.zeros((n_samples, w.shape[0]))
-            jac[ax, i] += grad_xi
-            jac[ax, j] += grad_xj
-
-            jac = jac.sum(axis=0) / self._count
-
-        if constraint:
-            # constraining score parameters
-            constraint_diff = np.sum(w[self._score_idx])
-            constraint_loss = constraint_diff ** 2
-            loss_ += constraint_loss
-
-            if return_jac:
-                # constraining score parameters
-                constraint_jac = 2.0 * constraint_diff
-                jac[self._score_idx] += constraint_jac
-
-        if return_jac:
-            return loss_, jac
+        if k_cov is None:
+            self._delegated_model = BradleyTerryNoCov(data)
         else:
-            return loss_
-
-    # ================
-    # iterative solver
-    # ================
-
-    @staticmethod
-    @numba.jit(nopython=True)
-    def _iterative_solver(
-            n_agents: int,
-            x: np.ndarray[np.integer],
-            y: np.ndarray[np.integer],
-            max_iter: int = 100,
-            tol: float = 1e-7):
-        """
-        Iterative solver for the Bradley-Terry model.
-
-        Parameters
-        ----------
-
-        n_agents : in
-            Number of models.
-
-        x : np.ndarray[np.integer]
-            Array of shape (n_pairs, 3) where each row represents a pair of
-            models.
-
-        y : np.ndarray[np.integer]
-            Array of shape (n_pairs, 3) where each row represents the outcome
-            of a pair of models.
-
-        max_iter : int, default=100
-            Maximum number of iterations.
-
-        tol : float, default=1e-7
-            Tolerance for convergence.
-
-        Returns
-        -------
-
-        param : np.array
-            Array of parameters
-
-        References
-        ----------
-
-        * Newman, M. E. J. (2023), Efficient Computation of Rankings from
-          Pairwise Comparisons. Journal of Machine Learning Research. 24-238,
-          pp 1--25m. http://jmlr.org/papers/v24/22-1086.html
-        """
-
-        w = np.zeros(n_agents)
-        i, j = x.T
-        win_count, loss_count, tie_count = y.T
-        w_ij = win_count + 0.5 * tie_count
-        w_ji = loss_count + 0.5 * tie_count
-
-        for _ in range(max_iter):
-            last_w = w.copy()
-            p = np.exp(w)
-            a = np.zeros_like(p)
-            b = np.zeros_like(p)
-            pi, pj = p[i], p[j]
-
-            s = pi + pj
-            p_win_ij = pi / s
-            a_i = w_ij * (1 - p_win_ij)
-            b_i = w_ji / s
-            a_j = w_ji * p_win_ij
-            b_j = w_ij / s
-
-            for k in range(x.shape[0]):
-                a[i[k]] += a_i[k]
-                b[i[k]] += b_i[k]
-                a[j[k]] += a_j[k]
-                b[j[k]] += b_j[k]
-
-            # Use MAP prior to avoid instability with sparse data
-            a += 1 / (1 + p)
-            b += 1 / (1 + p)
-
-            w = np.log(a / b)
-            w -= w.mean()
-            if np.allclose(w, last_w, atol=tol):
-                return w
-
-        return w
-
-    # =====
-    # train
-    # =====
-
-    def train(
-            self,
-            init_param: Union[List[float], np.ndarray[np.floating]] = None,
-            method: str = None,
-            max_iter: int = 100,
-            tol: float = 1e-8):
-        """
-        Tune model parameters with maximum likelihood estimation method.
-
-        .. note::
-
-            This function overwrites the base class's method.
-
-        Parameters
-        ----------
-
-        init_param : array_like, default=None
-            Initial parameters.
-
-            .. note::
-
-                This argument is not used, and is only kept for consistency
-                with the corresponding base method.
-
-        method : str, default=None
-            Method of optimization.
-
-            .. note::
-
-                This argument is not used, and is only kept for consistency
-                with the corresponding base method.
-
-        max_iter : int, default=100
-            Maximum number of iterations.
-
-
-        tol : float, default=1e-8
-            Tolerance of optimization.
-
-        See Also
-        --------
-
-        predict : predict probabilities based on given parameters.
-
-        Notes
-        -----
-
-        The trained parameters are available as ``param`` attribute.
-
-        Examples
-        --------
-
-        .. code-block:: python
-            :emphasize-lines: 9
-
-            >>> from leaderbot.data import load
-            >>> from leaderbot.models import BradleyTerry
-
-            >>> # Create a model
-            >>> data = load()
-            >>> model = BradleyTerry(data)
-
-            >>> # Train the model
-            >>> model.train()
-
-            >>> # Make inference
-            >>> prob = model.infer()
-        """
-
-        self.param = self._iterative_solver(self.n_agents, self.x, self.y,
-                                            max_iter=max_iter, tol=tol)
-
-    # =====
-    # infer
-    # =====
-
-    def infer(
-            self,
-            x: Union[List[int], np.ndarray[np.integer]] = None):
-        """
-        Make inference on probabilities of outcome of win, loss, or tie.
-
-        .. note::
-
-            This function overwrites the base class's method.
-
-        Parameters
-        ----------
-
-        x : np.ndarray
-            A 2D array of integers with the shape ``(n_pairs, 2)`` where each
-            row consists of indices ``[i, j]`` representing a match between a
-            pair of agents with the indices ``i`` and ``j``. If `None`, the
-            ``X`` variable from the input data is used.
-
-        Returns
-        -------
-
-        prob : np.array[np.float]
-            An array of the shape ``(n_pairs, 3)`` where the columns
-            represent the win, loss, and tie probabilities for the model `i`
-            against model `j` in order that appears in the input `x`.
-
-        Raises
-        ------
-
-        RuntimeError
-            If the model is not trained before calling this method.
-
-        See Also
-        --------
-
-        train : train model parameters.
-
-        Examples
-        --------
-
-        .. code-block:: python
-            :emphasize-lines: 12
-
-            >>> from leaderbot.data import load
-            >>> from leaderbot.models import BradleyTerry
-
-            >>> # Create a model
-            >>> data = load()
-            >>> model = BradleyTerry(data)
-
-            >>> # Train the model
-            >>> model.train()
-
-            >>> # Make prediction
-            >>> pred = model.predict()
-        """
-
-        if self.param is None:
-            raise RuntimeError('train model first.')
-
-        if x is None:
-            x = self.x
-
-        i, j = x.T
-        z = self.param[i] - self.param[j]
-
-        # Probabilities
-        p_win = 1 / (1 + np.exp(-z))  # sigmoid
-        p_loss = 1 - p_win
-        p_tie = 1 - p_win - p_loss
-
-        return np.column_stack([p_win, p_loss, p_tie])
+            self._delegated_model = BradleyTerryFactorCov(
+                data, n_cov_factors=k_cov)

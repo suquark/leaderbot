@@ -230,6 +230,7 @@ html_theme_options = {
     "logo": {
         "image_light": "images/icons/logo-leaderbot-light.png",
         "image_dark": "images/icons/logo-leaderbot-dark.png",
+        "max_width": "50px",
     },
 }
 

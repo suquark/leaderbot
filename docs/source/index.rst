@@ -141,8 +141,7 @@ clustering of the chatbots based on the score and correlation distances:
 .. code-block:: python
 
     >>> # Plot hierarchical cluster
-    >>> model.cluster(max_rank=100, layout='circular',
-    ...               tier_label=True, latex=True)
+    >>> model.cluster(max_rank=100)
 
 .. image:: _static/images/plots/cluster.png
     :align: center
@@ -173,7 +172,7 @@ The marginal probabilities (or frequencies) of win, loss, and tie outcomes can b
 .. code-block:: python
 
     >>> # Plot marginal probabilities
-    >>> model.marginal_outcome(max_rank=30)
+    >>> model.marginal_outcomes(max_rank=30)
 
 .. image:: _static/images/plots/rank.png
     :align: center
@@ -184,18 +183,18 @@ Make Inference and Prediction
 
 Once a model is trained, you can make inference on the probabilities of win,
 loss, or tie for a pair of agents using :func:`leaderbot.models.Davidson.infer`
-method:
+and :func:`leaderbot.models.Davidson.predict` methods:
 
 .. code-block:: python
 
     >>> # Create a list of three matches using pairs of indices of agents
-    >>> matches = zip((0, 1, 2), (1, 2, 0))
+    >>> matches = list(zip((0, 1, 2), (1, 2, 0)))
 
     >>> # Make inference
     >>> prob = model.infer(matches)
 
     >>> # Make prediction
-    >>> pred = model.predict(mathces)
+    >>> pred = model.predict(matches)
 
 Model Evaluation
 ----------------

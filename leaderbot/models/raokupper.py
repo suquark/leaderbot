@@ -10,12 +10,10 @@
 # imports
 # =======
 
-import numba
-import numpy as np
-from .base_model import BaseModel
-from ._math_util import sigmoid, cross_entropy
+from ._base_interface import BaseInterface
+from ._raokupper_no_cov import RaoKupperNoCov
+from ._raokupper_factor_cov import RaoKupperFactorCov
 from ..data import DataType
-from typing import List, Union
 
 __all__ = ['RaoKupper']
 
@@ -24,9 +22,9 @@ __all__ = ['RaoKupper']
 # Rao Kupper
 # ==========
 
-class RaoKupper(BaseModel):
+class RaoKupper(BaseInterface):
     """
-    Paired comparison based on Rao-Kupper model.
+    Generalized Rao-Kupper model.
 
     Parameters
     ----------
@@ -35,30 +33,124 @@ class RaoKupper(BaseModel):
         A dictionary of data that is provided by
         :func:`leaderbot.data.load`.
 
+    k_cov : int, default=0
+        Determines the structure of covariance in the model based on the
+        following values:
+
+        * ``None``: this means no covariance is used in the model. Together
+          with setting ``k_tie=0``, the original Rao-Kupper model is
+          retrieved.
+        * ``0``: this assumes covariance is a diagonal matrix.
+        * positive integer: this assumes covariance is a diagonal plus
+          low-rank matrix where the rank of low-rank approximation is
+          ``k_cov``.
+
+        See `Notes` below for further details.
+
     n_tie_factor : int, default=1
-        Number of factors to be used in tie parameters. If ``0``, no factor is
-        used and the model falls back to the original Davidson formulation.
+        Determines the rank of low-rank factor structure for modeling tie
+        outcomes based on the following values:
 
-    Notes
-    -----
+        * ``0``: this assumes no low-rank factor model. Together with setting
+          ``k_tie=0``, the original Rao-Kupper model is retrieved.
+        * positive integer: this employs a low-rank structure for modeling tie
+          outcomes with rank ``k_tie``.
 
-    The Rao-Kupper model of paired comparison is based on [1]_.
-
-    References
-    ----------
-
-    .. [1] Rao, P. V., Kupper, L. L. (1967). Ties in Paired-Comparison
-           Experiments: A Generalization of the Bradley-Terry Model. `Journal
-           of the American Statistical Association`, 62(317), 194–204.
-           https://doi.org/10.1080/01621459.1967.10482901
+        See `Notes` below for further details.
 
     See Also
     --------
 
-    RaoKupperScaled
-    RaoKupperScaledR
-    RaoKupperScaledRIJ
-    RaoKupperFactor
+    BradleyTerry
+    Davidson
+
+    Notes
+    -----
+
+    This class implements a generalization of the Rao-Kupper model based on
+    [1]_, incorporating covariance and tie factor models.
+
+    **Covariance Model:**
+
+    This model utilizes a covariance matrix with diagonal plus low-rank
+    structure of the form
+
+    .. math::
+
+        \\mathbf{\\Sigma} = \\mathbf{D} +
+        \\mathbf{\\Lambda} \\mathbf{\\Lambda}^{\\intercal},
+
+    where
+
+    * :math:`\\mathbf{\\Sigma}` is an :math:`m \\times m` symmetric positive
+      semi-definite covariance matrix where :math:`m` is the number of
+      agents (competitors).
+    * :math:`\\mathbf{D}`: is an :math:`m \\times m` diagonal matrix with
+      non-negative diagonals.
+    * :math:`\\mathbf{\\Lambda}`: is a full-rank
+      :math:`m \\times k_{\\mathrm{cov}}` matrix where
+      :math:`k_{\\mathrm{cov}}` is given by the input parameter ``k_cov``.
+
+    If ``k_cov=None``, the covariance matrix is not used in the model,
+    retrieving the original Bradley-Terry model [2]_ (along with setting
+    ``k_tie=0``). If ``k_cov=0``, the covariance model reduces to a diagonal
+    matrix :math:`\\mathbf{D}`.
+
+    **Tie Model:**
+
+    Modeling tie in Rao-Kupper model introduces a threshold parameter
+    :math:`\\eta`. In generalized Rao-Kupper model, threshold parameter is
+    instead modeled by the additive low-rank structure of the form
+
+    .. math::
+
+        \\mathbf{H} = \\begin{cases}
+            \\mathbf{G} \\boldsymbol{\\Phi}^{\\intercal} +
+            \\boldsymbol{\\Phi} \\mathbf{G}^{\\intercal},
+            & 0< k_{\\mathrm{tie}} \\leq m \\\\
+            \\eta \\mathbf{J} & k_{\\mathrm{tie}} = 0,
+        \\end{cases}
+
+    where
+
+    * :math:`\\mathbf{H}` is an :math:`m \\times m` symmetric matrix where its
+      elements represent pair-specific thresholds and :math:`m` is the number
+      of agents (competitors).
+    * :math:`\\mathbf{G}` is an :math:`m \\times k_{\\mathrm{tie}}` matrix of
+      parameters of the full rank :math:`k_{\\mathrm{tie}}` given by the input
+      argument ``k_tie``.
+    * :math:`\\boldsymbol{\\Phi}` is an :math:`m \\times k_{\\mathrm{tie}}`
+      orthonormal matrix of basis functions.
+    * :math:`\\matbf{J}` is an :math:`m \\times m` matrix of all ones.
+
+    Setting ``k_tie = 0`` leads to a model with single tie threshold,
+    retrieving the original Rao-Kupper model (along with setting
+    ``k_cov=None``).
+
+    A similar approach that also models tie outcomes is
+    :class:`leaderbot.models.Davidson` model.
+
+    **Best Practices for Setting Parameters:**
+
+    The number of model parameters and training time scale with
+    :math:`k_{\\mathrm{cov}}` and :math:`k_{\\mathrm{tie}}`. Depending on the
+    dataset size, choosing too small or too large a value for these parameters
+    can lead to under- or over-parameterization. In practice, moderate values
+    of :math:`1 \\sim 10` often balance model fit, test accuracy, and training
+    runtime efficiency.
+
+    References
+    ----------
+
+    .. [1] Siavash Ameli, Siyuan Zhuang, Ion Stoica, and Michael W. Mahoney.
+           `A Statistical Framework for Ranking LLM-Based Chatbots
+           <https://openreview.net/pdf?id=rAoEub6Nw2>`__. *The Thirteenth
+           International Conference on Learning Representations*, 2025.
+
+    .. [2] P. V. Rao and L. L. Kupper. `Ties in Paired-Comparison Experiments:
+           A Generalization of the Bradley-Terry Model.
+           <https://doi.org/10.1080/01621459.1967.10482901>`__. `Journal  of
+           the American Statistical Association`, 62(317), 194–204, 1967.
 
     Attributes
     ----------
@@ -85,6 +177,9 @@ class RaoKupper(BaseModel):
 
     n_param : int
         Number of parameters
+
+    k_cov : int
+        Number of factors for matrix factorization.
 
     n_tie_factor : int
         Number of factors used in tie parameters.
@@ -147,7 +242,7 @@ class RaoKupper(BaseModel):
         >>> model.train()
 
         >>> # Make inference
-        >>> p_win, p_loss, p_tie = model.infer()
+        >>> prob = model.infer()
     """
 
     # ====
@@ -157,264 +252,19 @@ class RaoKupper(BaseModel):
     def __init__(
             self,
             data: DataType,
-            n_tie_factors: int = 1):
+            k_cov: int = 0,
+            k_tie: int = 1):
         """
         Constructor.
         """
 
-        super().__init__(data)
+        super().__init__()
 
-        # Number of factors for tie (rank of matrix in factor analysis)
-        self.n_tie_factors = n_tie_factors
+        self._delegated_model_name = 'RaoKupper'
 
-        # Total number of parameters for modeling tie
-        self._n_tie_param = max(1, self.n_agents * self.n_tie_factors)
-
-        # Total number of parameters
-        self.n_param = self.n_agents + self._n_tie_param
-
-        # Indices of parameters
-        self._tie_factor_idx = slice(
-            self.n_agents,
-            self.n_agents * (1 + self.n_tie_factors))
-
-        # Basis functions for tie factor model
-        self.basis = self._generate_basis(self.n_agents, self.n_tie_factors)
-
-        # Containing which features
-        self._has_tie_factor = True
-
-        # Approximate bound for parameters (only needed for shgo optimization
-        # method). Note that these bounds are not enforced, rather, only used
-        # for seeding multi-initial points in global optimization methods.
-        self._param_bounds = [(-1.0, 1.0) for _ in range(self.n_agents)] + \
-                             [(-1.0, 1.0) for _ in range(self._n_tie_param)]
-
-    # ================
-    # initialize param
-    # ================
-
-    def _initialize_param(self):
-        """
-        Initialize parameters.
-        """
-
-        # Initial parameters
-        init_param = np.zeros(self.n_param)
-        init_param[:self.n_agents] = self._initialize_scores()
-
-        return init_param
-
-    # ===========
-    # sample loss
-    # ===========
-
-    @staticmethod
-    @numba.jit(nopython=True)
-    def _sample_loss(
-            w: Union[List[float], np.ndarray[np.floating]],
-            x: np.ndarray[np.integer],
-            y: np.ndarray[np.integer],
-            n_agents: int,
-            n_tie_factors: int,
-            basis: np.ndarray[np.floating],
-            return_jac: bool = True,
-            inference_only: bool = False):
-        """
-        Loss per each sample data (instance).
-
-        Note: in Rao-Kupper model, eta should be no-negative so that p_tie be
-        non-negative. To enforce this, we add absolute value and adjust its
-        gradient with sign of eta.
-        """
-
-        # Initialize outputs so numba does not complain
-        loss_ = None
-        grads = None
-        probs = None
-        grad_gi = None
-        grad_gj = None
-
-        i, j = x.T
-        xi, xj = w[i], w[j]
-        min_eta = 1e-2
-
-        if n_tie_factors == 0:
-            eta_scalar = np.maximum(w[-1], min_eta)  # clip eta
-            eta = np.full_like(xi, eta_scalar)
+        if k_cov is None:
+            self._delegated_model = RaoKupperNoCov(
+                    data, n_tie_factors=k_tie)
         else:
-            g = w[n_agents:].reshape(n_agents, n_tie_factors)
-            gi = g[i]
-            gj = g[j]
-            phi_i = basis[i]
-            phi_j = basis[j]
-            eta = np.sum(gi * phi_j, axis=1) + np.sum(gj * phi_i, axis=1)
-            eta[np.abs(eta) < min_eta] = min_eta   # clip eta
-
-        d_win = xi - xj - np.abs(eta)
-        d_loss = xj - xi - np.abs(eta)
-
-        # Probabilities
-        p_win = sigmoid(d_win)
-        p_loss = sigmoid(d_loss)
-
-        if inference_only:
-            p_tie = 1.0 - p_win - p_loss
-            probs = (p_win, p_loss, p_tie)
-            return loss_, grads, probs
-
-        # loss for each sample ij
-        win_ij, loss_ij, tie_ij = y.T
-        loss_ = - cross_entropy((win_ij + tie_ij), p_win) \
-                - cross_entropy((loss_ij + tie_ij), p_loss) \
-                - cross_entropy(tie_ij, (np.exp(2.0 * np.abs(eta)) - 1.0))
-
-        if return_jac:
-            grad_win = (win_ij + tie_ij) * (1.0 - p_win)
-            grad_loss = (loss_ij + tie_ij) * (1.0 - p_loss)
-            grad_xi = -grad_win + grad_loss
-            grad_xj = -grad_xi
-            grad_eta = (grad_win + grad_loss - (2.0 * tie_ij) /
-                        (1.0 - np.exp(-2.0 * eta))) * np.sign(eta)
-
-            # At eta=0, the gradient w.r.t eta is "-np.inf * np.sign(eta)".
-            # However, for stability of the optimizer, we set its gradient to
-            # zero in the clipped interval where it is assumed to be constant.
-            grad_eta[np.abs(eta) < min_eta] = 0.0
-
-            if n_tie_factors > 0:
-                grad_gi = grad_eta[:, None] * phi_j
-                grad_gj = grad_eta[:, None] * phi_i
-
-            grads = (grad_xi, grad_xj, grad_eta, grad_gi, grad_gj)
-
-        return loss_, grads, probs
-
-    # ====
-    # loss
-    # ====
-
-    def loss(
-            self,
-            w: Union[List[float], np.ndarray[np.floating]] = None,
-            return_jac: bool = False,
-            constraint: bool = False):
-        """
-        Total loss for all data instances.
-
-        Parameters
-        ----------
-
-        w : array_like, default=None
-            Parameters. If `None`, the pre-trained parameters are used,
-            provided is already trained.
-
-        return_jac : bool, default=False
-            if `True`, the Jacobian of loss with respect to the parameters is
-            also returned.
-
-        constraint : bool, default=False
-            If `True`, the constrain on the parameters is also added to the
-            loss.
-
-        Returns
-        -------
-
-        loss : float
-            Total loss for all data points.
-
-        if return_jac is `True`:
-
-            jac : np.array
-                An array of the size of the number of parameters, representing
-                the Jacobian of loss.
-
-        Raises
-        ------
-
-        RuntimeWarning
-            If loss is ``nan``.
-
-        RuntimeError
-            If the model is not trained and the input ``w`` is set to `None`.
-
-        See Also
-        --------
-
-        train : train model parameters.
-        fisher : Observed Fisher information matrix.
-
-        Examples
-        --------
-
-        .. code-block:: python
-            :emphasize-lines: 13
-
-            >>> from leaderbot.data import load
-            >>> from leaderbot.models import RaoKupper
-
-            >>> # Create a model
-            >>> data = load()
-            >>> model = RaoKupper(data)
-
-            >>> # Generate an array of parameters
-            >>> import numpy as np
-            >>> w = np.random.randn(model.n_param)
-
-            >>> # Compute loss and its gradient with respect to parameters
-            >>> loss, jac = model.loss(w, return_jac=True, constraint=False)
-        """
-
-        if w is None:
-            if self.param is None:
-                raise RuntimeError('train model first.')
-            w = self.param
-
-        loss_, grads, _ = self._sample_loss(w,
-                                            self.x,
-                                            self.y,
-                                            self.n_agents,
-                                            self.n_tie_factors,
-                                            self.basis,
-                                            return_jac=return_jac,
-                                            inference_only=False)
-
-        loss_ = loss_.sum() / self._count
-        if np.isnan(loss_):
-            raise RuntimeWarning("loss is nan")
-
-        if return_jac:
-            grad_xi, grad_xj, grad_eta, grad_gi, grad_gj = grads
-            i, j = self.x.T
-            n_samples = self.x.shape[0]
-            ax = np.arange(n_samples)
-            jac = np.zeros((n_samples, w.shape[0]))
-            jac[ax, i] += grad_xi
-            jac[ax, j] += grad_xj
-
-            if self.n_tie_factors == 0:
-                jac[ax, -1] += grad_eta
-            else:
-                dg = np.zeros((n_samples, self.n_agents, self.n_tie_factors))
-                dg[ax, i] += grad_gi
-                dg[ax, j] += grad_gj
-                jac[ax, self._tie_factor_idx] = \
-                    dg.reshape(n_samples, self.n_agents * self.n_tie_factors)
-
-            jac = jac.sum(axis=0) / self._count
-
-        if constraint:
-            # constraining score parameters
-            constraint_diff = np.sum(w[self._score_idx])
-            constraint_loss = constraint_diff ** 2
-            loss_ += constraint_loss
-
-            if return_jac:
-                # constraining score parameters
-                constraint_jac = 2.0 * constraint_diff
-                jac[self._score_idx] += constraint_jac
-
-        if return_jac:
-            return loss_, jac
-        else:
-            return loss_
+            self._delegated_model = RaoKupperFactorCov(
+                data, n_cov_factors=k_cov, n_tie_factors=k_tie)

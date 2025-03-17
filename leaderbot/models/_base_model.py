@@ -543,13 +543,13 @@ class BaseModel(object):
         Parameters
         ----------
 
-        x : np.ndarray or leaderbot.data.DataType
-            A 2D array of integers with the shape ``(n_pairs, 2)`` where each
-            row consists of indices ``[i, j]`` representing a match between a
-            pair of agents with the indices ``i`` and ``j``. Alternatively,
-            a dictionary of the type :class:`leaderbot.data.DataType` can
-            be provided. If `None`, the ``X`` variable from the input data is
-            used.
+        x : np.ndarray, list, zip, or leaderbot.data.DataType
+            A 2D array (or equivalent list to zip) of integers with the shape
+            ``(n_pairs, 2)`` where each row consists of indices ``[i, j]``
+            representing a match between a pair of agents with the indice
+            ``i`` and ``j``. Alternatively, a dictionary of the type
+            :class:`leaderbot.data.DataType` can be provided. If `None`, the
+            ``X`` variable from the input data is used.
 
         Returns
         -------
@@ -569,6 +569,7 @@ class BaseModel(object):
         --------
 
         train : train model parameters.
+        predict: Predict win, loss, or tie between agents.
 
         Examples
         --------
@@ -598,6 +599,10 @@ class BaseModel(object):
         elif isinstance(x, dict) and \
                 all(key in x for key in DataType.__annotations__):
             x_ = x['X']
+        elif isinstance(x, list):
+            x_ = np.array(x)
+        elif isinstance(x, zip):
+            x_ = np.array(list(x))
         else:
             x_ = x
 
@@ -632,13 +637,13 @@ class BaseModel(object):
         Parameters
         ----------
 
-        x : np.ndarray or leaderbot.data.DataType
-            A 2D array of integers with the shape ``(n_pairs, 2)`` where each
-            row consists of indices ``[i, j]`` representing a match between a
-            pair of agents with the indices ``i`` and ``j``. Alternatively,
-            a dictionary of the type :class:`leaderbot.data.DataType` can
-            be provided. If `None`, the ``X`` variable from the input data is
-            used.
+        x : np.ndarray, list, zip, or leaderbot.data.DataType
+            A 2D array (or equivalent list or zip) of integers with the shape
+            ``(n_pairs, 2)`` where each row consists of indices ``[i, j]``
+            representing a match between a pair of agents with the indices
+            ``i`` and ``j``. Alternatively, a dictionary of the type
+            :class:`leaderbot.data.DataType` can be provided. If `None`, the
+            ``X`` variable from the input data is used.
 
         Returns
         -------
@@ -680,7 +685,7 @@ class BaseModel(object):
             >>> model.train()
 
             >>> # Make prediction
-            >>> x = zip((0, 1, 2), (1, 2, 0))
+            >>> x = list(zip((0, 1, 2), (1, 2, 0)))
             >>> pred = model.predict(x)
         """
 
@@ -692,6 +697,10 @@ class BaseModel(object):
         elif isinstance(x, dict) and \
                 all(key in x for key in DataType.__annotations__):
             x_ = x['X']
+        elif isinstance(x, list):
+            x_ = np.array(x)
+        elif isinstance(x, zip):
+            x_ = np.array(list(x))
         else:
             x_ = x
 
@@ -701,9 +710,9 @@ class BaseModel(object):
         pred = np.zeros((probs.shape[0], ), dtype=int)
         for i in range(pred.shape[0]):
             if max_ind[i] == 0:
-                pred[0] = +1
+                pred[i] = +1
             elif max_ind[i] == 1:
-                pred[0] = -1
+                pred[i] = -1
 
         return pred
 

@@ -13,20 +13,20 @@
 import numba
 import numpy as np
 from .factor_model import FactorModel
-from ._math_util import double_sigmoid, cross_entropy
+from ._math_util import sigmoid, cross_entropy
 from ..data import DataType
 from typing import List, Union
 
-__all__ = ['DavidsonFactor']
+__all__ = ['BradleyTerryFactorCov']
 
 
-# ===============
-# Davidson Factor
-# ===============
+# =======================
+# Bradleyterry Factor Cov
+# =======================
 
-class DavidsonFactor(FactorModel):
+class BradleyTerryFactorCov(FactorModel):
     """
-    Paired comparison based on Davidson model and Thurstonian model with
+    Paired comparison based on Bradley-Terry and Thurstonian model with
     factored covariance.
 
     Parameters
@@ -39,14 +39,11 @@ class DavidsonFactor(FactorModel):
     n_cov_factors : int, default=3
         Number of factors for matrix factorization.
 
-    n_tie_factor : int, default=1
-        Number of factors to be used in tie parameters. If ``0``, no factor is
-        used and the model falls back to the original Davidson formulation.
-
     Notes
     -----
 
-    The Davidson model of paired comparison is based on [1]_.
+    The Bradley-Terry model of paired comparison is based on [1]_. This
+    model does not include ties in the data.
 
     .. note::
 
@@ -57,18 +54,17 @@ class DavidsonFactor(FactorModel):
     References
     ----------
 
-    .. [1] Davidson, R. R. (1970). On Extending the Bradley-Terry Model to
-           Accommodate Ties in Paired Comparison Experiments. `Journal of the
-           American Statistical Association`, 65(329), 317–328.
-           https://doi.org/10.2307/2283595
+    .. [1] Bradley, R., Terry, M. (1952). Rank Analysis of Incomplete Block
+           Designs: I. The Method of Paired Comparisons. `Biometrika`, 39
+           (3/4), 324-345. https://doi.org/10.2307/2334029
 
     See Also
     --------
 
-    Davidson
-    DavidsonScaled
-    DavidsonScaledR
-    DavidsonScaledRIJ
+    BradleyTerry
+    BradleyTerryScaled
+    BradleyTerryScaledR
+    BradleyTerryScaledRIJ
 
     Attributes
     ----------
@@ -98,9 +94,6 @@ class DavidsonFactor(FactorModel):
 
     n_cov_factors : int
         Number of factors for matrix factorization.
-
-    n_tie_factor : int
-        Number of factors used in tie parameters.
 
     Methods
     -------
@@ -150,11 +143,11 @@ class DavidsonFactor(FactorModel):
     .. code-block:: python
 
         >>> from leaderbot.data import load
-        >>> from leaderbot.models import DavidsonFactor
+        >>> from leaderbot.models import BradleyTerryFactor
 
         >>> # Create a model
         >>> data = load()
-        >>> model = DavidsonFactor(data)
+        >>> model = BradleyTerryFactor(data, n_cov_factors=3)
 
         >>> # Train the model
         >>> model.train()
@@ -170,39 +163,12 @@ class DavidsonFactor(FactorModel):
     def __init__(
             self,
             data: DataType,
-            n_cov_factors: int = 3,
-            n_tie_factors: int = 1):
+            n_cov_factors: int = 3):
         """
         Constructor.
         """
 
         super().__init__(data, n_cov_factors)
-
-        # Number of factors for tie (rank of matrix in factor analysis)
-        self.n_tie_factors = n_tie_factors
-
-        # Total number of parameters for modeling tie
-        self._n_tie_param = max(1, self.n_agents * self.n_tie_factors)
-
-        # Total number of parameters
-        self.n_param += self._n_tie_param
-
-        # Indices of parameters
-        self._tie_factor_idx = slice(
-            self.n_agents * (2 + self.n_cov_factors),
-            self.n_agents * (2 + self.n_cov_factors + self.n_tie_factors))
-
-        # Basis functions for tie factor model
-        self.basis = self._generate_basis(self.n_agents, self.n_tie_factors)
-
-        # Containing which features
-        self._has_tie_factor = True
-
-        # Approximate bound for parameters (only needed for shgo optimization
-        # method). Note that these bounds are not enforced, rather, only used
-        # for seeding multi-initial points in global optimization methods.
-        self._param_bounds.append(
-                [(-1.0, 1.0) for _ in range(self._n_tie_param)])
 
     # ===========
     # sample loss
@@ -216,8 +182,6 @@ class DavidsonFactor(FactorModel):
             y: np.ndarray[np.integer],
             n_agents: int,
             n_cov_factors: int,
-            n_tie_factors: int,
-            basis: np.ndarray[np.floating],
             return_jac: bool = True,
             inference_only: bool = False):
         """
@@ -228,28 +192,12 @@ class DavidsonFactor(FactorModel):
         loss_ = None
         grads = None
         probs = None
-        grad_gi = None
-        grad_gj = None
 
         i, j = x.T
         xi, xj = w[i], w[j]
         ti, tj = w[i + n_agents], w[j + n_agents]
         m = w[n_agents * 2:n_agents * (2 + n_cov_factors)].reshape(
             n_agents, n_cov_factors)
-
-        if n_tie_factors == 0:
-            mu = np.full_like(xi, w[-1])
-        else:
-            tie_factor_idx = slice(
-                n_agents * (2 + n_cov_factors),
-                n_agents * (2 + n_cov_factors + n_tie_factors))
-            g = w[tie_factor_idx].reshape(n_agents, n_tie_factors)
-            gi = g[i]
-            gj = g[j]
-            phi_i = basis[i]
-            phi_j = basis[j]
-            mu = np.sum(gi * phi_j, axis=1) + np.sum(gj * phi_i, axis=1)
-
         ri, rj = m[i], m[j]
 
         s_ij = np.sum(ri * rj, axis=1)
@@ -258,40 +206,25 @@ class DavidsonFactor(FactorModel):
 
         scale = 1.0 / np.sqrt(s_ii + s_jj - 2.0 * s_ij)
         z = (xi - xj) * scale
-        u = 0.5 * z - mu
-        v = -0.5 * z - mu
 
         # Probabilities
-        p_win = double_sigmoid(z, u)
-        p_loss = double_sigmoid(-z, v)
-        p_tie = double_sigmoid(-u, -v)
+        p_win = sigmoid(z)
+        p_loss = 1.0 - p_win
 
         if inference_only:
+            p_tie = np.zeros_like(p_loss)
             probs = (p_win, p_loss, p_tie)
             return loss_, grads, probs
 
         # loss for each sample ij
         win_ij, loss_ij, tie_ij = y.T
-        loss_ = - cross_entropy(win_ij, p_win) \
-                - cross_entropy(loss_ij, p_loss) \
-                - cross_entropy(tie_ij, p_tie)
+        w_ij = win_ij + 0.5 * tie_ij
+        l_ij = loss_ij + 0.5 * tie_ij
+        loss_ = -cross_entropy(w_ij, p_win) - cross_entropy(l_ij, p_loss)
 
         if return_jac:
-            grad_p_win_z = -(np.exp(-z) + 0.5 * np.exp(-u)) * p_win
-            grad_p_loss_z = (np.exp(z) + 0.5 * np.exp(-v)) * p_loss
-            grad_p_tie_z = 0.5 * (np.exp(u) - np.exp(v)) * p_tie
-            grad_z = \
-                win_ij * grad_p_win_z + \
-                loss_ij * grad_p_loss_z + \
-                tie_ij * grad_p_tie_z
-
-            grad_p_win_u = np.exp(-u) * p_win
-            grad_p_loss_u = np.exp(-v) * p_loss
-            grad_p_tie_u = -(np.exp(u) + np.exp(v)) * p_tie
-            grad_mu = \
-                win_ij * grad_p_win_u + \
-                loss_ij * grad_p_loss_u + \
-                tie_ij * grad_p_tie_u
+            # grad_z = w_ij * (p_win - 1) + l_ij * p_win
+            grad_z = (w_ij + l_ij) * p_win - w_ij
 
             grad_xi = grad_z * scale
             grad_xj = -grad_xi
@@ -303,12 +236,7 @@ class DavidsonFactor(FactorModel):
             grad_ri = grad_scale[:, None] * 2.0 * (ri - rj)
             grad_rj = -grad_ri
 
-            if n_tie_factors > 0:
-                grad_gi = grad_mu[:, None] * phi_j
-                grad_gj = grad_mu[:, None] * phi_i
-
-            grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj,
-                     grad_mu, grad_gi, grad_gj)
+            grads = grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj
 
         return loss_, grads, probs
 
@@ -373,11 +301,11 @@ class DavidsonFactor(FactorModel):
             :emphasize-lines: 13
 
             >>> from leaderbot.data import load
-            >>> from leaderbot.models import DavidsonFactor
+            >>> from leaderbot.models import BradleyTerryFactor
 
             >>> # Create a model
             >>> data = load()
-            >>> model = DavidsonFactor(data)
+            >>> model = BradleyTerryFactor(data)
 
             >>> # Generate an array of parameters
             >>> import numpy as np
@@ -397,8 +325,6 @@ class DavidsonFactor(FactorModel):
                                             self.y,
                                             self.n_agents,
                                             self.n_cov_factors,
-                                            self.n_tie_factors,
-                                            self.basis,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -407,8 +333,7 @@ class DavidsonFactor(FactorModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj, grad_mu, \
-                grad_gi, grad_gj = grads
+            grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj = grads
             i, j = self.x.T
             n_samples = self.x.shape[0]
             ax = np.arange(n_samples)
@@ -424,15 +349,6 @@ class DavidsonFactor(FactorModel):
                 dm[ax, j] += grad_rj
                 jac[ax, self._cov_factor_idx] = \
                     dm.reshape(n_samples, self.n_agents * self.n_cov_factors)
-
-            if self.n_tie_factors == 0:
-                jac[ax, -1] += grad_mu
-            else:
-                dg = np.zeros((n_samples, self.n_agents, self.n_tie_factors))
-                dg[ax, i] += grad_gi
-                dg[ax, j] += grad_gj
-                jac[ax, self._tie_factor_idx] = \
-                    dg.reshape(n_samples, self.n_agents * self.n_tie_factors)
 
             jac = jac.sum(axis=0) / self._count
 

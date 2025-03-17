@@ -17,16 +17,16 @@ from ._math_util import sigmoid, cross_entropy
 from ..data import DataType
 from typing import List, Union
 
-__all__ = ['BradleyTerryFactor']
+__all__ = ['RaoKupperFactorCov']
 
 
-# ===================
-# Bradleyterry Factor
-# ===================
+# =====================
+# Rao Kupper Factor Cov
+# =====================
 
-class BradleyTerryFactor(FactorModel):
+class RaoKupperFactorCov(FactorModel):
     """
-    Paired comparison based on Bradley-Terry and Thurstonian model with
+    Paired comparison based on Rao-Kupper model and Thurstonian model with
     factored covariance.
 
     Parameters
@@ -39,11 +39,14 @@ class BradleyTerryFactor(FactorModel):
     n_cov_factors : int, default=3
         Number of factors for matrix factorization.
 
+    n_tie_factor : int, default=1
+        Number of factors to be used in tie parameters. If ``0``, no factor is
+        used and the model falls back to the original Davidson formulation.
+
     Notes
     -----
 
-    The Bradley-Terry model of paired comparison is based on [1]_. This
-    model does not include ties in the data.
+    The Rao-Kupper model of paired comparison is based on [1]_.
 
     .. note::
 
@@ -54,17 +57,18 @@ class BradleyTerryFactor(FactorModel):
     References
     ----------
 
-    .. [1] Bradley, R., Terry, M. (1952). Rank Analysis of Incomplete Block
-           Designs: I. The Method of Paired Comparisons. `Biometrika`, 39
-           (3/4), 324-345. https://doi.org/10.2307/2334029
+    .. [1] Rao, P. V., Kupper, L. L. (1967). Ties in Paired-Comparison
+           Experiments: A Generalization of the Bradley-Terry Model. `Journal
+           of the American Statistical Association`, 62(317), 194–204.
+           https://doi.org/10.1080/01621459.1967.10482901
 
     See Also
     --------
 
-    BradleyTerry
-    BradleyTerryScaled
-    BradleyTerryScaledR
-    BradleyTerryScaledRIJ
+    RaoKupper
+    RaoKupperScaled
+    RaoKupperScaledR
+    RaoKupperScaledRIJ
 
     Attributes
     ----------
@@ -94,6 +98,9 @@ class BradleyTerryFactor(FactorModel):
 
     n_cov_factors : int
         Number of factors for matrix factorization.
+
+    n_tie_factor : int
+        Number of factors used in tie parameters.
 
     Methods
     -------
@@ -143,11 +150,11 @@ class BradleyTerryFactor(FactorModel):
     .. code-block:: python
 
         >>> from leaderbot.data import load
-        >>> from leaderbot.models import BradleyTerryFactor
+        >>> from leaderbot.models import RaoKupperFactor
 
         >>> # Create a model
         >>> data = load()
-        >>> model = BradleyTerryFactor(data, n_cov_factors=3)
+        >>> model = RaoKupperFactor(data)
 
         >>> # Train the model
         >>> model.train()
@@ -163,12 +170,39 @@ class BradleyTerryFactor(FactorModel):
     def __init__(
             self,
             data: DataType,
-            n_cov_factors: int = 3):
+            n_cov_factors: int = 3,
+            n_tie_factors: int = 1):
         """
         Constructor.
         """
 
         super().__init__(data, n_cov_factors)
+
+        # Number of factors for tie (rank of matrix in factor analysis)
+        self.n_tie_factors = n_tie_factors
+
+        # Total number of parameters for modeling tie
+        self._n_tie_param = max(1, self.n_agents * self.n_tie_factors)
+
+        # Total number of parameters
+        self.n_param += self._n_tie_param
+
+        # Indices of parameters
+        self._tie_factor_idx = slice(
+            self.n_agents * (2 + self.n_cov_factors),
+            self.n_agents * (2 + self.n_cov_factors + self.n_tie_factors))
+
+        # Basis functions for tie factor model
+        self.basis = self._generate_basis(self.n_agents, self.n_tie_factors)
+
+        # Containing which features
+        self._has_tie_factor = True
+
+        # Approximate bound for parameters (only needed for shgo optimization
+        # method). Note that these bounds are not enforced, rather, only used
+        # for seeding multi-initial points in global optimization methods.
+        self._param_bounds.append(
+                [(-1.0, 1.0) for _ in range(self._n_tie_param)])
 
     # ===========
     # sample loss
@@ -182,22 +216,48 @@ class BradleyTerryFactor(FactorModel):
             y: np.ndarray[np.integer],
             n_agents: int,
             n_cov_factors: int,
+            n_tie_factors: int,
+            basis: np.ndarray[np.floating],
             return_jac: bool = True,
             inference_only: bool = False):
         """
         Loss per each sample data (instance).
+
+        Note: in Rao-Kupper model, eta should be no-negative so that p_tie be
+        non-negative. To enforce this, we add absolute value and adjust its
+        gradient with sign of eta.
         """
 
         # Initialize outputs so numba does not complain
         loss_ = None
         grads = None
         probs = None
+        grad_gi = None
+        grad_gj = None
 
         i, j = x.T
         xi, xj = w[i], w[j]
         ti, tj = w[i + n_agents], w[j + n_agents]
         m = w[n_agents * 2:n_agents * (2 + n_cov_factors)].reshape(
             n_agents, n_cov_factors)
+
+        min_eta = 1e-2
+
+        if n_tie_factors == 0:
+            eta_scalar = np.maximum(w[-1], min_eta)  # clip eta
+            eta = np.full_like(xi, eta_scalar)
+        else:
+            tie_factor_idx = slice(
+                n_agents * (2 + n_cov_factors),
+                n_agents * (2 + n_cov_factors + n_tie_factors))
+            g = w[tie_factor_idx].reshape(n_agents, n_tie_factors)
+            gi = g[i]
+            gj = g[j]
+            phi_i = basis[i]
+            phi_j = basis[j]
+            eta = np.sum(gi * phi_j, axis=1) + np.sum(gj * phi_i, axis=1)
+            eta[np.abs(eta) < min_eta] = min_eta   # clip eta
+
         ri, rj = m[i], m[j]
 
         s_ij = np.sum(ri * rj, axis=1)
@@ -207,24 +267,29 @@ class BradleyTerryFactor(FactorModel):
         scale = 1.0 / np.sqrt(s_ii + s_jj - 2.0 * s_ij)
         z = (xi - xj) * scale
 
+        d_win = z - np.abs(eta)
+        d_loss = -z - np.abs(eta)
+
         # Probabilities
-        p_win = sigmoid(z)
-        p_loss = 1.0 - p_win
+        p_win = sigmoid(d_win)
+        p_loss = sigmoid(d_loss)
 
         if inference_only:
-            p_tie = np.zeros_like(p_loss)
+            # p_tie = (np.exp(np.abs(eta) * 2) - 1) * p_win * p_loss
+            p_tie = 1 - p_win - p_loss
             probs = (p_win, p_loss, p_tie)
             return loss_, grads, probs
 
         # loss for each sample ij
         win_ij, loss_ij, tie_ij = y.T
-        w_ij = win_ij + 0.5 * tie_ij
-        l_ij = loss_ij + 0.5 * tie_ij
-        loss_ = -cross_entropy(w_ij, p_win) - cross_entropy(l_ij, p_loss)
+        loss_ = - cross_entropy((win_ij + tie_ij), p_win) \
+                - cross_entropy((loss_ij + tie_ij), p_loss) \
+                - cross_entropy(tie_ij, (np.exp(2.0 * np.abs(eta)) - 1.0))
 
         if return_jac:
-            # grad_z = w_ij * (p_win - 1) + l_ij * p_win
-            grad_z = (w_ij + l_ij) * p_win - w_ij
+            grad_dwin = (win_ij + tie_ij) * (1.0 - p_win)
+            grad_dloss = (loss_ij + tie_ij) * (1.0 - p_loss)
+            grad_z = -grad_dwin + grad_dloss
 
             grad_xi = grad_z * scale
             grad_xj = -grad_xi
@@ -232,11 +297,27 @@ class BradleyTerryFactor(FactorModel):
             grad_scale = -0.5 * grad_z * z * scale ** 2
             grad_ti = grad_scale * 2.0 * ti
             grad_tj = grad_scale * 2.0 * tj
+            grad_scale = -0.5 * grad_z * z * scale ** 2
+            grad_ti = grad_scale * 2.0 * ti
+            grad_tj = grad_scale * 2.0 * tj
 
             grad_ri = grad_scale[:, None] * 2.0 * (ri - rj)
             grad_rj = -grad_ri
 
-            grads = grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj
+            grad_eta = (grad_dwin + grad_dloss - (2.0 * tie_ij) /
+                        (1.0 - np.exp(-2.0 * np.abs(eta)))) * np.sign(eta)
+
+            # At eta=0, the gradient w.r.t eta is "-np.inf * np.sign(eta)".
+            # However, for stability of the optimizer, we set its gradient to
+            # zero in the clipped interval where it is assumed to be constant.
+            grad_eta[np.abs(eta) < min_eta] = 0.0
+
+            if n_tie_factors > 0:
+                grad_gi = grad_eta[:, None] * phi_j
+                grad_gj = grad_eta[:, None] * phi_i
+
+            grads = (grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj,
+                     grad_eta, grad_gi, grad_gj)
 
         return loss_, grads, probs
 
@@ -301,11 +382,11 @@ class BradleyTerryFactor(FactorModel):
             :emphasize-lines: 13
 
             >>> from leaderbot.data import load
-            >>> from leaderbot.models import BradleyTerryFactor
+            >>> from leaderbot.models import RaoKupperFactor
 
             >>> # Create a model
             >>> data = load()
-            >>> model = BradleyTerryFactor(data)
+            >>> model = RaoKupperFactor(data)
 
             >>> # Generate an array of parameters
             >>> import numpy as np
@@ -325,6 +406,8 @@ class BradleyTerryFactor(FactorModel):
                                             self.y,
                                             self.n_agents,
                                             self.n_cov_factors,
+                                            self.n_tie_factors,
+                                            self.basis,
                                             return_jac=return_jac,
                                             inference_only=False)
 
@@ -333,7 +416,8 @@ class BradleyTerryFactor(FactorModel):
             raise RuntimeWarning("loss is nan")
 
         if return_jac:
-            grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj = grads
+            grad_xi, grad_xj, grad_ti, grad_tj, grad_ri, grad_rj, grad_eta, \
+                grad_gi, grad_gj = grads
             i, j = self.x.T
             n_samples = self.x.shape[0]
             ax = np.arange(n_samples)
@@ -349,6 +433,15 @@ class BradleyTerryFactor(FactorModel):
                 dm[ax, j] += grad_rj
                 jac[ax, self._cov_factor_idx] = \
                     dm.reshape(n_samples, self.n_agents * self.n_cov_factors)
+
+            if self.n_tie_factors == 0:
+                jac[ax, -1] += grad_eta
+            else:
+                dg = np.zeros((n_samples, self.n_agents, self.n_tie_factors))
+                dg[ax, i] += grad_gi
+                dg[ax, j] += grad_gj
+                jac[ax, self._tie_factor_idx] = \
+                    dg.reshape(n_samples, self.n_agents * self.n_tie_factors)
 
             jac = jac.sum(axis=0) / self._count
 

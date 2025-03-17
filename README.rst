@@ -122,18 +122,18 @@ Make Inference and Prediction
 
 Once a model is trained, you can make inference on the probabilities of win,
 loss, or tie for a pair of agents using ``leaderbot.models.Davidson.infer``
-method:
+and ``leaderbot.models.Davidson.predict`` method:
 
 .. code-block:: python
 
     >>> # Create a list of three matches using pairs of indices of agents
-    >>> matches = zip((0, 1, 2), (1, 2, 0))
+    >>> matches = list(zip((0, 1, 2), (1, 2, 0)))
 
     >>> # Make inference
     >>> prob = model.infer(matches)
 
     >>> # Make prediction
-    >>> pred = model.predict(mathces)
+    >>> pred = model.predict(matches)
 
 Model Evaluation
 ----------------

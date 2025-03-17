@@ -15,20 +15,8 @@ Classes to define statistical models to train on data.
     :template: autosummary/class.rst
 
     leaderbot.models.BradleyTerry
-    leaderbot.models.BradleyTerryScaled
-    leaderbot.models.BradleyTerryScaledR
-    leaderbot.models.BradleyTerryScaledRIJ
-    leaderbot.models.BradleyTerryFactor
     leaderbot.models.RaoKupper
-    leaderbot.models.RaoKupperScaled
-    leaderbot.models.RaoKupperScaledR
-    leaderbot.models.RaoKupperScaledRIJ
-    leaderbot.models.RaoKupperFactor
     leaderbot.models.Davidson
-    leaderbot.models.DavidsonScaled
-    leaderbot.models.DavidsonScaledR
-    leaderbot.models.DavidsonScaledRIJ
-    leaderbot.models.DavidsonFactor
 
 Model Evaluation
 ----------------
