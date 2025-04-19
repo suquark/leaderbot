@@ -31,7 +31,7 @@ How to Cite
 
 .. |btn-view-pdf-1| raw:: html
 
-    <button class="btn btn-outline-info btn-sm btn-extra-sm" type="button" id="showPDF01">
+    <button class="btn btn-outline-info btn-sm btn-extra-sm" type="button" id="showPaper01">
         PDF
     </button>
     

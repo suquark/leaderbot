@@ -12,5 +12,6 @@ pandoc
 sphinx-prompt
 sphinx-copybutton
 sphinx-gallery
+sphinxcontrib-youtube
 sphinxext-opengraph
 sphinx-argparse

@@ -141,6 +141,7 @@ extensions = [
     'sphinx_gallery.load_style',
     "sphinxext.opengraph",
     'sphinxarg.ext',
+    "sphinxcontrib.youtube",
 ]
 
 # Copy button settings

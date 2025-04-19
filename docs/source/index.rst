@@ -6,30 +6,27 @@
 |project| is a python package that provides a **leader**\ board for
 chat\ **bot**\ s based on `Chatbot Arena <https://lmarena.ai/>`_ project.
 
-.. .. grid:: 4
-..
-..     .. grid-item-card:: Slides
-..         :link: install
-..         :link-type: ref
-..         :text-align: center
-..         :class-card: custom-card-link
-..
-..     .. grid-item-card:: Poster
-..         :link: user_guide
-..         :link-type: ref
-..         :text-align: center
-..         :class-card: custom-card-link
-..
-..     .. grid-item-card:: Video
-..         :link: api
-..         :link-type: ref
-..         :text-align: center
-..         :class-card: custom-card-link
-..
-..     .. grid-item-card:: Paper
-..         :link: https://openreview.net/pdf?id=rAoEub6Nw2
-..         :text-align: center
-..         :class-card: custom-card-link
+.. grid:: 4
+
+    .. grid-item-card:: Slides
+        :link: http://leaderbot.org/slides
+        :text-align: center
+        :class-card: custom-card-link
+
+    .. grid-item-card:: Poster
+        :link: https://leaderbot.org/poster
+        :text-align: center
+        :class-card: custom-card-link
+
+    .. grid-item-card:: Video
+        :link: https://www.youtube.com/watch?v=k9hZohJyOjw
+        :text-align: center
+        :class-card: custom-card-link
+
+    .. grid-item-card:: Paper
+        :link: https://openreview.net/pdf?id=rAoEub6Nw2
+        :text-align: center
+        :class-card: custom-card-link
 
 .. grid:: 4
 
@@ -54,6 +51,10 @@ chat\ **bot**\ s based on `Chatbot Arena <https://lmarena.ai/>`_ project.
         :link-type: ref
         :text-align: center
         :class-card: custom-card-link
+
+.. .. youtube:: k9hZohJyOjw
+..    :width: 100%
+..    :align: center
 
 Install
 =======
