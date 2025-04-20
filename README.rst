@@ -3,15 +3,15 @@
     :width: 240
     :class: custom-dark
 
- .. note::
-   :class: centered-note
+.. note::
+    :class: centered-note
 
-   `Paper <https://openreview.net/pdf?id=rAoEub6Nw2>`__ |
-   `Poster <https://leaderbot.org/poster>`__ |
-   `Slides <https://leaderbot.org/slides>`__ |
-   `Video <https://www.youtube.com/watch?v=k9hZohJyOjw>`__ |
-   `API <https://leaderbot.org/api.html>`__ |
-   `Docs <https://leaderbot.org/>`__
+    `Paper <https://openreview.net/pdf?id=rAoEub6Nw2>`__ |
+    `Poster <https://leaderbot.org/poster>`__ |
+    `Slides <https://leaderbot.org/slides>`__ |
+    `Video <https://www.youtube.com/watch?v=k9hZohJyOjw>`__ |
+    `API <https://leaderbot.org/api.html>`__ |
+    `Docs <https://leaderbot.org/>`__
 
 *leaderbot* is a python package that provides a **leader**\ board for
 chat\ **bot**\ s based on `Chatbot Arena <https://lmarena.ai/>`_ project.
