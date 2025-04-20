@@ -8,8 +8,8 @@ const clientId = "ec3799abaed846ae9e640d0dfa9b3a33";
 const slide_viewerOptionsForSlide = {
     // embedMode: "IN_LINE",
     // embedMode: "LIGHT_BOX",
-    embedMode: "SIZED_CONTAINER",
-    // embedMode: "FULL_WINDOW",
+    // embedMode: "SIZED_CONTAINER",
+    embedMode: "FULL_WINDOW",
     defaultViewMode: "FIT_PAGE",
     // defaultViewMode: "FIT_WIDTH",
     // showDownloadPDF: false,
