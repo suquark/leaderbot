@@ -238,7 +238,7 @@ html_theme_options = {
 html_context = {
     "default_mode": "auto",
     "github_url": "https://github.com",
-    "github_user": "user",
+    "github_user": "suquark",
     "github_repo": "leaderbot",
     "github_version": "main",
     "doc_path": "docs/source",
@@ -292,9 +292,9 @@ html_favicon = '_static/images/icons/favicon.ico'
 
 # Open Graph cards for sharing the documentation on social media
 ogp_site_url = 'https://leaderbot.org'
-ogp_image = 'https://leaderbot.org/_static/images/icons/' + \
-            'logo-leaderbot-light.svg'
-ogp_site_name = 'IMATE'
+ogp_image = 'https://raw.githubusercontent.com/suquark/leaderbot/main/' + \
+        'docs/source/_static/images/icons/logo-leaderbot-light.svg'
+ogp_site_name = 'LeaderBot'
 ogp_description_length = 300
 ogp_type = "website"
 ogp_enable_meta_description = True
