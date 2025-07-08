@@ -135,7 +135,7 @@ extensions = [
     'numpydoc',                               # either use napoleon or numpydoc
     'sphinx_design',
     # 'sphinx_multitoc_numbering',
-    'sphinx-prompt',
+    'sphinx_prompt',
     'sphinx_copybutton',
     'nbsphinx',
     'sphinx_gallery.load_style',

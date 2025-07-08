@@ -1,7 +1,6 @@
-.. image:: https://raw.githubusercontent.com/suquark/leaderbot/refs/heads/main/docs/source/_static/images/icons/logo-leaderbot-light.png
+.. figure:: https://raw.githubusercontent.com/suquark/leaderbot/refs/heads/main/docs/source/_static/images/icons/logo-leaderbot-light.png
     :align: left
     :width: 240
-    :class: custom-dark
 
 `Paper <https://openreview.net/pdf?id=rAoEub6Nw2>`__ |
 `Poster <https://leaderbot.org/poster>`__ |

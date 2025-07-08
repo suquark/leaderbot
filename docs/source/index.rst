@@ -1,3 +1,6 @@
+.. meta::
+   :description: leaderbot is a Python package for ranking chatbots via human pairwise comparisons.
+
 .. module:: leaderbot
 
 |project| Documentation
@@ -9,7 +12,7 @@ chat\ **bot**\ s based on `Chatbot Arena <https://lmarena.ai/>`_ project.
 .. grid:: 4
 
     .. grid-item-card:: Slides
-        :link: http://leaderbot.org/slides
+        :link: https://leaderbot.org/slides
         :text-align: center
         :class-card: custom-card-link
 
